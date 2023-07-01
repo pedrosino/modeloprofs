@@ -1,0 +1,635 @@
+Modo: num
+Unidades: 8
+CH Maxima: True 16
+CH Minima: True 11
+P-Equivalente: False
+Total: - a -
+Dif: False 
+Vinte: False
+Quarenta: False
+
+Situação: 1, Optimal
+Objetivo: 45 Professores
+Resolvido em 0.03764796257019043 segundos
+
+Resultados:
+--------+---------------------------------+-------+--------+---------+------------+
+Unidade |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo | Tempo/prof |
+--------+---------------------------------+-------+--------+---------+------------+
+FACOM   |   0   0   0   0   0   2   0   0 |     2 |   3.30 |     0.0 |      0.000 |
+FAGEN   |   0   0   0   0   0   2   0   0 |     2 |   3.30 |     0.0 |      0.000 |
+FAMAT   |   0   0   0   5   0   0   0   0 |     5 |   8.25 |    60.0 |     12.000 |
+FEELT   |   0   1   0   0   7   2   0   0 |    10 |  16.50 |    10.0 |      1.000 |
+FEQUI   |   0   1   5   0   0   5   0   0 |    11 |  18.15 |    62.5 |      5.682 |
+IBTEC   |   0   1   0   5   0   2   1   0 |     9 |  13.80 |    32.5 |      3.611 |
+INFIS   |   0   0   0   0   2   0   1   0 |     3 |   3.90 |    13.0 |      4.333 |
+IQUFU   |   0   0   2   0   0   1   0   0 |     3 |   4.95 |    36.0 |     12.000 |
+--------+---------------------------------+-------+--------+---------+------------+
+Total   |   0   3   7  10   9  14   2   0 |    45 |  72.15 |   214.0 |      4.756 |
+--------+---------------------------------+-------+--------+---------+------------+
+
+
+---------------------------
+Modo: peq
+Unidades: 8
+CH Maxima: True 16
+CH Minima: True 11
+P-Equivalente: False
+Total: - a -
+Dif: False 
+Vinte: False
+Quarenta: False
+
+Situação: 1, Optimal
+Objetivo: 43.8 Prof-Equivalente
+Resolvido em 0.04908466339111328 segundos
+
+Resultados:
+--------+---------------------------------+-------+--------+---------+------------+
+Unidade |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo | Tempo/prof |
+--------+---------------------------------+-------+--------+---------+------------+
+FACOM   |   0   0   0   0   0   0   0   3 |     3 |   1.80 |     0.0 |      0.000 |
+FAGEN   |   0   0   0   0   0   0   0   3 |     3 |   1.80 |     0.0 |      0.000 |
+FAMAT   |   0   0   0   0   0   1   0   4 |     5 |   4.05 |     0.0 |      0.000 |
+FEELT   |   0   1   0   0   0   0   9   4 |    14 |   9.45 |     2.0 |      0.143 |
+FEQUI   |   0   1   0   2   0   0   4   8 |    15 |  12.15 |     8.5 |      0.567 |
+IBTEC   |   0   1   0   2   0   0   5   4 |    12 |  10.35 |     8.5 |      0.708 |
+INFIS   |   0   0   0   0   0   0   0   3 |     3 |   1.80 |     0.0 |      0.000 |
+IQUFU   |   0   0   0   0   0   0   0   4 |     4 |   2.40 |     0.0 |      0.000 |
+--------+---------------------------------+-------+--------+---------+------------+
+Total   |   0   3   0   4   0   1  18  33 |    59 |  43.80 |    19.0 |      0.322 |
+--------+---------------------------------+-------+--------+---------+------------+
+
+
+---------------------------
+Modo: tempo
+Unidades: 8
+CH Maxima: True 16
+CH Minima: True 11
+P-Equivalente: False
+Total: - a -
+Dif: False 
+Vinte: False
+Quarenta: False
+
+Situação: 1, Optimal
+Objetivo: 925.0 horas
+Resolvido em 0.04445934295654297 segundos
+
+Resultados:
+--------+---------------------------------+-------+--------+---------+------------+
+Unidade |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo | Tempo/prof |
+--------+---------------------------------+-------+--------+---------+------------+
+FACOM   |   0   0   3   0   0   0   0   0 |     3 |   4.95 |    54.0 |     18.000 |
+FAGEN   |   0   0   3   0   0   0   0   0 |     3 |   4.95 |    54.0 |     18.000 |
+FAMAT   |   0   0   6   0   0   0   0   0 |     6 |   9.90 |   108.0 |     18.000 |
+FEELT   |   0   1  12   0   0   0   0   0 |    13 |  21.45 |   191.0 |     14.692 |
+FEQUI   |   0   1  14   0   0   0   0   0 |    15 |  24.75 |   224.5 |     14.967 |
+IBTEC   |   0   1  11   0   0   0   0   0 |    12 |  19.80 |   167.5 |     13.958 |
+INFIS   |   0   0   3   0   0   0   0   0 |     3 |   4.95 |    54.0 |     18.000 |
+IQUFU   |   0   0   4   0   0   0   0   0 |     4 |   6.60 |    72.0 |     18.000 |
+--------+---------------------------------+-------+--------+---------+------------+
+Total   |   0   3  56   0   0   0   0   0 |    59 |  97.35 |   925.0 |     15.678 |
+--------+---------------------------------+-------+--------+---------+------------+
+
+
+---------------------------
+Modo: ch
+Unidades: 8
+CH Maxima: True 16
+CH Minima: True 11
+P-Equivalente: False
+Total: - a -
+Dif: False 
+Vinte: False
+Quarenta: False
+
+Situação: 1, Optimal
+Objetivo: 0.6345893963749999 aulas/prof
+Resolvido em 15.084527015686035 segundos
+
+Resultados:
+--------+---------------------------------+-------+--------+---------+------------+
+Unidade |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo | Tempo/prof |
+--------+---------------------------------+-------+--------+---------+------------+
+FACOM   |   0   0   0   0   2   0   0   0 |     2 |   3.30 |    10.0 |      5.000 |
+FAGEN   |   0   0   0   2   0   0   0   0 |     2 |   3.30 |    24.0 |     12.000 |
+FAMAT   |   0   0   0   2   0   3   0   0 |     5 |   8.25 |    24.0 |      4.800 |
+FEELT   |   0   1   0  10   0   0   0   0 |    11 |  18.15 |    95.0 |      8.636 |
+FEQUI   |   0   1   0  12   0   0   0   0 |    13 |  21.45 |   116.5 |      8.962 |
+IBTEC   |   0   1   0   0   9   0   0   0 |    10 |  16.50 |    14.5 |      1.450 |
+INFIS   |   0   0   0   0   0   0   0   3 |     3 |   1.80 |     0.0 |      0.000 |
+IQUFU   |   0   0   0   0   2   1   0   0 |     3 |   4.95 |    10.0 |      3.333 |
+--------+---------------------------------+-------+--------+---------+------------+
+Total   |   0   3   0  26  13   4   0   3 |    49 |  77.70 |   294.0 |      6.000 |
+--------+---------------------------------+-------+--------+---------+------------+
+
+
+---------------------------
+Melhores:
+{'num': 45, 'peq': 43.8, 'tempo': 925.0, 'ch': 0.6345893963749999}
+Piores:
+{'num': 59, 'peq': 97.35, 'tempo': 0, 'ch': 2.5}
+
+---------------------------
+Modo: Geral
+Unidades: 8
+CH Maxima: True 16
+CH Minima: True 11
+P-Equivalente: False
+Total: - a -
+Dif: False 
+Vinte: False
+Quarenta: False
+
+Professores-Geral:
+MAXIMIZE
+0.1336*p_0 + 0.0614*p_1 + 0.3102*p_2 + 0.4948*p_3 + 0.0
+SUBJECT TO
+aulas_FACOM: 10 x_2.FACOM + 12 x_3.FACOM + 16 x_4.FACOM + 20 x_5.FACOM
+ + 24 x_6.FACOM + 10 x_7.FACOM + 12 x_8.FACOM >= 25
+
+aulas_FAGEN: 10 x_2.FAGEN + 12 x_3.FAGEN + 16 x_4.FAGEN + 20 x_5.FAGEN
+ + 24 x_6.FAGEN + 10 x_7.FAGEN + 12 x_8.FAGEN >= 28
+
+aulas_FAMAT: 10 x_2.FAMAT + 12 x_3.FAMAT + 16 x_4.FAMAT + 20 x_5.FAMAT
+ + 24 x_6.FAMAT + 10 x_7.FAMAT + 12 x_8.FAMAT >= 68
+
+aulas_FEELT: 10 x_2.FEELT + 12 x_3.FEELT + 16 x_4.FEELT + 20 x_5.FEELT
+ + 24 x_6.FEELT + 10 x_7.FEELT + 12 x_8.FEELT >= 147
+
+aulas_FEQUI: 10 x_2.FEQUI + 12 x_3.FEQUI + 16 x_4.FEQUI + 20 x_5.FEQUI
+ + 24 x_6.FEQUI + 10 x_7.FEQUI + 12 x_8.FEQUI >= 171
+
+aulas_IBTEC: 10 x_2.IBTEC + 12 x_3.IBTEC + 16 x_4.IBTEC + 20 x_5.IBTEC
+ + 24 x_6.IBTEC + 10 x_7.IBTEC + 12 x_8.IBTEC >= 137
+
+aulas_INFIS: 10 x_2.INFIS + 12 x_3.INFIS + 16 x_4.INFIS + 20 x_5.INFIS
+ + 24 x_6.INFIS + 10 x_7.INFIS + 12 x_8.INFIS >= 34
+
+aulas_IQUFU: 10 x_2.IQUFU + 12 x_3.IQUFU + 16 x_4.IQUFU + 20 x_5.IQUFU
+ + 24 x_6.IQUFU + 10 x_7.IQUFU + 12 x_8.IQUFU >= 41
+
+h_orientacoes_FACOM: 10 x_3.FACOM + 10 x_4.FACOM + 5 x_5.FACOM + 3 x_7.FACOM
+ >= 0
+
+h_orientacoes_FAGEN: 10 x_3.FAGEN + 10 x_4.FAGEN + 5 x_5.FAGEN + 3 x_7.FAGEN
+ >= 0
+
+h_orientacoes_FAMAT: 10 x_3.FAMAT + 10 x_4.FAMAT + 5 x_5.FAMAT + 3 x_7.FAMAT
+ >= 0
+
+h_orientacoes_FEELT: 10 x_3.FEELT + 10 x_4.FEELT + 5 x_5.FEELT + 3 x_7.FEELT
+ >= 25
+
+h_orientacoes_FEQUI: 10 x_3.FEQUI + 10 x_4.FEQUI + 5 x_5.FEQUI + 3 x_7.FEQUI
+ >= 27.5
+
+h_orientacoes_IBTEC: 10 x_3.IBTEC + 10 x_4.IBTEC + 5 x_5.IBTEC + 3 x_7.IBTEC
+ >= 30.5
+
+h_orientacoes_INFIS: 10 x_3.INFIS + 10 x_4.INFIS + 5 x_5.INFIS + 3 x_7.INFIS
+ >= 0
+
+h_orientacoes_IQUFU: 10 x_3.IQUFU + 10 x_4.IQUFU + 5 x_5.IQUFU + 3 x_7.IQUFU
+ >= 0
+
+n_orientacoes_FACOM: 8 x_3.FACOM + 8 x_4.FACOM + 8 x_5.FACOM + 6 x_7.FACOM
+ >= 0
+
+n_orientacoes_FAGEN: 8 x_3.FAGEN + 8 x_4.FAGEN + 8 x_5.FAGEN + 6 x_7.FAGEN
+ >= 0
+
+n_orientacoes_FAMAT: 8 x_3.FAMAT + 8 x_4.FAMAT + 8 x_5.FAMAT + 6 x_7.FAMAT
+ >= 0
+
+n_orientacoes_FEELT: 8 x_3.FEELT + 8 x_4.FEELT + 8 x_5.FEELT + 6 x_7.FEELT
+ >= 50
+
+n_orientacoes_FEQUI: 8 x_3.FEQUI + 8 x_4.FEQUI + 8 x_5.FEQUI + 6 x_7.FEQUI
+ >= 40
+
+n_orientacoes_IBTEC: 8 x_3.IBTEC + 8 x_4.IBTEC + 8 x_5.IBTEC + 6 x_7.IBTEC
+ >= 43
+
+n_orientacoes_INFIS: 8 x_3.INFIS + 8 x_4.INFIS + 8 x_5.INFIS + 6 x_7.INFIS
+ >= 0
+
+n_orientacoes_IQUFU: 8 x_3.IQUFU + 8 x_4.IQUFU + 8 x_5.IQUFU + 6 x_7.IQUFU
+ >= 0
+
+diretor_FACOM: x_1.FACOM = 0
+
+diretor_FAGEN: x_1.FAGEN = 0
+
+diretor_FAMAT: x_1.FAMAT = 0
+
+diretor_FEELT: x_1.FEELT = 0
+
+diretor_FEQUI: x_1.FEQUI = 0
+
+diretor_IBTEC: x_1.IBTEC = 0
+
+diretor_INFIS: x_1.INFIS = 0
+
+diretor_IQUFU: x_1.IQUFU = 0
+
+coords_FACOM: x_2.FACOM = 0
+
+coords_FAGEN: x_2.FAGEN = 0
+
+coords_FAMAT: x_2.FAMAT = 0
+
+coords_FEELT: x_2.FEELT = 1
+
+coords_FEQUI: x_2.FEQUI = 1
+
+coords_IBTEC: x_2.IBTEC = 1
+
+coords_INFIS: x_2.INFIS = 0
+
+coords_IQUFU: x_2.IQUFU = 0
+
+FACOM_chmax:_2: 16 x_1.FACOM + 16 x_2.FACOM + 16 x_3.FACOM + 16 x_4.FACOM
+ + 16 x_5.FACOM + 16 x_6.FACOM + 16 x_7.FACOM + 16 x_8.FACOM >= 25
+
+FAGEN_chmax:_2: 16 x_1.FAGEN + 16 x_2.FAGEN + 16 x_3.FAGEN + 16 x_4.FAGEN
+ + 16 x_5.FAGEN + 16 x_6.FAGEN + 16 x_7.FAGEN + 16 x_8.FAGEN >= 28
+
+FAMAT_chmax:_5: 16 x_1.FAMAT + 16 x_2.FAMAT + 16 x_3.FAMAT + 16 x_4.FAMAT
+ + 16 x_5.FAMAT + 16 x_6.FAMAT + 16 x_7.FAMAT + 16 x_8.FAMAT >= 68
+
+FEELT_chmax:_10: 16 x_1.FEELT + 16 x_2.FEELT + 16 x_3.FEELT + 16 x_4.FEELT
+ + 16 x_5.FEELT + 16 x_6.FEELT + 16 x_7.FEELT + 16 x_8.FEELT >= 147
+
+FEQUI_chmax:_11: 16 x_1.FEQUI + 16 x_2.FEQUI + 16 x_3.FEQUI + 16 x_4.FEQUI
+ + 16 x_5.FEQUI + 16 x_6.FEQUI + 16 x_7.FEQUI + 16 x_8.FEQUI >= 171
+
+IBTEC_chmax:_9: 16 x_1.IBTEC + 16 x_2.IBTEC + 16 x_3.IBTEC + 16 x_4.IBTEC
+ + 16 x_5.IBTEC + 16 x_6.IBTEC + 16 x_7.IBTEC + 16 x_8.IBTEC >= 137
+
+INFIS_chmax:_3: 16 x_1.INFIS + 16 x_2.INFIS + 16 x_3.INFIS + 16 x_4.INFIS
+ + 16 x_5.INFIS + 16 x_6.INFIS + 16 x_7.INFIS + 16 x_8.INFIS >= 34
+
+IQUFU_chmax:_3: 16 x_1.IQUFU + 16 x_2.IQUFU + 16 x_3.IQUFU + 16 x_4.IQUFU
+ + 16 x_5.IQUFU + 16 x_6.IQUFU + 16 x_7.IQUFU + 16 x_8.IQUFU >= 41
+
+chmax:_41: 16 x_1.FACOM + 16 x_1.FAGEN + 16 x_1.FAMAT + 16 x_1.FEELT
+ + 16 x_1.FEQUI + 16 x_1.IBTEC + 16 x_1.INFIS + 16 x_1.IQUFU + 16 x_2.FACOM
+ + 16 x_2.FAGEN + 16 x_2.FAMAT + 16 x_2.FEELT + 16 x_2.FEQUI + 16 x_2.IBTEC
+ + 16 x_2.INFIS + 16 x_2.IQUFU + 16 x_3.FACOM + 16 x_3.FAGEN + 16 x_3.FAMAT
+ + 16 x_3.FEELT + 16 x_3.FEQUI + 16 x_3.IBTEC + 16 x_3.INFIS + 16 x_3.IQUFU
+ + 16 x_4.FACOM + 16 x_4.FAGEN + 16 x_4.FAMAT + 16 x_4.FEELT + 16 x_4.FEQUI
+ + 16 x_4.IBTEC + 16 x_4.INFIS + 16 x_4.IQUFU + 16 x_5.FACOM + 16 x_5.FAGEN
+ + 16 x_5.FAMAT + 16 x_5.FEELT + 16 x_5.FEQUI + 16 x_5.IBTEC + 16 x_5.INFIS
+ + 16 x_5.IQUFU + 16 x_6.FACOM + 16 x_6.FAGEN + 16 x_6.FAMAT + 16 x_6.FEELT
+ + 16 x_6.FEQUI + 16 x_6.IBTEC + 16 x_6.INFIS + 16 x_6.IQUFU + 16 x_7.FACOM
+ + 16 x_7.FAGEN + 16 x_7.FAMAT + 16 x_7.FEELT + 16 x_7.FEQUI + 16 x_7.IBTEC
+ + 16 x_7.INFIS + 16 x_7.IQUFU + 16 x_8.FACOM + 16 x_8.FAGEN + 16 x_8.FAMAT
+ + 16 x_8.FEELT + 16 x_8.FEQUI + 16 x_8.IBTEC + 16 x_8.INFIS + 16 x_8.IQUFU
+ >= 651
+
+chmin:_59: 11 x_1.FACOM + 11 x_1.FAGEN + 11 x_1.FAMAT + 11 x_1.FEELT
+ + 11 x_1.FEQUI + 11 x_1.IBTEC + 11 x_1.INFIS + 11 x_1.IQUFU + 11 x_2.FACOM
+ + 11 x_2.FAGEN + 11 x_2.FAMAT + 11 x_2.FEELT + 11 x_2.FEQUI + 11 x_2.IBTEC
+ + 11 x_2.INFIS + 11 x_2.IQUFU + 11 x_3.FACOM + 11 x_3.FAGEN + 11 x_3.FAMAT
+ + 11 x_3.FEELT + 11 x_3.FEQUI + 11 x_3.IBTEC + 11 x_3.INFIS + 11 x_3.IQUFU
+ + 11 x_4.FACOM + 11 x_4.FAGEN + 11 x_4.FAMAT + 11 x_4.FEELT + 11 x_4.FEQUI
+ + 11 x_4.IBTEC + 11 x_4.INFIS + 11 x_4.IQUFU + 11 x_5.FACOM + 11 x_5.FAGEN
+ + 11 x_5.FAMAT + 11 x_5.FEELT + 11 x_5.FEQUI + 11 x_5.IBTEC + 11 x_5.INFIS
+ + 11 x_5.IQUFU + 11 x_6.FACOM + 11 x_6.FAGEN + 11 x_6.FAMAT + 11 x_6.FEELT
+ + 11 x_6.FEQUI + 11 x_6.IBTEC + 11 x_6.INFIS + 11 x_6.IQUFU + 11 x_7.FACOM
+ + 11 x_7.FAGEN + 11 x_7.FAMAT + 11 x_7.FEELT + 11 x_7.FEQUI + 11 x_7.IBTEC
+ + 11 x_7.INFIS + 11 x_7.IQUFU + 11 x_8.FACOM + 11 x_8.FAGEN + 11 x_8.FAMAT
+ + 11 x_8.FEELT + 11 x_8.FEQUI + 11 x_8.IBTEC + 11 x_8.INFIS + 11 x_8.IQUFU
+ <= 651
+
+Media_geral: 0.270353302611 x_1.FACOM + 0.270353302611 x_1.FAGEN
+ + 0.270353302611 x_1.FAMAT + 0.270353302611 x_1.FEELT
+ + 0.270353302611 x_1.FEQUI + 0.270353302611 x_1.IBTEC
+ + 0.270353302611 x_1.INFIS + 0.270353302611 x_1.IQUFU
+ + 0.270353302611 x_2.FACOM + 0.270353302611 x_2.FAGEN
+ + 0.270353302611 x_2.FAMAT + 0.270353302611 x_2.FEELT
+ + 0.270353302611 x_2.FEQUI + 0.270353302611 x_2.IBTEC
+ + 0.270353302611 x_2.INFIS + 0.270353302611 x_2.IQUFU
+ + 0.270353302611 x_3.FACOM + 0.270353302611 x_3.FAGEN
+ + 0.270353302611 x_3.FAMAT + 0.270353302611 x_3.FEELT
+ + 0.270353302611 x_3.FEQUI + 0.270353302611 x_3.IBTEC
+ + 0.270353302611 x_3.INFIS + 0.270353302611 x_3.IQUFU
+ + 0.270353302611 x_4.FACOM + 0.270353302611 x_4.FAGEN
+ + 0.270353302611 x_4.FAMAT + 0.270353302611 x_4.FEELT
+ + 0.270353302611 x_4.FEQUI + 0.270353302611 x_4.IBTEC
+ + 0.270353302611 x_4.INFIS + 0.270353302611 x_4.IQUFU
+ + 0.270353302611 x_5.FACOM + 0.270353302611 x_5.FAGEN
+ + 0.270353302611 x_5.FAMAT + 0.270353302611 x_5.FEELT
+ + 0.270353302611 x_5.FEQUI + 0.270353302611 x_5.IBTEC
+ + 0.270353302611 x_5.INFIS + 0.270353302611 x_5.IQUFU
+ + 0.270353302611 x_6.FACOM + 0.270353302611 x_6.FAGEN
+ + 0.270353302611 x_6.FAMAT + 0.270353302611 x_6.FEELT
+ + 0.270353302611 x_6.FEQUI + 0.270353302611 x_6.IBTEC
+ + 0.270353302611 x_6.INFIS + 0.270353302611 x_6.IQUFU
+ + 0.270353302611 x_7.FACOM + 0.270353302611 x_7.FAGEN
+ + 0.270353302611 x_7.FAMAT + 0.270353302611 x_7.FEELT
+ + 0.270353302611 x_7.FEQUI + 0.270353302611 x_7.IBTEC
+ + 0.270353302611 x_7.INFIS + 0.270353302611 x_7.IQUFU
+ + 0.270353302611 x_8.FACOM + 0.270353302611 x_8.FAGEN
+ + 0.270353302611 x_8.FAMAT + 0.270353302611 x_8.FEELT
+ + 0.270353302611 x_8.FEQUI + 0.270353302611 x_8.IBTEC
+ + 0.270353302611 x_8.INFIS + 0.270353302611 x_8.IQUFU + zmg = 27
+
+FACOM_ch_media: 7.04 x_1.FACOM + 7.04 x_2.FACOM + 7.04 x_3.FACOM
+ + 7.04 x_4.FACOM + 7.04 x_5.FACOM + 7.04 x_6.FACOM + 7.04 x_7.FACOM
+ + 7.04 x_8.FACOM + zm_FACOM = 27
+
+FACOM_up: zd_FACOM - zm_FACOM + zmg >= 0
+
+FACOM_low: zd_FACOM + zm_FACOM - zmg >= 0
+
+FAGEN_ch_media: 6.28571428571 x_1.FAGEN + 6.28571428571 x_2.FAGEN
+ + 6.28571428571 x_3.FAGEN + 6.28571428571 x_4.FAGEN + 6.28571428571 x_5.FAGEN
+ + 6.28571428571 x_6.FAGEN + 6.28571428571 x_7.FAGEN + 6.28571428571 x_8.FAGEN
+ + zm_FAGEN = 27
+
+FAGEN_up: zd_FAGEN - zm_FAGEN + zmg >= 0
+
+FAGEN_low: zd_FAGEN + zm_FAGEN - zmg >= 0
+
+FAMAT_ch_media: 2.58823529412 x_1.FAMAT + 2.58823529412 x_2.FAMAT
+ + 2.58823529412 x_3.FAMAT + 2.58823529412 x_4.FAMAT + 2.58823529412 x_5.FAMAT
+ + 2.58823529412 x_6.FAMAT + 2.58823529412 x_7.FAMAT + 2.58823529412 x_8.FAMAT
+ + zm_FAMAT = 27
+
+FAMAT_up: zd_FAMAT - zm_FAMAT + zmg >= 0
+
+FAMAT_low: zd_FAMAT + zm_FAMAT - zmg >= 0
+
+FEELT_ch_media: 1.19727891156 x_1.FEELT + 1.19727891156 x_2.FEELT
+ + 1.19727891156 x_3.FEELT + 1.19727891156 x_4.FEELT + 1.19727891156 x_5.FEELT
+ + 1.19727891156 x_6.FEELT + 1.19727891156 x_7.FEELT + 1.19727891156 x_8.FEELT
+ + zm_FEELT = 27
+
+FEELT_up: zd_FEELT - zm_FEELT + zmg >= 0
+
+FEELT_low: zd_FEELT + zm_FEELT - zmg >= 0
+
+FEQUI_ch_media: 1.02923976608 x_1.FEQUI + 1.02923976608 x_2.FEQUI
+ + 1.02923976608 x_3.FEQUI + 1.02923976608 x_4.FEQUI + 1.02923976608 x_5.FEQUI
+ + 1.02923976608 x_6.FEQUI + 1.02923976608 x_7.FEQUI + 1.02923976608 x_8.FEQUI
+ + zm_FEQUI = 27
+
+FEQUI_up: zd_FEQUI - zm_FEQUI + zmg >= 0
+
+FEQUI_low: zd_FEQUI + zm_FEQUI - zmg >= 0
+
+IBTEC_ch_media: 1.28467153285 x_1.IBTEC + 1.28467153285 x_2.IBTEC
+ + 1.28467153285 x_3.IBTEC + 1.28467153285 x_4.IBTEC + 1.28467153285 x_5.IBTEC
+ + 1.28467153285 x_6.IBTEC + 1.28467153285 x_7.IBTEC + 1.28467153285 x_8.IBTEC
+ + zm_IBTEC = 27
+
+IBTEC_up: zd_IBTEC - zm_IBTEC + zmg >= 0
+
+IBTEC_low: zd_IBTEC + zm_IBTEC - zmg >= 0
+
+INFIS_ch_media: 5.17647058824 x_1.INFIS + 5.17647058824 x_2.INFIS
+ + 5.17647058824 x_3.INFIS + 5.17647058824 x_4.INFIS + 5.17647058824 x_5.INFIS
+ + 5.17647058824 x_6.INFIS + 5.17647058824 x_7.INFIS + 5.17647058824 x_8.INFIS
+ + zm_INFIS = 27
+
+INFIS_up: zd_INFIS - zm_INFIS + zmg >= 0
+
+INFIS_low: zd_INFIS + zm_INFIS - zmg >= 0
+
+IQUFU_ch_media: 4.29268292683 x_1.IQUFU + 4.29268292683 x_2.IQUFU
+ + 4.29268292683 x_3.IQUFU + 4.29268292683 x_4.IQUFU + 4.29268292683 x_5.IQUFU
+ + 4.29268292683 x_6.IQUFU + 4.29268292683 x_7.IQUFU + 4.29268292683 x_8.IQUFU
+ + zm_IQUFU = 27
+
+IQUFU_up: zd_IQUFU - zm_IQUFU + zmg >= 0
+
+IQUFU_low: zd_IQUFU + zm_IQUFU - zmg >= 0
+
+_C1: p_0 + 0.0714285714286 x_1.FACOM + 0.0714285714286 x_1.FAGEN
+ + 0.0714285714286 x_1.FAMAT + 0.0714285714286 x_1.FEELT
+ + 0.0714285714286 x_1.FEQUI + 0.0714285714286 x_1.IBTEC
+ + 0.0714285714286 x_1.INFIS + 0.0714285714286 x_1.IQUFU
+ + 0.0714285714286 x_2.FACOM + 0.0714285714286 x_2.FAGEN
+ + 0.0714285714286 x_2.FAMAT + 0.0714285714286 x_2.FEELT
+ + 0.0714285714286 x_2.FEQUI + 0.0714285714286 x_2.IBTEC
+ + 0.0714285714286 x_2.INFIS + 0.0714285714286 x_2.IQUFU
+ + 0.0714285714286 x_3.FACOM + 0.0714285714286 x_3.FAGEN
+ + 0.0714285714286 x_3.FAMAT + 0.0714285714286 x_3.FEELT
+ + 0.0714285714286 x_3.FEQUI + 0.0714285714286 x_3.IBTEC
+ + 0.0714285714286 x_3.INFIS + 0.0714285714286 x_3.IQUFU
+ + 0.0714285714286 x_4.FACOM + 0.0714285714286 x_4.FAGEN
+ + 0.0714285714286 x_4.FAMAT + 0.0714285714286 x_4.FEELT
+ + 0.0714285714286 x_4.FEQUI + 0.0714285714286 x_4.IBTEC
+ + 0.0714285714286 x_4.INFIS + 0.0714285714286 x_4.IQUFU
+ + 0.0714285714286 x_5.FACOM + 0.0714285714286 x_5.FAGEN
+ + 0.0714285714286 x_5.FAMAT + 0.0714285714286 x_5.FEELT
+ + 0.0714285714286 x_5.FEQUI + 0.0714285714286 x_5.IBTEC
+ + 0.0714285714286 x_5.INFIS + 0.0714285714286 x_5.IQUFU
+ + 0.0714285714286 x_6.FACOM + 0.0714285714286 x_6.FAGEN
+ + 0.0714285714286 x_6.FAMAT + 0.0714285714286 x_6.FEELT
+ + 0.0714285714286 x_6.FEQUI + 0.0714285714286 x_6.IBTEC
+ + 0.0714285714286 x_6.INFIS + 0.0714285714286 x_6.IQUFU
+ + 0.0714285714286 x_7.FACOM + 0.0714285714286 x_7.FAGEN
+ + 0.0714285714286 x_7.FAMAT + 0.0714285714286 x_7.FEELT
+ + 0.0714285714286 x_7.FEQUI + 0.0714285714286 x_7.IBTEC
+ + 0.0714285714286 x_7.INFIS + 0.0714285714286 x_7.IQUFU
+ + 0.0714285714286 x_8.FACOM + 0.0714285714286 x_8.FAGEN
+ + 0.0714285714286 x_8.FAMAT + 0.0714285714286 x_8.FEELT
+ + 0.0714285714286 x_8.FEQUI + 0.0714285714286 x_8.IBTEC
+ + 0.0714285714286 x_8.INFIS + 0.0714285714286 x_8.IQUFU = 4.21428571429
+
+_C2: p_1 + 0.03081232493 x_1.FACOM + 0.03081232493 x_1.FAGEN
+ + 0.03081232493 x_1.FAMAT + 0.03081232493 x_1.FEELT + 0.03081232493 x_1.FEQUI
+ + 0.03081232493 x_1.IBTEC + 0.03081232493 x_1.INFIS + 0.03081232493 x_1.IQUFU
+ + 0.03081232493 x_2.FACOM + 0.03081232493 x_2.FAGEN + 0.03081232493 x_2.FAMAT
+ + 0.03081232493 x_2.FEELT + 0.03081232493 x_2.FEQUI + 0.03081232493 x_2.IBTEC
+ + 0.03081232493 x_2.INFIS + 0.03081232493 x_2.IQUFU + 0.03081232493 x_3.FACOM
+ + 0.03081232493 x_3.FAGEN + 0.03081232493 x_3.FAMAT + 0.03081232493 x_3.FEELT
+ + 0.03081232493 x_3.FEQUI + 0.03081232493 x_3.IBTEC + 0.03081232493 x_3.INFIS
+ + 0.03081232493 x_3.IQUFU + 0.03081232493 x_4.FACOM + 0.03081232493 x_4.FAGEN
+ + 0.03081232493 x_4.FAMAT + 0.03081232493 x_4.FEELT + 0.03081232493 x_4.FEQUI
+ + 0.03081232493 x_4.IBTEC + 0.03081232493 x_4.INFIS + 0.03081232493 x_4.IQUFU
+ + 0.03081232493 x_5.FACOM + 0.03081232493 x_5.FAGEN + 0.03081232493 x_5.FAMAT
+ + 0.03081232493 x_5.FEELT + 0.03081232493 x_5.FEQUI + 0.03081232493 x_5.IBTEC
+ + 0.03081232493 x_5.INFIS + 0.03081232493 x_5.IQUFU + 0.03081232493 x_6.FACOM
+ + 0.03081232493 x_6.FAGEN + 0.03081232493 x_6.FAMAT + 0.03081232493 x_6.FEELT
+ + 0.03081232493 x_6.FEQUI + 0.03081232493 x_6.IBTEC + 0.03081232493 x_6.INFIS
+ + 0.03081232493 x_6.IQUFU + 0.0112044817927 x_7.FACOM
+ + 0.0112044817927 x_7.FAGEN + 0.0112044817927 x_7.FAMAT
+ + 0.0112044817927 x_7.FEELT + 0.0112044817927 x_7.FEQUI
+ + 0.0112044817927 x_7.IBTEC + 0.0112044817927 x_7.INFIS
+ + 0.0112044817927 x_7.IQUFU + 0.0112044817927 x_8.FACOM
+ + 0.0112044817927 x_8.FAGEN + 0.0112044817927 x_8.FAMAT
+ + 0.0112044817927 x_8.FEELT + 0.0112044817927 x_8.FEQUI
+ + 0.0112044817927 x_8.IBTEC + 0.0112044817927 x_8.INFIS
+ + 0.0112044817927 x_8.IQUFU = 1.81792717087
+
+_C3: p_2 - 0.0194594594595 x_3.FACOM - 0.0194594594595 x_3.FAGEN
+ - 0.0194594594595 x_3.FAMAT - 0.0194594594595 x_3.FEELT
+ - 0.0194594594595 x_3.FEQUI - 0.0194594594595 x_3.IBTEC
+ - 0.0194594594595 x_3.INFIS - 0.0194594594595 x_3.IQUFU
+ - 0.012972972973 x_4.FACOM - 0.012972972973 x_4.FAGEN
+ - 0.012972972973 x_4.FAMAT - 0.012972972973 x_4.FEELT
+ - 0.012972972973 x_4.FEQUI - 0.012972972973 x_4.IBTEC
+ - 0.012972972973 x_4.INFIS - 0.012972972973 x_4.IQUFU
+ - 0.00540540540541 x_5.FACOM - 0.00540540540541 x_5.FAGEN
+ - 0.00540540540541 x_5.FAMAT - 0.00540540540541 x_5.FEELT
+ - 0.00540540540541 x_5.FEQUI - 0.00540540540541 x_5.IBTEC
+ - 0.00540540540541 x_5.INFIS - 0.00540540540541 x_5.IQUFU
+ - 0.00324324324324 x_7.FACOM - 0.00324324324324 x_7.FAGEN
+ - 0.00324324324324 x_7.FAMAT - 0.00324324324324 x_7.FEELT
+ - 0.00324324324324 x_7.FEQUI - 0.00324324324324 x_7.IBTEC
+ - 0.00324324324324 x_7.INFIS - 0.00324324324324 x_7.IQUFU = -0.0897297297297
+
+_C4: p_3 + 0.0670093757144 zd_FACOM + 0.0670093757144 zd_FAGEN
+ + 0.0670093757144 zd_FAMAT + 0.0670093757144 zd_FEELT
+ + 0.0670093757144 zd_FEQUI + 0.0670093757144 zd_IBTEC
+ + 0.0670093757144 zd_INFIS + 0.0670093757144 zd_IQUFU = 1.34018751429
+
+VARIABLES
+p_0 <= 1 Continuous
+p_1 <= 1 Continuous
+p_2 <= 1 Continuous
+p_3 <= 1 Continuous
+0 <= x_1.FACOM Integer
+0 <= x_1.FAGEN Integer
+0 <= x_1.FAMAT Integer
+0 <= x_1.FEELT Integer
+0 <= x_1.FEQUI Integer
+0 <= x_1.IBTEC Integer
+0 <= x_1.INFIS Integer
+0 <= x_1.IQUFU Integer
+0 <= x_2.FACOM Integer
+0 <= x_2.FAGEN Integer
+0 <= x_2.FAMAT Integer
+0 <= x_2.FEELT Integer
+0 <= x_2.FEQUI Integer
+0 <= x_2.IBTEC Integer
+0 <= x_2.INFIS Integer
+0 <= x_2.IQUFU Integer
+0 <= x_3.FACOM Integer
+0 <= x_3.FAGEN Integer
+0 <= x_3.FAMAT Integer
+0 <= x_3.FEELT Integer
+0 <= x_3.FEQUI Integer
+0 <= x_3.IBTEC Integer
+0 <= x_3.INFIS Integer
+0 <= x_3.IQUFU Integer
+0 <= x_4.FACOM Integer
+0 <= x_4.FAGEN Integer
+0 <= x_4.FAMAT Integer
+0 <= x_4.FEELT Integer
+0 <= x_4.FEQUI Integer
+0 <= x_4.IBTEC Integer
+0 <= x_4.INFIS Integer
+0 <= x_4.IQUFU Integer
+0 <= x_5.FACOM Integer
+0 <= x_5.FAGEN Integer
+0 <= x_5.FAMAT Integer
+0 <= x_5.FEELT Integer
+0 <= x_5.FEQUI Integer
+0 <= x_5.IBTEC Integer
+0 <= x_5.INFIS Integer
+0 <= x_5.IQUFU Integer
+0 <= x_6.FACOM Integer
+0 <= x_6.FAGEN Integer
+0 <= x_6.FAMAT Integer
+0 <= x_6.FEELT Integer
+0 <= x_6.FEQUI Integer
+0 <= x_6.IBTEC Integer
+0 <= x_6.INFIS Integer
+0 <= x_6.IQUFU Integer
+0 <= x_7.FACOM Integer
+0 <= x_7.FAGEN Integer
+0 <= x_7.FAMAT Integer
+0 <= x_7.FEELT Integer
+0 <= x_7.FEQUI Integer
+0 <= x_7.IBTEC Integer
+0 <= x_7.INFIS Integer
+0 <= x_7.IQUFU Integer
+0 <= x_8.FACOM Integer
+0 <= x_8.FAGEN Integer
+0 <= x_8.FAMAT Integer
+0 <= x_8.FEELT Integer
+0 <= x_8.FEQUI Integer
+0 <= x_8.IBTEC Integer
+0 <= x_8.INFIS Integer
+0 <= x_8.IQUFU Integer
+zd_FACOM Continuous
+zd_FAGEN Continuous
+zd_FAMAT Continuous
+zd_FEELT Continuous
+zd_FEQUI Continuous
+zd_IBTEC Continuous
+zd_INFIS Continuous
+zd_IQUFU Continuous
+zm_FACOM Continuous
+zm_FAGEN Continuous
+zm_FAMAT Continuous
+zm_FEELT Continuous
+zm_FEQUI Continuous
+zm_IBTEC Continuous
+zm_INFIS Continuous
+zm_IQUFU Continuous
+zmg Continuous
+
+Situação: 1, Optimal
+Objetivo: 0.8167
+Resolvido em 1.585214376449585 segundos
+
+Resultados:
+--------+---------------------------------+-------+--------+---------+------------+
+Unidade |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo | Tempo/prof |
+--------+---------------------------------+-------+--------+---------+------------+
+FACOM   |   0   0   1   1   0   0   0   0 |     2 |   3.30 |    30.0 |     15.000 |
+FAGEN   |   0   0   1   1   0   0   0   0 |     2 |   3.30 |    30.0 |     15.000 |
+FAMAT   |   0   0   3   2   0   0   0   0 |     5 |   8.25 |    78.0 |     15.600 |
+FEELT   |   0   1   5   5   0   0   0   0 |    11 |  18.15 |   125.0 |     11.364 |
+FEQUI   |   0   1   9   2   0   1   0   0 |    13 |  21.45 |   158.5 |     12.192 |
+IBTEC   |   0   1   4   5   0   0   0   0 |    10 |  16.50 |   101.5 |     10.150 |
+INFIS   |   0   0   3   0   0   0   0   0 |     3 |   4.95 |    54.0 |     18.000 |
+IQUFU   |   0   0   1   2   0   0   0   0 |     3 |   4.95 |    42.0 |     14.000 |
+--------+---------------------------------+-------+--------+---------+------------+
+Total   |   0   3  27  18   0   1   0   0 |    49 |  80.85 |   619.0 |     12.633 |
+--------+---------------------------------+-------+--------+---------+------------+
+
+Parâmetros:
+--------+-------------+----------------+-------------+-------------+-------------+---------+---------+----------+
+Unidade |      aulas  |  horas_orient  |  num_orient |   diretor   |   coords.   |   40h   |   20h   | ch media |
+--------+-------------+----------------+-------------+-------------+-------------+---------+---------+----------+
+FACOM   |   28 (+  3) |  20.0 (+ 20.0) |   16 (+ 16) |    0 (+  0) |    0 (+  0) |   0.00% |   0.00% |   12.500 |
+FAGEN   |   28 (+  0) |  20.0 (+ 20.0) |   16 (+ 16) |    0 (+  0) |    0 (+  0) |   0.00% |   0.00% |   14.000 |
+FAMAT   |   68 (+  0) |  50.0 (+ 50.0) |   40 (+ 40) |    0 (+  0) |    0 (+  0) |   0.00% |   0.00% |   13.600 |
+FEELT   |  150 (+  3) | 100.0 (+ 75.0) |   80 (+ 30) |    0 (+  0) |    1 (+  0) |   0.00% |   0.00% |   13.364 |
+FEQUI   |  174 (+  3) | 110.0 (+ 82.5) |   88 (+ 48) |    0 (+  0) |    1 (+  0) |   7.69% |   0.00% |   13.154 |
+IBTEC   |  138 (+  1) |  90.0 (+ 59.5) |   72 (+ 29) |    0 (+  0) |    1 (+  0) |   0.00% |   0.00% |   13.700 |
+INFIS   |   36 (+  2) |  30.0 (+ 30.0) |   24 (+ 24) |    0 (+  0) |    0 (+  0) |   0.00% |   0.00% |   11.333 |
+IQUFU   |   44 (+  3) |  30.0 (+ 30.0) |   24 (+ 24) |    0 (+  0) |    0 (+  0) |   0.00% |   0.00% |   13.667 |
+--------+-------------+----------------+-------------+-------------+-------------+---------+---------+----------+
+Total   |  666 (+ 15) | 450.0 (+367.0) |  360 (+227) |    0 (+  0) |    3 (+  0) |   2.04% |   0.00% |   13.286 |
+--------+-------------+----------------+-------------+-------------+-------------+---------+---------+----------+
+
+p_0: 0.71428571
+p_1: 0.30812325
+p_2: 0.66918919
+p_3: 1.0
+zd_FACOM: 0.83268817
+zd_FAGEN: 0.67588326
+zd_FAMAT: 0.30613536
+zd_FEELT: 0.077243801
+zd_FEQUI: 0.13280513
+zd_IBTEC: 0.4005965
+zd_INFIS: 2.2820999
+zd_IQUFU: 0.36926305
+zm_FACOM: 12.92
+zm_FAGEN: 14.428571
+zm_FAMAT: 14.058824
+zm_FEELT: 13.829932
+zm_FEQUI: 13.619883
+zm_IBTEC: 14.153285
+zm_INFIS: 11.470588
+zm_IQUFU: 14.121951
+zmg: 13.752688
