@@ -155,20 +155,14 @@ modelos = {}
 melhores = {}
 piores = {}
 
-# valores conhecidos a priori
+# Valores conhecidos a priori
+# número máximo é dado pelo total de aulas dividido pela carga horária mínima
+# ou é definido pelo usuário
 numero_max = round(np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_min) if not max_total else n_max_total
 piores['num'] = numero_max
 piores['peq'] = numero_max*1.65
 piores['tempo'] = 0
 piores['ch'] = (ch_max - ch_min)/2
-
-##melhores['ch'] = 0
-
-#print("Melhores:")
-#print(melhores)
-#print("Piores:")
-#print(piores)
-#input('Continuar...')
 
 original_stdout = sys.stdout
 #filename = f"output{datetime.now().strftime('%H-%M-%S')}.txt"
@@ -197,7 +191,7 @@ for modo in modos:
         modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
         
     # Restrições
-    if(modo != 'oi'):
+    if(modo != 'ch'):
         for r in range(n_restricoes):
             for u in range(n_unidades):
                 match conectores[r]:
@@ -211,6 +205,14 @@ for modo in modos:
                     case "<=":
                         modelos[modo] += lpDot(saida[u], m_perfis[r]) <= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)        
 
+        # Restrições de regimes de trabalho
+        if(quarenta):
+            for u in range(n_unidades):
+                modelos[modo] += saida[u][4] + saida[u][5] - p_quarenta*lpSum(saida[u]) <= 0, f"40 horas {m_unidades[u][0]} <= 10%"
+        if(vinte):
+            for u in range(n_unidades):
+                modelos[modo] += saida[u][6] + saida[u][7] - p_vinte*lpSum(saida[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
+        
     # Restrições de máximo e mínimo por unidade -> carga horária média
     # ------------------
     # Considerou-se carga horária média mínima de 12 aulas e máxima de 16
@@ -236,14 +238,14 @@ for modo in modos:
     if(min_total):
         modelos[modo] += lpSum(saida*matriz_prof) >= n_min_total, f"TotalMin: {n_min_total}"
 
-    # Restrições de regimes de trabalho
+    '''# Restrições de regimes de trabalho
     if(quarenta):
         for u in range(n_unidades):
             modelos[modo] += saida[u][4] + saida[u][5] - p_quarenta*lpSum(saida[u]) <= 0, f"40 horas {m_unidades[u][0]} <= 10%"
     if(vinte):
         for u in range(n_unidades):
             modelos[modo] += saida[u][6] + saida[u][7] - p_vinte*lpSum(saida[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
-
+    '''
     # Modo de carga horária
     if(modo == 'ch'):
         '''for r in range(n_restricoes):
@@ -264,6 +266,7 @@ for modo in modos:
         medias = LpVariable.matrix("zm", m_unidades[:n_unidades, 0], cat="Continuous")
         media_geral = LpVariable("zmg", cat="Continuous")
         
+        # minimizar desvio em relação à média
         # coeficientes
         # m = (a-b)/(c-d) -> a = media minima, b = media maxima, c = numero maximo, d = numero minimo
         c = np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_min
@@ -476,8 +479,6 @@ if(vinte):
         modelo += saida[u][6] + saida[u][7] - p_vinte*lpSum(saida[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
 
 # minimizar desvio em relação à média
-#media_geral = np.sum(m_unidades, axis=0)[1] / ch_media
-##if(modo == 'ch'):
 # coeficientes
 # m = (a-b)/(c-d) -> a = media minima, b = media maxima, c = numero maximo, d = numero minimo
 c = np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_min
@@ -501,7 +502,11 @@ for u in range(n_unidades):
 # Pontuações
 pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBound=1)
 # Restrições/cálculos
-modelo += pontuacoes[0] == (lpSum(saida) - piores['num'])/(melhores['num'] - piores['num']) if not max_total else 1
+# caso seja dado um número exato, é necessário alterar a pontuação do critério 'num' para evitar a divisão por zero
+if(max_total and min_total and n_max_total == n_min_total):
+    modelo += pontuacoes[0] == lpSum(saida)/melhores['num']
+else:
+    modelo += pontuacoes[0] == (lpSum(saida) - piores['num'])/(melhores['num'] - piores['num'])
 modelo += pontuacoes[1] == (lpSum(saida*matriz_peq) - piores['peq'])/(melhores['peq'] - piores['peq'])
 modelo += pontuacoes[2] == (lpSum(saida*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo'])
 modelo += pontuacoes[3] == (lpSum(desvios[:n_unidades])/n_unidades - piores['ch'])/(melhores['ch'] - piores['ch'])
@@ -608,11 +613,8 @@ fileout.close()
 #Imprime na tela    
 sys.stdout = original_stdout
 print(f"Situação: {modelo.status}, {LpStatus[modelo.status]}")
-#if peq or modo == 'ch':
 objetivo = f"{modelo.objective.value():.4f}"
-#else:
-#    objetivo = int(modelo.objective.value())
-print(f"Objetivo: {objetivo} {'horas' if modo == 'tempo' else 'Prof-Equivalente' if peq else 'Professores' if modo == 'num' else 'aulas/prof'}")
+print(f"Objetivo: {objetivo} (na escala de 0 a 1)")
 print(f"Resolvido em {modelo.solutionTime} segundos")
 print("")
 print(f"Verifique o arquivo {filename} para o relatório completo")
@@ -622,7 +624,5 @@ print("")
 df = pd.DataFrame(qtdes, columns=['x1','x2','x3','x4','x5','x6','x7','x8'])
 df.insert(0, "Unidade", m_unidades[:, 0])
 df.to_excel(f'CBC_CompletoOrient.xlsx', sheet_name='Resultados', index=False)
-
-
 
 ##input("Aperte Enter para finalizar")
