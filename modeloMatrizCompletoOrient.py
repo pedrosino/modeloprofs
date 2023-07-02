@@ -318,7 +318,7 @@ for modo in modos:
     #print(modelos[modo])
     # Resolver o modelo
     #status = model.solve()
-    status = modelos[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=15))#time_limit))
+    status = modelos[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=time_limit))#time_limit))
     #status = model.solve(GLPK(msg=True))
 
     # Resultados
