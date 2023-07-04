@@ -280,14 +280,12 @@ for modo in modos:
     print(f'Quarenta: {quarenta}')
     print()
 
-    #print(modelos[modo])
     # Resolver o modelo
-    #status = model.solve()
     status = modelos[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=time_limit))#time_limit))
-    #status = model.solve(GLPK(msg=True))
-
+    
     # Resultados
     print(f"Situação: {modelos[modo].status}, {LpStatus[modelos[modo].status]}")
+    # Para cada critério o resultado é em um formato diferente
     if(modo == 'ch'):
         objetivo = modelos[modo].objective.value()
     elif(modo == 'peq'):
@@ -301,36 +299,27 @@ for modo in modos:
     print(f"Resolvido em {modelos[modo].solutionTime} segundos")
     print("")
     
-    melhores[modo] = objetivo #if modo <> 'tempo' else objetivo*-1
+    melhores[modo] = objetivo
     sys.stdout = original_stdout
     print(f"Ok. Resultado: {melhores[modo]}")
+    sys.stdout = fileout
+    
     # Formata resultados e calcula totais
-    #resultados = np.full(n_unidades, '', dtype=object)
-    #totais = np.full(n_unidades, 0, dtype=int)
     qtdes = np.full((n_unidades, n_perfis), 0, dtype=int)
     index = 0
     perfil = 0
-    log = ""
     for var in modelos[modo].variables():
-        #if(modo == 'ch'):
-        #    print(var.name)
         if(var.name.find('x') == 0):
-            log += f"({index},{perfil}): {var.value():2.0f}; "
             valor = int(var.value())
             #resultados[index] += f"{valor:2d} "
             qtdes[index][perfil] = valor
-            #totais[index] += valor
             index += 1
             if(index >= n_unidades):
                 index = 0
                 perfil += 1
-                log += "\n"
             if(perfil >= n_perfis+1):
                 print(f"i: {index}, p: {perfil}")
                 break
-    #if(modo == 'ch'):    
-    #    print(log)
-    sys.stdout = fileout
     
     print("Resultados:")
     print(f"--------+---------------------------------+-------+--------+---------+------------+")
@@ -346,45 +335,27 @@ for modo in modos:
     + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*matriz_peq):6.2f} |  {np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2]:6.1f} |    {(np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2])/np.sum(qtdes):7.3f} |")
     print(f"--------+---------------------------------+-------+--------+---------+------------+")
     print("")
-    
-    #salva em planilha
-    ##df = pd.DataFrame(qtdes, columns=['x1','x2','x3','x4','x5','x6','x7','x8'])
-    ##df.insert(0, "Unidade", m_unidades[:, 0])
-    ##df.to_excel(f'CBC{modo}ori-prel{"q" if quarenta else ""}.xlsx', sheet_name='Resultados', index=False)
-    
-    ##print(qtdes)
-    print()
+    print("")
     print("---------------------------")
     
 ##### -----------------Fim da primeira 'rodada'-----------------
-#sys.stdout = original_stdout
 print("Melhores:")
 print(melhores)
 print("Piores:")
 print(piores)
 print()
 print("---------------------------")
-#print(medias)
-#print(desvios)
-#print(media_geral)
-sys.stdout = original_stdout
-#input("Aperte enter para continuar...")
-sys.stdout = fileout
 
 ## Agora uma nova rodada do modelo usando os pesos
-# Verifica modo de tempo e ativa máximo se não estiver ativo
-#if(modo == 'tempo' and max_total == False and minima == False):
-#    minima = True
-
 # Verifica modo de carga horária e ativa máximo e mínimo
 #if(modo == 'ch'):
 minima = True
 maxima = True
 
-# Definir o modelo
+# -- Definir o modelo --
 modelo = LpProblem(name=f"Professores-Geral", sense=LpMaximize)
 
-#variáveis auxiliares
+# Variáveis auxiliares
 desvios = LpVariable.matrix("zd", m_unidades[:n_unidades, 0], cat="Continuous", lowBound=0)
 medias = LpVariable.matrix("zm", m_unidades[:n_unidades, 0], cat="Continuous", lowBound=0)
 media_geral = LpVariable("zmg", cat="Continuous", lowBound=0)
@@ -410,9 +381,7 @@ for r in range(n_restricoes):
 for u in range(n_unidades):
     if(maxima):
         modelo += ch_max*lpSum(saida[u]) >= m_unidades[u][1], f"{m_unidades[u][0]}_chmax: {math.ceil(m_unidades[u][1]/ch_max)}"
-    #if(minima):
-    #    modelo += ch_min*lpSum(saida[u]) <= m_unidades[u][1], f"{m_unidades[u][0]}_chmin: {int(m_unidades[u][1]/ch_min)}"
-
+    
 if(maxima):
     modelo += ch_max*lpSum(saida) >= np.sum(m_unidades[:n_unidades], axis=0)[1], f"chmax: {math.ceil(np.sum(m_unidades[:n_unidades], axis=0)[1]/ch_max)}"
 if(minima):
@@ -432,13 +401,11 @@ if(vinte):
     for u in range(n_unidades):
         modelo += saida[u][6] + saida[u][7] - p_vinte*lpSum(saida[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
 
-# minimizar desvio em relação à média
 # coeficientes
 # m = (a-b)/(c-d) -> a = media minima, b = media maxima, c = numero maximo, d = numero minimo
 c = np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_min
 d = np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_max
 m = (ch_min - ch_max) / (c - d)
-##print(f"Geral, c = {c}, d = {d}, m = {m}")
 
 modelo += media_geral == m*lpSum(saida[:n_unidades]) + ch_min + ch_max, "Media geral"
 
@@ -446,7 +413,6 @@ for u in range(n_unidades):
     c = m_unidades[u][1] / ch_min
     d = m_unidades[u][1] / ch_max
     m = (ch_min - ch_max) / (c - d)
-    ##print(f"{m_unidades[u][0]}, c = {c}, d = {d}, m = {m}")
     # calculo da media
     modelo += medias[u] == m*lpSum(saida[u]) + ch_min + ch_max, f"{m_unidades[u][0]}_ch_media"
     # desvio
@@ -465,12 +431,11 @@ modelo += pontuacoes[1] == (lpSum(saida*matriz_peq) - piores['peq'])/(melhores['
 modelo += pontuacoes[2] == (lpSum(saida*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
 modelo += pontuacoes[3] == (lpSum(desvios[:n_unidades])/n_unidades - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
 
-# Função objetivo
+# -- Função objetivo --
+# O objetivo é maximimizar a pontuação dada pela soma de cada pontuação multiplicada por seu peso
 modelo += lpSum(pontuacoes*pesos)
-    
-#print(model)
-# Imprime os resultados no arquivo txt
-
+   
+# Imprime os resultados
 print(f'Modo: Geral')
 print(f'Unidades: {n_unidades}')
 print(f'CH Maxima: {maxima} {ch_max if maxima else ""}')
@@ -480,25 +445,15 @@ print(f'Vinte: {vinte}')
 print(f'Quarenta: {quarenta}')
 print()
 
-print(modelo)
 # Resolver o modelo
-#status = model.solve()
 status = modelo.solve(PULP_CBC_CMD(msg=0, timeLimit=time_limit))
-#status = model.solve(GLPK(msg=True))
 
 # Resultados
 print(f"Situação: {modelo.status}, {LpStatus[modelo.status]}")
-#if(modo == 'peq' or modo == 'ch'):
 objetivo = f"{modelo.objective.value():.4f}"
-#else:
-#    objetivo = int(modelo.objective.value())
-#    if(modo == 'tempo'):
-#        objetivo = objetivo*-1
-#print(f"Objetivo: {objetivo} {'horas' if modo == 'tempo' else 'Prof-Equivalente' if peq else 'Professores' if modo == 'num' else 'aulas/prof'}")
 print(f"Objetivo: {objetivo}")
 print(f"Resolvido em {modelo.solutionTime} segundos")
 print("")
-#input("Aperte enter para continuar...")
 
 # Formata resultados e calcula totais
 resultados = np.full(n_unidades, '', dtype=object)
@@ -560,12 +515,18 @@ print(f"Total   | "
 )
 print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
 print()
-#print("------------------Modelo:------------------")
-#print()
-#print(model)
+
+# Imprime médias e desvios
 for var in modelo.variables():
     if(var.name[0] == 'p' or var.name[0] == 'z'):
         print(f"{var.name}: {var.value()}")
+
+# Imprime o modelo completo
+print("")
+print("------------------Modelo:------------------")
+print(modelo)
+
+# Fecha arquivo texto
 fileout.close()
 
 #Imprime na tela    
@@ -582,5 +543,3 @@ print("")
 df = pd.DataFrame(qtdes, columns=['x1','x2','x3','x4','x5','x6','x7','x8'])
 df.insert(0, "Unidade", m_unidades[:, 0])
 df.to_excel(f'CBC_CompletoOrient.xlsx', sheet_name='Resultados', index=False)
-
-##input("Aperte Enter para finalizar")
