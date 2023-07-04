@@ -568,15 +568,21 @@ print("Parâmetros:")
 print(f"--------+-------------+----------------+-------------+-------------+-------------+---------+---------+----------+")
 print(f"Unidade |      aulas  |  horas_orient  |  num_orient |   diretor   |   coords.   |   40h   |   20h   | ch media |") #{'minim' if minimo else ''} {'maxim' if maximo or modo == 'tempo' else ''}")
 print(f"--------+-------------+----------------+-------------+-------------+-------------+---------+---------+----------+")
+# Formatos dos números
+formatos =          ['4d', '7.2f', '4d', '3d', '3d']
+formatosdiferenca = ['3d', '7.2f', '4d', '2d', '2d']
 for u in range(n_unidades):
     print(f"{m_unidades[u][0]:5s}   | " 
-    + " ".join([f"{np.sum(qtdes[u]*m_perfis[p]):{'4d' if p != 1 else '5.1f'}} (+{(np.sum(qtdes[u]*m_perfis[p]) - m_unidades[u][p+1]):{'3d' if p != 1 else '5.1f'}}) |" for p in range(n_restricoes)])
+    #+ "  ".join([f"{np.sum(qtdes[u]*m_perfis[p]):{'4d' if p != 1 else '6.1f'}} (+{(np.sum(qtdes[u]*m_perfis[p]) - m_unidades[u][p+1]):{'3d' if p != 1 else '6.1f'}}) |" for p in range(n_restricoes)])
+    + " ".join([f"{np.sum(qtdes[u]*m_perfis[p]):{formatos[p]}} (+{(np.sum(qtdes[u]*m_perfis[p]) - m_unidades[u][p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
     + f"  {((qtdes[u][4] + qtdes[u][5]) / np.sum(qtdes[u]))*100:5.2f}% |" #40h
     + f"  {((qtdes[u][6] + qtdes[u][7]) / np.sum(qtdes[u]))*100:5.2f}% |" #20h
     + f"  {m_unidades[u][1] / np.sum(qtdes[u]):7.3f} |"
     )
-print(f"--------+-------------+----------------+-------------+-------------+-------------+---------+---------+----------+")
-print(f"Total   | " + " ".join([f"{np.sum(qtdes*m_perfis[p]):{'4d' if p != 1 else '4.1f'}} (+{np.sum(qtdes*m_perfis[p]) - int(np.sum(m_unidades, axis=0)[p+1]):{'3d' if p != 1 else '3.1f'}}) |" for p in range(n_restricoes)])
+print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+print(f"Total   | "
+#+ " ".join([f"{np.sum(qtdes*m_perfis[p]):{'4d' if p != 1 else '6.1f'}} (+{np.sum(qtdes*m_perfis[p]) - int(np.sum(m_unidades, axis=0)[p+1]):{'3d' if p != 1 else '6.1f'}}) |" for p in range(n_restricoes)])
++ " ".join([f"{np.sum(qtdes*m_perfis[p]):{formatos[p]}} (+{np.sum(qtdes*m_perfis[p]) - int(np.sum(m_unidades, axis=0)[p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
 + f"  {(np.sum(qtdes, axis=0)[4] + np.sum(qtdes, axis=0)[5]) / np.sum(qtdes)*100:5.2f}% |"
 + f"  {(np.sum(qtdes, axis=0)[6] + np.sum(qtdes, axis=0)[7]) / np.sum(qtdes)*100:5.2f}% |"
 + f"  {np.sum(m_unidades, axis=0)[1]/np.sum(qtdes):7.3f} |"
