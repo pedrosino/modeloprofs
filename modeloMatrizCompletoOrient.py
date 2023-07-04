@@ -247,20 +247,7 @@ for modo in modos:
             modelos[modo] += saida[u][6] + saida[u][7] - p_vinte*lpSum(saida[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
     '''
     # Modo de carga horária
-    if(modo == 'ch'):
-        '''for r in range(n_restricoes):
-            for u in range(n_unidades):
-                match conectores[r]:
-                    case ">=":
-                        modelos[modo] += lpDot(saida[u], m_perfis[r]) >= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
-                        # limitar diferença da meta
-                        if(dif):
-                            modelos[modo] += lpDot(saida[u], m_perfis[r]) <= m_unidades[u][r+1]*(100+dif_tam)/100, f"dif {nomes_restricoes[r]} {m_unidades[u][0]}"
-                    case "==":
-                        modelos[modo] += lpDot(saida[u], m_perfis[r]) == m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
-                    case "<=":
-                        modelos[modo] += lpDot(saida[u], m_perfis[r]) <= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)     
-        '''                
+    if(modo == 'ch'):            
         # variáveis auxiliares
         desvios = LpVariable.matrix("zd", m_unidades[:n_unidades, 0], cat="Continuous")
         medias = LpVariable.matrix("zm", m_unidades[:n_unidades, 0], cat="Continuous")
@@ -294,14 +281,8 @@ for modo in modos:
     elif(modo == 'peq'):
         modelos[modo] += lpSum(saida*matriz_peq)
     elif(modo == 'tempo'):
-        #sys.stdout = original_stdout
-        #print(np.sum(m_unidades[:n_unidades], axis=0)[2])
-        #sys.stdout = fileout
         modelos[modo] += lpSum(saida*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2]
     elif(modo == 'ch'):
-        #sys.stdout = original_stdout
-        #print("Olá, ch aqui")
-        #sys.stdout = fileout
         modelos[modo] += lpSum(desvios[:n_unidades])/n_unidades
         
     #print(modelos[modo])
@@ -504,12 +485,12 @@ pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBo
 # Restrições/cálculos
 # caso seja dado um número exato, é necessário alterar a pontuação do critério 'num' para evitar a divisão por zero
 if(max_total and min_total and n_max_total == n_min_total):
-    modelo += pontuacoes[0] == lpSum(saida)/melhores['num']
+    modelo += pontuacoes[0] == lpSum(saida)/melhores['num'], "Pontuação número"
 else:
-    modelo += pontuacoes[0] == (lpSum(saida) - piores['num'])/(melhores['num'] - piores['num'])
-modelo += pontuacoes[1] == (lpSum(saida*matriz_peq) - piores['peq'])/(melhores['peq'] - piores['peq'])
-modelo += pontuacoes[2] == (lpSum(saida*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo'])
-modelo += pontuacoes[3] == (lpSum(desvios[:n_unidades])/n_unidades - piores['ch'])/(melhores['ch'] - piores['ch'])
+    modelo += pontuacoes[0] == (lpSum(saida) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
+modelo += pontuacoes[1] == (lpSum(saida*matriz_peq) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq"
+modelo += pontuacoes[2] == (lpSum(saida*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
+modelo += pontuacoes[3] == (lpSum(desvios[:n_unidades])/n_unidades - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
 
 # Função objetivo
 modelo += lpSum(pontuacoes*pesos)

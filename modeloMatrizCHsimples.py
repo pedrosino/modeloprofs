@@ -193,6 +193,7 @@ if(modo == 'ch'):
     print(f"Geral, c = {c}, d = {d}, m = {m}")
     
     model += media_geral == m*lpSum(saida[:n_unidades]) + ch_min + ch_max, "Media geral"
+    
     for u in range(n_unidades):
         #model += ch_media*lpSum(saida[u]) == m_unidades[u][1], f"{m_unidades[u][0]}_ch_media"
         #model += lpSum(saida[u])*desvios[u] >= (m_unidades[0][1] - media_geral*lpSum(saida[u]))
