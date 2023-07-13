@@ -18,7 +18,7 @@ minima = False
 ch_max = 16
 max_total = False  # Restrição do número máximo total
 min_total = False # Restrição do número mínimo total
-# Restrição quanto aos perfis 5 e 6 (podem ser considerados como regime de 40h)
+# Restrição quanto aos perfis 5 e 6 - ministram grande número de aulas e não participam de pesquisa ou extensão (podem ser considerados como regime de 40h)
 quarenta = False
 p_quarenta = 0.1 # porcentagem máxima aceita
 # Restrição quanto aos perfis 7 e 8 - regime de 20h
@@ -82,31 +82,16 @@ n_unidades = len(m_unidades)
 # 3) Tempo disponível:                  0,3093            0,3102
 # 4) Equilíbrio na carga horária média: 0,4919            0,4948
 # 
-#pesos = np.array([0.1362, 0.0626, 0.3093, 0.4919])
-pesos = np.array([0.1336, 0.0614, 0.3102, 0.4948])
+#pesos = np.array([0.1362, 0.0626, 0.3093, 0.4919]) # valores aproximados
+pesos = np.array([0.1336, 0.0614, 0.3102, 0.4948]) # valores exatos
 
-##print("As opções escolhidas são:")
-##print(f"Unidades: {n_unidades}, Max:{maxima} {ch_max if maxima else ''}, Min:{minima} {ch_min if minima else ''}, PEq:{peq}, TotalMax:{max_total} {n_max_total if max_total else ''}, TotalMin:{min_total} {n_min_total if min_total else ''}, 40h:{quarenta}, 20h{vinte}")
 print("Bem vindo!")
 print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
-
-# Dá opção de alterar os parâmetros
-'''tecla = input("Aperte enter para continuar ou a para alterar\n")
-if(tecla=='a'):
-    print("--chmin define o valor da carga horária mínima. Exemplo: --chmin 11")
-    print("--chmax define o valor da carga horária máxima. Exemplo: --chmax 15")
-    print("--tmax ativa a quantidade máxima total de professores. Deve ser seguido do número desejado. Exemplo: --tmax 100")
-    print("--tmin ativa a quantidade mínima total de professores. Deve ser seguido do número desejado. Exemplo: --tmin 50")
-    print("-n define o número de unidades. Exemplo: -n 4")
-    print("-v ativa a limitação de professores em regime de 20 horas (20%)")
-    print("-q ativa a limitação de professores em regime de 40 horas (10%)")
-    opcoes = input("Digite as opções desejadas, separadas por espaço. Exemplo: --tmax 130 -v --chmax 15")
-'''    
 
 # Custos
 ##matriz_peq = np.array([1.65, 1.65, 1.65, 1.65, 1, 1, 0.6, 0.6]) #professor-equivalente - x1 a x4 = DE, x5 e x6 = 40h, x7 e x8 = 20h
 matriz_peq = np.array([1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 0.6, 0.6]) #professor-equivalente - x1 a x6 = DE, x7 e x8 = 20h
-matriz_tempo = np.array([0, 0, 18, 12, 5, 0, 3, 0]) # tempo disponível
+matriz_tempo = m_perfis[n_restricoes] # tempo disponível
 
 # Definições das restrições                              
 conectores = np.array([">=", ">=", ">=", "==", "=="])
@@ -132,7 +117,7 @@ piores = {}
 # Essa pontuação varia entre 0 (pior caso) e 1 (melhor caso), e será multiplicada pelo peso de cada critério
 # para obter a pontuação total daquele cenário. Para cada critério é necessário então determinar o pior e 
 # o melhor caso. Nos dois primeiros o pior caso é quando o total de professores é número máximo possível,
-# com base na carga horária média mínima. Por exemplo, se são 900 aulas e a carga horária mínim foi definida
+# com base na carga horária média mínima. Por exemplo, se são 900 aulas e a carga horária mínima foi definida
 # em 12 aulas por professor, o número máximo possível é 75. Para o critério 1 esse é o valor a ser considerado.
 # Para o critério 2, o pior valor seria 75*1,65, que é o fator do professor 40h-DE.
 # Já o melhor caso não pode ser determinado a priori, pois o número de professores deve atender às restrições
@@ -142,7 +127,7 @@ piores = {}
 # No caso do critério 3 a lógica é inversa, quanto mais tempo disponível, melhor o cenário. O pior caso é quando
 # não há tempo nenhum (valor 0), e o melhor caso deve ser determinado resolvendo o modelo usando esse critério.
 # Para o critério 4, o melhor caso é determinado pela solução inicial do modelo com este critério. O pior caso é
-# quando metade das unidades estiver na carga horária máxima e a outra metade na mímina. A média geral seria
+# quando metade das unidades estiver na carga horária máxima e a outra metade na mínima. A média geral seria
 # o valor intermediário entre as duas e o desvio total é dado por n_unidades*(ch_max - ch_min)/2
 # Exemplo:
 # 
@@ -457,7 +442,6 @@ print("")
 
 # Formata resultados e calcula totais
 resultados = np.full(n_unidades, '', dtype=object)
-#totais = np.full(n_unidades, 0, dtype=int)
 qtdes = np.full((n_unidades, n_perfis), 0, dtype=int)
 index = 0
 perfil = 0
@@ -466,7 +450,6 @@ for var in modelo.variables():
         valor = int(var.value())
         resultados[index] += f"{valor:2d} "
         qtdes[index][perfil] = valor
-        #totais[index] += valor
         index += 1
         if(index >= n_unidades):
             index = 0
@@ -499,7 +482,6 @@ formatos =          ['4d', '7.2f', '4d', '3d', '3d']
 formatosdiferenca = ['3d', '7.2f', '4d', '2d', '2d']
 for u in range(n_unidades):
     print(f"{m_unidades[u][0]:5s}   | " 
-    #+ "  ".join([f"{np.sum(qtdes[u]*m_perfis[p]):{'4d' if p != 1 else '6.1f'}} (+{(np.sum(qtdes[u]*m_perfis[p]) - m_unidades[u][p+1]):{'3d' if p != 1 else '6.1f'}}) |" for p in range(n_restricoes)])
     + " ".join([f"{np.sum(qtdes[u]*m_perfis[p]):{formatos[p]}} (+{(np.sum(qtdes[u]*m_perfis[p]) - m_unidades[u][p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
     + f"  {((qtdes[u][4] + qtdes[u][5]) / np.sum(qtdes[u]))*100:5.2f}% |" #40h
     + f"  {((qtdes[u][6] + qtdes[u][7]) / np.sum(qtdes[u]))*100:5.2f}% |" #20h
@@ -507,7 +489,6 @@ for u in range(n_unidades):
     )
 print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
 print(f"Total   | "
-#+ " ".join([f"{np.sum(qtdes*m_perfis[p]):{'4d' if p != 1 else '6.1f'}} (+{np.sum(qtdes*m_perfis[p]) - int(np.sum(m_unidades, axis=0)[p+1]):{'3d' if p != 1 else '6.1f'}}) |" for p in range(n_restricoes)])
 + " ".join([f"{np.sum(qtdes*m_perfis[p]):{formatos[p]}} (+{np.sum(qtdes*m_perfis[p]) - int(np.sum(m_unidades, axis=0)[p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
 + f"  {(np.sum(qtdes, axis=0)[4] + np.sum(qtdes, axis=0)[5]) / np.sum(qtdes)*100:5.2f}% |"
 + f"  {(np.sum(qtdes, axis=0)[6] + np.sum(qtdes, axis=0)[7]) / np.sum(qtdes)*100:5.2f}% |"

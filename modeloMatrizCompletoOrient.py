@@ -116,15 +116,14 @@ print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
 # Dá opção de alterar os parâmetros
 '''tecla = input("Aperte enter para continuar ou a para alterar\n")
 if(tecla=='a'):
-    print("-m escolhe o modo (num ou tempo). Exemplo: -m tempo")
-    print("-i ativa a quantidade mínima por unidade e -a ativa a quantidade máxima por unidade")
-    print("-p usa os fatores do professor-equivalente em vez do número de professores")
-    print("-t ativa a quantidade máxima total de professores. Deve ser seguido do número desejado. Exemplo: -t 100")
+    print("--chmin define o valor da carga horária mínima. Exemplo: --chmin 11")
+    print("--chmax define o valor da carga horária máxima. Exemplo: --chmax 15")
+    print("--tmax ativa a quantidade máxima total de professores. Deve ser seguido do número desejado. Exemplo: --tmax 100")
+    print("--tmin ativa a quantidade mínima total de professores. Deve ser seguido do número desejado. Exemplo: --tmin 50")
     print("-n define o número de unidades. Exemplo: -n 4")
-    print("-d ativa a limitação de 'sobra' nos parâmetros (20%)")
-    print("-r ativa a limitação de professores em regime de 20 horas (20%)")
+    print("-v ativa a limitação de professores em regime de 20 horas (20%)")
     print("-q ativa a limitação de professores em regime de 40 horas (10%)")
-    opcoes = input("Digite as opções desejadas, separadas por espaço. Exemplo: -t 130 -d -p (define 130 como total máximo e ativa a opção de professor-equivalente e limitação da 'sobra'\n")
+    opcoes = input("Digite as opções desejadas, separadas por espaço. Exemplo: --tmax 130 -v --chmax 15")
 '''    
 
 # Custos
