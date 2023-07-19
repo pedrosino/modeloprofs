@@ -24,8 +24,8 @@ p_quarenta = 0.1 # porcentagem máxima aceita
 # Restrição quanto aos perfis 7 e 8 - regime de 20h
 vinte = False
 p_vinte = 0.2 # porcentagem máxima aceita
-time_limit = 30 # Tempo limite para o programa procurar a solução ótima (em segundos) - esse parâmetro pode ser alterado pelo usuário ao chamar o programa
-filein = 'importar.xlsx' # Arquivo com os dados para importação - esse parâmetro pode ser alterado pelo usuário ao chamar o programa
+limite = 30 # Tempo limite para o programa procurar a solução ótima (em segundos) - esse parâmetro pode ser alterado pelo usuário ao chamar o programa
+arquivo = 'importar.xlsx' # Arquivo com os dados para importação - esse parâmetro pode ser alterado pelo usuário ao chamar o programa
 
 # Opções passadas na linha de comando
 opts, args = getopt.getopt(sys.argv[1:],"piavqn:",["chmin=","chmax=","tmax=","tmin=","limite=","input=","pv=","pq="])
@@ -34,9 +34,6 @@ for opt, arg in opts:
         minima = True
     elif opt == '-a': # Ativa restrição da carga horária máxima com valor padrão
         maxima = True
-    elif opt == '-t':
-        max_total = True
-        n_max_total = int(arg)
     elif opt == '-n':
         n_unidades = int(arg)
     elif opt == '-v':
@@ -62,12 +59,12 @@ for opt, arg in opts:
         max_total = True
         n_max_total = int(arg)
     elif opt == '--limite':
-        time_limit = int(arg)
+        limite = int(arg)
     elif opt == '--input':
-        filein = arg
+        arquivo = arg
 
 # Importa dados do arquivo        
-df_todas = pd.read_excel(filein, sheet_name=['unidades','perfis'])
+df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
 m_unidades = df_todas['unidades'].to_numpy()
 m_perfis = df_todas['perfis'].to_numpy()
 m_perfis = np.delete(m_perfis, 0, axis=1)
@@ -90,7 +87,8 @@ print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
 
 # Custos
 ##matriz_peq = np.array([1.65, 1.65, 1.65, 1.65, 1, 1, 0.6, 0.6]) #professor-equivalente - x1 a x4 = DE, x5 e x6 = 40h, x7 e x8 = 20h
-matriz_peq = np.array([1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 0.6, 0.6]) #professor-equivalente - x1 a x6 = DE, x7 e x8 = 20h
+##matriz_peq = np.array([1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 0.6, 0.6]) #professor-equivalente - x1 a x6 = DE, x7 e x8 = 20h
+matriz_peq = m_perfis[n_restricoes+1]
 matriz_tempo = m_perfis[n_restricoes] # tempo disponível
 
 # Definições das restrições                              
@@ -266,7 +264,7 @@ for modo in modos:
     print()
 
     # Resolver o modelo
-    status = modelos[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=time_limit))#time_limit))
+    status = modelos[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=limite))#limite))
     
     # Resultados
     print(f"Situação: {modelos[modo].status}, {LpStatus[modelos[modo].status]}")
@@ -431,7 +429,7 @@ print(f'Quarenta: {quarenta}')
 print()
 
 # Resolver o modelo
-status = modelo.solve(PULP_CBC_CMD(msg=0, timeLimit=time_limit))
+status = modelo.solve(PULP_CBC_CMD(msg=0, timeLimit=limite))
 
 # Resultados
 print(f"Situação: {modelo.status}, {LpStatus[modelo.status]}")
@@ -477,9 +475,9 @@ print("Parâmetros:")
 print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
 print(f"Unidade |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. |   40h   |   20h   | ch media |")
 print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-# Formatos dos números
-formatos =          ['4d', '7.2f', '4d', '3d', '3d']
-formatosdiferenca = ['3d', '7.2f', '4d', '2d', '2d']
+# Formatos dos números - tem que ser tudo como float, pois ao importar os valores de professor-equivalente, a m_perfis fica toda como float
+formatos =          ['4.0f', '7.2f', '4.0f', '3.0f', '3.0f']
+formatosdiferenca = ['3.0f', '7.2f', '4.0f', '2.0f', '2.0f']
 for u in range(n_unidades):
     print(f"{m_unidades[u][0]:5s}   | " 
     + " ".join([f"{np.sum(qtdes[u]*m_perfis[p]):{formatos[p]}} (+{(np.sum(qtdes[u]*m_perfis[p]) - m_unidades[u][p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
