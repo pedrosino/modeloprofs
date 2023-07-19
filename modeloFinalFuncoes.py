@@ -25,7 +25,7 @@ def ler_arquivo():
     # Lê critérios do AHP
     df_criterios = pd.read_excel(arquivo, sheet_name='criterios', usecols="A:B").dropna()
     pesosd = df_criterios.to_numpy()
-    #pesos = np.delete(pesosd, 0, axis=1).transpose()
+    pesos = np.delete(pesosd, 0, axis=1).transpose()
     
     # Foi usado o AHP para determinar os coeficientes de cada objetivo/critério no modelo geral:
     # 1) Número absoluto total:             0,1362  (aprox)   0,1336 (reais)
@@ -34,7 +34,7 @@ def ler_arquivo():
     # 4) Equilíbrio na carga horária média: 0,4919            0,4948
     # 
     #pesos = np.array([0.1362, 0.0626, 0.3093, 0.4919]) # valores aproximados
-    pesos = np.array([0.1336, 0.0614, 0.3102, 0.4948]) # valores exatos
+    #pesos = np.array([0.1336, 0.0614, 0.3102, 0.4948]) # valores exatos
 
 # Variáveis globais
 m_unidades = None
