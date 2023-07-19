@@ -25,7 +25,7 @@ def ler_arquivo():
     # Lê critérios do AHP
     df_criterios = pd.read_excel(arquivo, sheet_name='criterios', usecols="A:B").dropna()
     pesosd = df_criterios.to_numpy()
-    pesos = np.delete(pesosd, 0, axis=1).transpose()
+    #pesos = np.delete(pesosd, 0, axis=1).transpose()
     
     # Foi usado o AHP para determinar os coeficientes de cada objetivo/critério no modelo geral:
     # 1) Número absoluto total:             0,1362  (aprox)   0,1336 (reais)
@@ -34,7 +34,7 @@ def ler_arquivo():
     # 4) Equilíbrio na carga horária média: 0,4919            0,4948
     # 
     #pesos = np.array([0.1362, 0.0626, 0.3093, 0.4919]) # valores aproximados
-    #pesos = np.array([0.1336, 0.0614, 0.3102, 0.4948]) # valores exatos
+    pesos = np.array([0.1336, 0.0614, 0.3102, 0.4948]) # valores exatos
 
 # Variáveis globais
 m_unidades = None
@@ -171,6 +171,7 @@ sys.stdout = fileout
 def otimizar(modo):
     global fileout, original_stdout, m_unidades, m_perfis, matriz_peq, matriz_tempo, pesos
     
+    # Variáveis de decisão
     nxs[modo] = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
     saidas[modo] = np.array(nxs[modo]).reshape(n_unidades, n_perfis)
 
@@ -182,7 +183,7 @@ def otimizar(modo):
     maxima = True
     
     # -- Definir o modelo --
-    if(modo == 'tempo'):
+    if(modo == 'tempo' or modo == 'todos'):
         modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMaximize)
     else:
         modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
@@ -234,12 +235,12 @@ def otimizar(modo):
         modelos[modo] += lpSum(saidas[modo]) >= n_min_total, f"TotalMin: {n_min_total}"
 
     # Modo de equilíbrio da carga horária
-    if(modo == 'ch'):            
+    if(modo == 'ch' or modo == 'todos'):
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
-        desvios = LpVariable.matrix("zd", m_unidades[:n_unidades, 0], cat="Continuous")
-        medias = LpVariable.matrix("zm", m_unidades[:n_unidades, 0], cat="Continuous")
-        media_geral = LpVariable("zmg", cat="Continuous")
+        desvios = LpVariable.matrix("zd", m_unidades[:n_unidades, 0], cat="Continuous", lowBound=0)
+        medias = LpVariable.matrix("zm", m_unidades[:n_unidades, 0], cat="Continuous", lowBound=0)
+        media_geral = LpVariable("zmg", cat="Continuous", lowBound=0)
         
         # Como a média seria uma função não linear (aulas/professores), foi feita uma aproximação com uma reta que passa pelos dois pontos extremos
         # dados pelos valores de carga horária mínima e máxima
@@ -263,7 +264,21 @@ def otimizar(modo):
             # Assim, são colocadas duas restrições, uma usando o valor positivo e outra o negativo
             modelos[modo] += desvios[u] >= medias[u] - media_geral, f"{m_unidades[u][0]}_up"
             modelos[modo] += desvios[u] >= -1*(medias[u] - media_geral), f"{m_unidades[u][0]}_low"
-            
+    
+    # Modo com todos os critérios
+    if(modo == 'todos'):
+        # Variáveis com as pontuações
+        pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBound=1)
+        # Restrições/cálculos
+        # caso seja dado um número exato, é necessário alterar a pontuação do critério 'num' para evitar a divisão por zero
+        if(max_total and min_total and n_max_total == n_min_total):
+            modelos[modo] += pontuacoes[0] == lpSum(saidas[modo])/melhores['num'], "Pontuação número"
+        else:
+            modelos[modo] += pontuacoes[0] == (lpSum(saidas[modo]) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
+        modelos[modo] += pontuacoes[1] == (lpSum(saidas[modo]*matriz_peq) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq"
+        modelos[modo] += pontuacoes[2] == (lpSum(saidas[modo]*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
+        modelos[modo] += pontuacoes[3] == (lpSum(desvios[:n_unidades])/n_unidades - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
+        
     # -- Função objetivo --
     if(modo == 'num'):
         modelos[modo] += lpSum(saidas[modo])
@@ -275,6 +290,9 @@ def otimizar(modo):
     # No modo de equilíbrio a medida de desempenho é o desvio médio
     elif(modo == 'ch'):
         modelos[modo] += lpSum(desvios[:n_unidades])/n_unidades
+    elif(modo == 'todos'):
+        # O objetivo é maximimizar a pontuação dada pela soma de cada pontuação multiplicada por seu peso
+        modelos[modo] += lpSum(pontuacoes*pesos)
         
     # Imprime os resultados no arquivo txt
     print(f'Modo: {modo}')
@@ -300,6 +318,8 @@ def otimizar(modo):
         objetivo = int(modelos[modo].objective.value())
     elif(modo == 'tempo'):
         objetivo = modelos[modo].objective.value()
+    elif(modo == 'todos'):
+        objetivo = f"{modelos[modo].objective.value():.4f}"
     
     print(f"Objetivo: {objetivo} {'horas' if modo == 'tempo' else 'Prof-Equivalente' if modo == 'peq' else 'Professores' if modo == 'num' else 'aulas/prof'}")
     print(f"Resolvido em {modelos[modo].solutionTime} segundos")
@@ -347,6 +367,9 @@ for modo in modos:
     #            Total                      P-Eq                                     Tempo      -  horas de orientação                               Tempo/prof
     + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*matriz_peq):6.2f} |  {np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2]:6.1f} |    {(np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2])/np.sum(qtdes):7.3f} |")
     print(f"--------+---------------------------------+-------+--------+---------+------------+")
+    if(modo == 'ch'):
+        print("*O modo de carga horária considera apenas o número total de professores, e não considera as restrições de número de aulas e orientações.")
+        print("Dessa forma as quantidades de cada perfil são aleatórias, e pode haver valores negativos no tempo disponível.")
     print("")
     print("")
     print("---------------------------")
@@ -360,7 +383,9 @@ print()
 print("---------------------------")
 
 ## Agora uma nova rodada do modelo usando os pesos
-# Verifica modo de carga horária e ativa máximo e mínimo
+resultado, qtdes = otimizar('todos')
+
+'''# Verifica modo de carga horária e ativa máximo e mínimo
 #if(modo == 'ch'):
 minima = True
 maxima = True
@@ -472,7 +497,7 @@ print(f"Objetivo: {objetivo}")
 print(f"Resolvido em {modelo.solutionTime} segundos")
 print("")
 
-# Formata resultados e calcula totais
+# Extrai quantidades
 resultados = np.full(n_unidades, '', dtype=object)
 qtdes = np.full((n_unidades, n_perfis), 0, dtype=int)
 index = 0
@@ -489,7 +514,8 @@ for var in modelo.variables():
         if(perfil >= n_perfis+1):
             print(f"i: {index}, p: {perfil}")
             break
-
+'''
+# Formata resultados
 print("Resultados:")
 print(f"--------+---------------------------------+-------+--------+---------+------------+")
 print(f"Unidade |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo | Tempo/prof |")
@@ -530,24 +556,24 @@ print(f"--------+-------------+--------------------+--------------+-----------+-
 print()
 
 # Imprime médias e desvios
-for var in modelo.variables():
+for var in modelos['todos'].variables():
     if(var.name[0] == 'p' or var.name[0] == 'z'):
         print(f"{var.name}: {var.value()}")
 
 # Imprime o modelo completo
 print("")
 print("------------------Modelo:------------------")
-print(modelo)
+print(modelos['todos'])
 
 # Fecha arquivo texto
 fileout.close()
 
 #Imprime na tela    
 sys.stdout = original_stdout
-print(f"Situação: {modelo.status}, {LpStatus[modelo.status]}")
-objetivo = f"{modelo.objective.value():.4f}"
+print(f"Situação: {modelos['todos'].status}, {LpStatus[modelos['todos'].status]}")
+objetivo = f"{modelos['todos'].objective.value():.4f}"
 print(f"Objetivo: {objetivo} (na escala de 0 a 1)")
-print(f"Resolvido em {modelo.solutionTime} segundos")
+print(f"Resolvido em {modelos['todos'].solutionTime} segundos")
 print("")
 print(f"Verifique o arquivo {filename} para o relatório completo")
 print("")
