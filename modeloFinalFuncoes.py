@@ -9,6 +9,7 @@ import sys, getopt
 import pandas as pd
 import math
 
+# Função para importar os dados da planilha
 def ler_arquivo():
     global m_unidades, m_perfis, matriz_peq, matriz_tempo, n_restricoes, n_unidades, pesos
     # Importa dados do arquivo        
@@ -28,6 +29,231 @@ def ler_arquivo():
     pesos = np.delete(pesosd, 0, axis=1).transpose()
     #pesos = np.array([0.1362, 0.0626, 0.3093, 0.4919]) # valores aproximados
     #pesos = np.array([0.1336, 0.0614, 0.3102, 0.4948]) # valores exatos
+
+# Função que faz a otimização conforme o modo escolhido
+def otimizar(modo):
+    global fileout, original_stdout, m_unidades, m_perfis, matriz_peq, matriz_tempo, pesos, formato_resultado
+    
+    # Variáveis de decisão
+    nx = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
+    saida = np.array(nx).reshape(n_unidades, n_perfis)
+
+    sys.stdout = original_stdout
+    print(f"Modo: {modo}")
+    sys.stdout = fileout
+    # Sempre ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
+    minima = True
+    maxima = True
+    
+    # -- Definir o modelo --
+    if(modo == 'tempo' or modo == 'todos'):
+        modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMaximize)
+    else:
+        modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
+        
+    # -- Restrições --
+    for r in range(n_restricoes):
+        for u in range(n_unidades):
+            match conectores[r]:
+                case ">=":
+                    modelos[modo] += lpDot(saida[u], m_perfis[r]) >= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
+                case "==":
+                    modelos[modo] += lpDot(saida[u], m_perfis[r]) == m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
+                case "<=":
+                    modelos[modo] += lpDot(saida[u], m_perfis[r]) <= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
+
+    # Restrições de regimes de trabalho
+    if(quarenta):
+        for u in range(n_unidades):
+            modelos[modo] += saida[u][4] + saida[u][5] - p_quarenta*lpSum(saida[u]) <= 0, f"40 horas {m_unidades[u][0]} <= 10%"
+    if(vinte):
+        for u in range(n_unidades):
+            modelos[modo] += saida[u][6] + saida[u][7] - p_vinte*lpSum(saida[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
+        
+    # Restrições de máximo e mínimo por unidade -> carga horária média
+    # ------------------
+    # Exemplo para 900 aulas, considerando-se carga horária média mínima de 12 aulas e máxima de 16
+    # soma <= 900/12 -> soma <= 75
+    # soma >= 900/16 -> soma >= 56.25
+    # a soma deve estar entre 57 e 75, inclusive
+    for u in range(n_unidades):
+        if(maxima):# or modo == 'tempo'):
+            modelos[modo] += ch_max*lpSum(saida[u]) >= m_unidades[u][1], f"{m_unidades[u][0]}_chmax: {math.ceil(m_unidades[u][1]/ch_max)}"
+        # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo, que tem 19 aulas apenas
+        #if(minima):
+        #    modelos[modo] += ch_min*lpSum(saida[u]) <= m_unidades[u][1], f"{m_unidades[u][0]}_chmin: {int(m_unidades[u][1]/ch_min)}"
+    
+    # Restrições no geral
+    if(maxima):
+        modelos[modo] += ch_max*lpSum(saida) >= np.sum(m_unidades[:n_unidades], axis=0)[1], f"chmax: {math.ceil(np.sum(m_unidades[:n_unidades], axis=0)[1]/ch_max)}"
+    if(minima):
+        modelos[modo] += ch_min*lpSum(saida) <= np.sum(m_unidades[:n_unidades], axis=0)[1], f"chmin: {int(np.sum(m_unidades[:n_unidades], axis=0)[1]/ch_min)}"
+
+    # Restrição do número total de professores
+    if(max_total):
+        modelos[modo] += lpSum(saida) <= n_max_total, f"TotalMax: {n_max_total}"
+    if(min_total):
+        modelos[modo] += lpSum(saida) >= n_min_total, f"TotalMin: {n_min_total}"
+
+    # Modo de equilíbrio da carga horária
+    if(modo == 'ch' or modo == 'todos'):
+        # variáveis auxiliares
+        # Para cada unidade há um valor da média e um desvio em relação à média geral
+        desvios = LpVariable.matrix("zd", m_unidades[:n_unidades, 0], cat="Continuous", lowBound=0)
+        medias = LpVariable.matrix("zm", m_unidades[:n_unidades, 0], cat="Continuous", lowBound=0)
+        media_geral = LpVariable("zmg", cat="Continuous", lowBound=0)
+        
+        # Como a média seria uma função não linear (aulas/professores), foi feita uma aproximação com uma reta que passa pelos dois pontos extremos
+        # dados pelos valores de carga horária mínima e máxima
+        # Coeficientes
+        # m = (a-b)/(c-d) -> a = media minima, b = media maxima, c = numero maximo, d = numero minimo
+        c = np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_min
+        d = np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_max
+        m = (ch_min - ch_max) / (c - d)
+        
+        # O cálculo da média é inserido no modelo como uma restrição
+        modelos[modo] += media_geral == m*lpSum(saida[:n_unidades]) + ch_min + ch_max, "Media geral"
+        
+        for u in range(n_unidades):        
+            c = m_unidades[u][1] / ch_min
+            d = m_unidades[u][1] / ch_max
+            m = (ch_min - ch_max) / (c - d)
+            # Cálculo da media
+            modelos[modo] += medias[u] == m*lpSum(saida[u]) + ch_min + ch_max, f"{m_unidades[u][0]}_ch_media"
+            # Cálculo do desvio
+            # O desvio é dado pelo módulo da subtração, porém o PuLP não aceita a função abs()
+            # Assim, são colocadas duas restrições, uma usando o valor positivo e outra o negativo
+            modelos[modo] += desvios[u] >= medias[u] - media_geral, f"{m_unidades[u][0]}_up"
+            modelos[modo] += desvios[u] >= -1*(medias[u] - media_geral), f"{m_unidades[u][0]}_low"
+    
+    # Modo com todos os critérios
+    if(modo == 'todos'):
+        # Variáveis com as pontuações
+        pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBound=1)
+        # Restrições/cálculos
+        # caso seja dado um número exato, é necessário alterar a pontuação do critério 'num' para evitar a divisão por zero
+        if(max_total and min_total and n_max_total == n_min_total):
+            modelos[modo] += pontuacoes[0] == lpSum(saida)/melhores['num'], "Pontuação número"
+        else:
+            modelos[modo] += pontuacoes[0] == (lpSum(saida) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
+        modelos[modo] += pontuacoes[1] == (lpSum(saida*matriz_peq) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq"
+        modelos[modo] += pontuacoes[2] == (lpSum(saida*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
+        modelos[modo] += pontuacoes[3] == (lpSum(desvios[:n_unidades])/n_unidades - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
+        
+    # -- Função objetivo --
+    if(modo == 'num'):
+        modelos[modo] += lpSum(saida)
+    elif(modo == 'peq'):
+        modelos[modo] += lpSum(saida*matriz_peq)
+    # No modo tempo é necessário deduzir do tempo calculo as horas que serão destinadas às orientações
+    elif(modo == 'tempo'):
+        modelos[modo] += lpSum(saida*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2]
+    # No modo de equilíbrio a medida de desempenho é o desvio médio
+    elif(modo == 'ch'):
+        modelos[modo] += lpSum(desvios[:n_unidades])/n_unidades
+    elif(modo == 'todos'):
+        # O objetivo é maximimizar a pontuação dada pela soma de cada pontuação multiplicada por seu peso
+        modelos[modo] += lpSum(pontuacoes*pesos)
+        
+    # Imprime os resultados no arquivo txt
+    print(f'Modo: {modo}')
+    print(f'Unidades: {n_unidades}')
+    print(f'CH Maxima: {maxima} {ch_max if maxima else ""}')
+    print(f'CH Minima: {minima} {ch_min if minima else ""}')
+    print(f'Total: {n_min_total if min_total else "-"} a {n_max_total if max_total else "-"}')
+    print(f'Vinte: {vinte}')
+    print(f'Quarenta: {quarenta}')
+    print()
+
+    # Ajusta limite
+    if(modo_escolhido == 'todos' and modo != 'todos'):
+        novo_limite = 30
+    else:
+        novo_limite = limite
+    # Resolver o modelo
+    status = modelos[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=novo_limite))
+    
+    # Resultados
+    print(f"Situação: {modelos[modo].status}, {LpStatus[modelos[modo].status]}")
+    # Para cada critério o resultado é em um formato diferente
+    if(modo == 'ch'):
+        objetivo = modelos[modo].objective.value()
+    elif(modo == 'peq'):
+        objetivo = round(modelos[modo].objective.value(), 2)
+    elif(modo == 'num'):
+        objetivo = int(modelos[modo].objective.value())
+    elif(modo == 'tempo'):
+        objetivo = modelos[modo].objective.value()
+    elif(modo == 'todos'):
+        objetivo = round(modelos[modo].objective.value(), 4)
+    
+    print(f"Objetivo: {objetivo} {formato_resultado[modo]}")
+    print(f"Resolvido em {modelos[modo].solutionTime} segundos")
+    print("")
+    
+    # Extrai as quantidades
+    qtdes = np.full((n_unidades, n_perfis), 0, dtype=int)
+    index = 0
+    perfil = 0
+    for var in modelos[modo].variables():
+        if(var.name.find('x') == 0):
+            valor = int(var.value())
+            #resultados[index] += f"{valor:2d} "
+            qtdes[index][perfil] = valor
+            index += 1
+            if(index >= n_unidades):
+                index = 0
+                perfil += 1
+            if(perfil >= n_perfis+1):
+                print(f"i: {index}, p: {perfil}")
+                break
+    
+    # Retorna o valor da função objetivo e as quantidades
+    return objetivo, qtdes
+
+def imprimir_resultados(qtdes, modo):
+    # Formata resultados
+    print("Resultados:")
+    print(f"---------+---------------------------------+-------+--------+----------+------------+")
+    print(f"Unidade  |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo  | Tempo/prof |")
+    print(f"---------+---------------------------------+-------+--------+----------+------------+")
+    for u in range(n_unidades):
+        print(f"{m_unidades[u][0]:6s}   | " + " ".join([f"{qtdes[u][p]:3d}" for p in range(n_perfis)])
+        #           Total                      P-Eq                                    Tempo                 - horas de orientação                                     Tempo/prof
+        + f" |  {np.sum(qtdes[u]):4d} | {np.sum(qtdes[u]*matriz_peq):6.2f} |  {np.sum(qtdes[u]*matriz_tempo) - m_unidades[u][2]:7.2f} |    {(np.sum(qtdes[u]*matriz_tempo) - m_unidades[u][2])/np.sum(qtdes[u]):7.3f} |")
+    print(f"---------+---------------------------------+-------+--------+----------+------------+")
+    print(f"Total    | " + " ".join([f"{np.sum(qtdes, axis=0)[p]:3d}" for p in range(n_perfis)])
+    #            Total                      P-Eq                                     Tempo      -  horas de orientação                               Tempo/prof
+    + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*matriz_peq):6.2f} |  {np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2]:7.2f} |    {(np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2])/np.sum(qtdes):7.3f} |")
+    print(f"---------+---------------------------------+-------+--------+----------+------------+")
+    print("")
+
+def imprimir_parametros(qtdes):
+    print("Parâmetros:")
+    print(f"---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+    print(f"Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. |   40h   |   20h   | ch media |")
+    print(f"---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+    # Formatos dos números - tem que ser tudo como float, pois ao importar os valores de professor-equivalente, a m_perfis fica toda como float
+    formatos =          ['4.0f', '7.2f', '4.0f', '3.0f', '3.0f']
+    formatosdiferenca = ['3.0f', '7.2f', '4.0f', '2.0f', '2.0f']
+    for u in range(n_unidades):
+        print(f"{m_unidades[u][0]:6s}   | " 
+        + " ".join([f"{np.sum(qtdes[u]*m_perfis[p]):{formatos[p]}} (+{(np.sum(qtdes[u]*m_perfis[p]) - m_unidades[u][p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
+        + f"  {((qtdes[u][4] + qtdes[u][5]) / np.sum(qtdes[u]))*100:5.2f}% |" #40h
+        + f"  {((qtdes[u][6] + qtdes[u][7]) / np.sum(qtdes[u]))*100:5.2f}% |" #20h
+        + f"  {m_unidades[u][1] / np.sum(qtdes[u]):7.3f} |"
+        )
+    print(f"---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+    print(f"Total    | "
+    + " ".join([f"{np.sum(qtdes*m_perfis[p]):{formatos[p]}} (+{np.sum(qtdes*m_perfis[p]) - int(np.sum(m_unidades, axis=0)[p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
+    + f"  {(np.sum(qtdes, axis=0)[4] + np.sum(qtdes, axis=0)[5]) / np.sum(qtdes)*100:5.2f}% |"
+    + f"  {(np.sum(qtdes, axis=0)[6] + np.sum(qtdes, axis=0)[7]) / np.sum(qtdes)*100:5.2f}% |"
+    + f"  {np.sum(m_unidades, axis=0)[1]/np.sum(qtdes):7.3f} |"
+    )
+    print(f"---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+    print()
+
+#### fim das funções ####
 
 # Variáveis globais
 m_unidades = None
@@ -57,14 +283,24 @@ vinte = False
 p_vinte = 0.2 # porcentagem máxima aceita
 limite = 30 # Tempo limite para o programa procurar a solução ótima (em segundos) - esse parâmetro pode ser alterado pelo usuário ao chamar o programa
 arquivo = 'importar.xlsx' # Arquivo com os dados para importação - esse parâmetro pode ser alterado pelo usuário ao chamar o programa
+modo_escolhido = 'todos'
+
+formato_resultado = dict()
+formato_resultado['num'] = 'professores'
+formato_resultado['peq'] = 'prof-equivalente'
+formato_resultado['tempo'] = 'horas' 
+formato_resultado['ch'] = 'aulas/prof'
+formato_resultado['todos'] = '(na escala de 0 a 1)'
 
 # Opções passadas na linha de comando
-opts, args = getopt.getopt(sys.argv[1:],"piavqn:",["chmin=","chmax=","tmax=","tmin=","limite=","input=","pv=","pq="])
+opts, args = getopt.getopt(sys.argv[1:],"piavqm:n:",["chmin=","chmax=","tmax=","tmin=","limite=","input=","pv=","pq="])
 for opt, arg in opts:
     if opt == '-i': # Ativa restrição da carga horária mínima com valor padrão
         minima = True
     elif opt == '-a': # Ativa restrição da carga horária máxima com valor padrão
         maxima = True
+    elif opt == '-m':
+        modo_escolhido = arg
     elif opt == '-n':
         n_unidades = int(arg)
     elif opt == '-v':
@@ -94,11 +330,11 @@ for opt, arg in opts:
     elif opt == '--input':
         arquivo = arg
 
+#verificar modo escolhido
+#e outras opções
+
 # Lê os dados da planilha
 ler_arquivo()
-
-print("Bem vindo!")
-print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
 
 # Definições das restrições                              
 conectores = np.array([">=", ">=", ">=", "==", "=="])
@@ -107,336 +343,120 @@ nomes_restricoes = np.array(['aulas','h_orientacoes','n_orientacoes','diretor','
 # Critérios/modos
 modos = np.array(['num', 'peq', 'tempo', 'ch'])
  
-# Variáveis de decisão
 #nomes
 nomes = [str(p) + "." + m_unidades[u][0] for u in range(n_unidades) for p in range(1, n_perfis+1) ]
-# Variáveis para cada critério/modo
-nxs = {}
-saidas = {}
 
-## Percorre os critérios 
-modelos = {}
-melhores = {}
-piores = {}
-
-# Valores conhecidos a priori
-# número máximo é dado pelo total de aulas dividido pela carga horária mínima ou é definido pelo usuário
-#
-# Para avaliar cada cenário em relação a esses critérios, é necessário estabelecer uma forma de pontuação
-# Essa pontuação varia entre 0 (pior caso) e 1 (melhor caso), e será multiplicada pelo peso de cada critério
-# para obter a pontuação total daquele cenário. Para cada critério é necessário então determinar o pior e 
-# o melhor caso. Nos dois primeiros o pior caso é quando o total de professores é número máximo possível,
-# com base na carga horária média mínima. Por exemplo, se são 900 aulas e a carga horária mínima foi definida
-# em 12 aulas por professor, o número máximo possível é 75. Para o critério 1 esse é o valor a ser considerado.
-# Para o critério 2, o pior valor seria 75*1,65, que é o fator do professor 40h-DE.
-# Já o melhor caso não pode ser determinado a priori, pois o número de professores deve atender às restrições
-# de aulas e orientações, por exemplo. Assim, é necessário resolver o modelo com cada critério e registrar o
-# valor ótimo obtido para ser a base da escala. Para esses dois critérios a escala é invertida, ou seja, quanto
-# mais professores, menor a pontuação.
-# No caso do critério 3 a lógica é inversa, quanto mais tempo disponível, melhor o cenário. O pior caso é quando
-# não há tempo nenhum (valor 0), e o melhor caso deve ser determinado resolvendo o modelo usando esse critério.
-# Para o critério 4, o melhor caso é determinado pela solução inicial do modelo com este critério. O pior caso é
-# quando metade das unidades estiver na carga horária máxima e a outra metade na mínima. A média geral seria
-# o valor intermediário entre as duas e o desvio total é dado por n_unidades*(ch_max - ch_min)/2
-# Exemplo:
-# 
-# ch_max      = 16  --   d1 = d2 = (ch_max - ch_min)/2
-#                   |
-#                   d1   desvio total = n_unidades/2*d1 + n_unidades/2*d2
-#                   |
-# média geral = 14  --   desvio total = n_unidades*d1 = n_unidades*(ch_max - ch_min)/2
-#                   | 
-#                   d2
-#                   |
-# ch_min      = 12  --
-numero_max = round(np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_min) if not max_total else n_max_total
-piores['num'] = numero_max
-piores['peq'] = numero_max*1.65
-piores['tempo'] = 0
-piores['ch'] = (ch_max - ch_min)/2
-
+print("Bem vindo!")
+print(f"O modo escolhido foi {modo_escolhido}")
+if(modo_escolhido == 'todos'):
+    print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
+    
 # Imprime os resultados no arquivo de texto
 original_stdout = sys.stdout
-filename = f"CBC completoN={n_unidades} {datetime.now().strftime('%H-%M-%S')}.txt"
+filename = f"CBC completo_{modo_escolhido}_N={n_unidades} {datetime.now().strftime('%H-%M-%S')}.txt"
 fileout =  open(filename, 'w')
 sys.stdout = fileout
 
-def otimizar(modo):
-    global fileout, original_stdout, m_unidades, m_perfis, matriz_peq, matriz_tempo, pesos
-    
-    # Variáveis de decisão
-    nxs[modo] = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
-    saidas[modo] = np.array(nxs[modo]).reshape(n_unidades, n_perfis)
 
-    sys.stdout = original_stdout
-    print(f"Modo: {modo}")
-    sys.stdout = fileout
-    # Sempre ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
-    minima = True
-    maxima = True
-    
-    # -- Definir o modelo --
-    if(modo == 'tempo' or modo == 'todos'):
-        modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMaximize)
-    else:
-        modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
-        
-    # -- Restrições --
-    # No caso do modo de equilíbrio da carga horária não é necessário considerar essas restrições, pois apenas o número total por unidade é levado em conta
-    if(modo != 'ch'):
-        for r in range(n_restricoes):
-            for u in range(n_unidades):
-                match conectores[r]:
-                    case ">=":
-                        modelos[modo] += lpDot(saidas[modo][u], m_perfis[r]) >= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
-                    case "==":
-                        modelos[modo] += lpDot(saidas[modo][u], m_perfis[r]) == m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
-                    case "<=":
-                        modelos[modo] += lpDot(saidas[modo][u], m_perfis[r]) <= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)        
+# Vetor de modelos
+modelos = {}
 
-        # Restrições de regimes de trabalho
-        if(quarenta):
-            for u in range(n_unidades):
-                modelos[modo] += saidas[modo][u][4] + saidas[modo][u][5] - p_quarenta*lpSum(saidas[modo][u]) <= 0, f"40 horas {m_unidades[u][0]} <= 10%"
-        if(vinte):
-            for u in range(n_unidades):
-                modelos[modo] += saidas[modo][u][6] + saidas[modo][u][7] - p_vinte*lpSum(saidas[modo][u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
-        
-    # Restrições de máximo e mínimo por unidade -> carga horária média
-    # ------------------
-    # Exemplo para 900 aulas, considerando-se carga horária média mínima de 12 aulas e máxima de 16
-    # soma <= 900/12 -> soma <= 75
-    # soma >= 900/16 -> soma >= 56.25
-    # a soma deve estar entre 57 e 75, inclusive
-    for u in range(n_unidades):
-        if(maxima):# or modo == 'tempo'):
-            modelos[modo] += ch_max*lpSum(saidas[modo][u]) >= m_unidades[u][1], f"{m_unidades[u][0]}_chmax: {math.ceil(m_unidades[u][1]/ch_max)}"
-        # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo, que tem 19 aulas apenas
-        #if(minima):
-        #    modelos[modo] += ch_min*lpSum(saidas[modo][u]) <= m_unidades[u][1], f"{m_unidades[u][0]}_chmin: {int(m_unidades[u][1]/ch_min)}"
-    
-    # Restrições no geral
-    if(maxima):
-        modelos[modo] += ch_max*lpSum(saidas[modo]) >= np.sum(m_unidades[:n_unidades], axis=0)[1], f"chmax: {math.ceil(np.sum(m_unidades[:n_unidades], axis=0)[1]/ch_max)}"
-    if(minima):
-        modelos[modo] += ch_min*lpSum(saidas[modo]) <= np.sum(m_unidades[:n_unidades], axis=0)[1], f"chmin: {int(np.sum(m_unidades[:n_unidades], axis=0)[1]/ch_min)}"
+# Conforme o modo escolhido, faz só uma otimização ou todas
+if(modo_escolhido != 'todos'):
+    resultado, qtdes = otimizar(modo_escolhido)
+else:
+    ## Percorre os critérios 
+    melhores = {}
+    piores = {}
 
-    # Restrição do número total de professores
-    if(max_total):
-        modelos[modo] += lpSum(saidas[modo]) <= n_max_total, f"TotalMax: {n_max_total}"
-    if(min_total):
-        modelos[modo] += lpSum(saidas[modo]) >= n_min_total, f"TotalMin: {n_min_total}"
-
-    # Modo de equilíbrio da carga horária
-    if(modo == 'ch' or modo == 'todos'):
-        # variáveis auxiliares
-        # Para cada unidade há um valor da média e um desvio em relação à média geral
-        desvios = LpVariable.matrix("zd", m_unidades[:n_unidades, 0], cat="Continuous", lowBound=0)
-        medias = LpVariable.matrix("zm", m_unidades[:n_unidades, 0], cat="Continuous", lowBound=0)
-        media_geral = LpVariable("zmg", cat="Continuous", lowBound=0)
-        
-        # Como a média seria uma função não linear (aulas/professores), foi feita uma aproximação com uma reta que passa pelos dois pontos extremos
-        # dados pelos valores de carga horária mínima e máxima
-        # Coeficientes
-        # m = (a-b)/(c-d) -> a = media minima, b = media maxima, c = numero maximo, d = numero minimo
-        c = np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_min
-        d = np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_max
-        m = (ch_min - ch_max) / (c - d)
-        
-        # O cálculo da média é inserido no modelo como uma restrição
-        modelos[modo] += media_geral == m*lpSum(saidas[modo][:n_unidades]) + ch_min + ch_max, "Media geral"
-        
-        for u in range(n_unidades):        
-            c = m_unidades[u][1] / ch_min
-            d = m_unidades[u][1] / ch_max
-            m = (ch_min - ch_max) / (c - d)
-            # Cálculo da media
-            modelos[modo] += medias[u] == m*lpSum(saidas[modo][u]) + ch_min + ch_max, f"{m_unidades[u][0]}_ch_media"
-            # Cálculo do desvio
-            # O desvio é dado pelo módulo da subtração, porém o PuLP não aceita a função abs()
-            # Assim, são colocadas duas restrições, uma usando o valor positivo e outra o negativo
-            modelos[modo] += desvios[u] >= medias[u] - media_geral, f"{m_unidades[u][0]}_up"
-            modelos[modo] += desvios[u] >= -1*(medias[u] - media_geral), f"{m_unidades[u][0]}_low"
+    # Valores conhecidos a priori
+    # número máximo é dado pelo total de aulas dividido pela carga horária mínima ou é definido pelo usuário
+    #
+    # Para avaliar cada cenário em relação a esses critérios, é necessário estabelecer uma forma de pontuação
+    # Essa pontuação varia entre 0 (pior caso) e 1 (melhor caso), e será multiplicada pelo peso de cada critério
+    # para obter a pontuação total daquele cenário. Para cada critério é necessário então determinar o pior e 
+    # o melhor caso. Nos dois primeiros o pior caso é quando o total de professores é número máximo possível,
+    # com base na carga horária média mínima. Por exemplo, se são 900 aulas e a carga horária mínima foi definida
+    # em 12 aulas por professor, o número máximo possível é 75. Para o critério 1 esse é o valor a ser considerado.
+    # Para o critério 2, o pior valor seria 75*1,65, que é o fator do professor 40h-DE.
+    # Já o melhor caso não pode ser determinado a priori, pois o número de professores deve atender às restrições
+    # de aulas e orientações, por exemplo. Assim, é necessário resolver o modelo com cada critério e registrar o
+    # valor ótimo obtido para ser a base da escala. Para esses dois critérios a escala é invertida, ou seja, quanto
+    # mais professores, menor a pontuação.
+    # No caso do critério 3 a lógica é inversa, quanto mais tempo disponível, melhor o cenário. O pior caso é quando
+    # não há tempo nenhum (valor 0), e o melhor caso deve ser determinado resolvendo o modelo usando esse critério.
+    # Para o critério 4, o melhor caso é determinado pela solução inicial do modelo com este critério. O pior caso é
+    # quando metade das unidades estiver na carga horária máxima e a outra metade na mínima. A média geral seria
+    # o valor intermediário entre as duas e o desvio total é dado por n_unidades*(ch_max - ch_min)/2
+    # Exemplo:
+    # 
+    # ch_max      = 16  --   d1 = d2 = (ch_max - ch_min)/2
+    #                   |
+    #                   d1   desvio total = n_unidades/2*d1 + n_unidades/2*d2
+    #                   |
+    # média geral = 14  --   desvio total = n_unidades*d1 = n_unidades*(ch_max - ch_min)/2
+    #                   | 
+    #                   d2
+    #                   |
+    # ch_min      = 12  --
+    numero_max = round(np.sum(m_unidades[:n_unidades], axis=0)[1] / ch_min) if not max_total else n_max_total
+    piores['num'] = numero_max
+    piores['peq'] = numero_max*1.65
+    piores['tempo'] = 0
+    piores['ch'] = (ch_max - ch_min)/2
     
-    # Modo com todos os critérios
-    if(modo == 'todos'):
-        # Variáveis com as pontuações
-        pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBound=1)
-        # Restrições/cálculos
-        # caso seja dado um número exato, é necessário alterar a pontuação do critério 'num' para evitar a divisão por zero
-        if(max_total and min_total and n_max_total == n_min_total):
-            modelos[modo] += pontuacoes[0] == lpSum(saidas[modo])/melhores['num'], "Pontuação número"
-        else:
-            modelos[modo] += pontuacoes[0] == (lpSum(saidas[modo]) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
-        modelos[modo] += pontuacoes[1] == (lpSum(saidas[modo]*matriz_peq) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq"
-        modelos[modo] += pontuacoes[2] == (lpSum(saidas[modo]*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
-        modelos[modo] += pontuacoes[3] == (lpSum(desvios[:n_unidades])/n_unidades - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
+    for modo in modos:
+        resultado, qtdes = otimizar(modo)
+           
+        melhores[modo] = resultado
+        sys.stdout = original_stdout
+        print(f"Ok. Resultado: {melhores[modo]}")
+        sys.stdout = fileout
         
-    # -- Função objetivo --
-    if(modo == 'num'):
-        modelos[modo] += lpSum(saidas[modo])
-    elif(modo == 'peq'):
-        modelos[modo] += lpSum(saidas[modo]*matriz_peq)
-    # No modo tempo é necessário deduzir do tempo calculo as horas que serão destinadas às orientações
-    elif(modo == 'tempo'):
-        modelos[modo] += lpSum(saidas[modo]*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2]
-    # No modo de equilíbrio a medida de desempenho é o desvio médio
-    elif(modo == 'ch'):
-        modelos[modo] += lpSum(desvios[:n_unidades])/n_unidades
-    elif(modo == 'todos'):
-        # O objetivo é maximimizar a pontuação dada pela soma de cada pontuação multiplicada por seu peso
-        modelos[modo] += lpSum(pontuacoes*pesos)
+        # Imprime resultados
+        imprimir_resultados(qtdes, modo)
+        print("------------------------------------------------------------")
+        print("")
         
-    # Imprime os resultados no arquivo txt
-    print(f'Modo: {modo}')
-    print(f'Unidades: {n_unidades}')
-    print(f'CH Maxima: {maxima} {ch_max if maxima else ""}')
-    print(f'CH Minima: {minima} {ch_min if minima else ""}')
-    print(f'Total: {n_min_total if min_total else "-"} a {n_max_total if max_total else "-"}')
-    print(f'Vinte: {vinte}')
-    print(f'Quarenta: {quarenta}')
+    ##### -----------------Fim da primeira 'rodada'-----------------
+    print("Melhores:")
+    print(melhores)
+    print("Piores:")
+    print(piores)
     print()
+    print("------------------------------------------------------------")
 
-    # Resolver o modelo
-    status = modelos[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=limite))
-    
-    # Resultados
-    print(f"Situação: {modelos[modo].status}, {LpStatus[modelos[modo].status]}")
-    # Para cada critério o resultado é em um formato diferente
-    if(modo == 'ch'):
-        objetivo = modelos[modo].objective.value()
-    elif(modo == 'peq'):
-        objetivo = round(modelos[modo].objective.value(), 2)
-    elif(modo == 'num'):
-        objetivo = int(modelos[modo].objective.value())
-    elif(modo == 'tempo'):
-        objetivo = modelos[modo].objective.value()
-    elif(modo == 'todos'):
-        objetivo = f"{modelos[modo].objective.value():.4f}"
-    
-    print(f"Objetivo: {objetivo} {'horas' if modo == 'tempo' else 'Prof-Equivalente' if modo == 'peq' else 'Professores' if modo == 'num' else 'aulas/prof'}")
-    print(f"Resolvido em {modelos[modo].solutionTime} segundos")
-    print("")
-    
-    # Extrai as quantidades
-    qtdes = np.full((n_unidades, n_perfis), 0, dtype=int)
-    index = 0
-    perfil = 0
-    for var in modelos[modo].variables():
-        if(var.name.find('x') == 0):
-            valor = int(var.value())
-            #resultados[index] += f"{valor:2d} "
-            qtdes[index][perfil] = valor
-            index += 1
-            if(index >= n_unidades):
-                index = 0
-                perfil += 1
-            if(perfil >= n_perfis+1):
-                print(f"i: {index}, p: {perfil}")
-                break
-    
-    # Retorna o valor da função objetivo e as quantidades
-    return objetivo, qtdes
+    ## Agora uma nova rodada do modelo usando os pesos
+    resultado, qtdes = otimizar('todos')
 
-for modo in modos:
-    resultado, qtdes = otimizar(modo)
-       
-    melhores[modo] = resultado
-    sys.stdout = original_stdout
-    print(f"Ok. Resultado: {melhores[modo]}")
-    sys.stdout = fileout
-    
-    # Formata resultados
-    print("Resultados:")
-    print(f"--------+---------------------------------+-------+--------+---------+------------+")
-    print(f"Unidade |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo | Tempo/prof |")
-    print(f"--------+---------------------------------+-------+--------+---------+------------+")
-    for u in range(n_unidades):
-        print(f"{m_unidades[u][0]:5s}   | " + " ".join([f"{qtdes[u][p]:3d}" for p in range(n_perfis)])
-        #           Total                      P-Eq                                    Tempo                 - horas de orientação                                     Tempo/prof
-        + f" |  {np.sum(qtdes[u]):4d} | {np.sum(qtdes[u]*matriz_peq):6.2f} |  {np.sum(qtdes[u]*matriz_tempo) - m_unidades[u][2]:6.1f} |    {(np.sum(qtdes[u]*matriz_tempo) - m_unidades[u][2])/np.sum(qtdes[u]):7.3f} |")
-    print(f"--------+---------------------------------+-------+--------+---------+------------+")
-    print(f"Total   | " + " ".join([f"{np.sum(qtdes, axis=0)[p]:3d}" for p in range(n_perfis)])
-    #            Total                      P-Eq                                     Tempo      -  horas de orientação                               Tempo/prof
-    + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*matriz_peq):6.2f} |  {np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2]:6.1f} |    {(np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2])/np.sum(qtdes):7.3f} |")
-    print(f"--------+---------------------------------+-------+--------+---------+------------+")
-    if(modo == 'ch'):
-        print("*O modo de carga horária considera apenas o número total de professores, e não considera as restrições de número de aulas e orientações.")
-        print("Dessa forma as quantidades de cada perfil são aleatórias, e pode haver valores negativos no tempo disponível.")
-    print("")
-    print("")
-    print("---------------------------")
-    
-##### -----------------Fim da primeira 'rodada'-----------------
-print("Melhores:")
-print(melhores)
-print("Piores:")
-print(piores)
-print()
-print("---------------------------")
+# ---- Finalização ----
+# Imprime resultados
+imprimir_resultados(qtdes, 'todos')
+# Imprime parâmetros
+imprimir_parametros(qtdes)
 
-## Agora uma nova rodada do modelo usando os pesos
-resultado, qtdes = otimizar('todos')
-
-# Formata resultados
-print("Resultados:")
-print(f"--------+---------------------------------+-------+--------+---------+------------+")
-print(f"Unidade |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo | Tempo/prof |")
-print(f"--------+---------------------------------+-------+--------+---------+------------+")
-for u in range(n_unidades):
-    print(f"{m_unidades[u][0]:5s}   | " + " ".join([f"{qtdes[u][p]:3d}" for p in range(n_perfis)])
-    #           Total                      P-Eq                                    Tempo                     - horas de orientação                                     Tempo/prof
-    + f" |  {np.sum(qtdes[u]):4d} | {np.sum(qtdes[u]*matriz_peq):6.2f} |  {np.sum(qtdes[u]*matriz_tempo) - m_unidades[u][2]:6.1f} |    {(np.sum(qtdes[u]*matriz_tempo) - m_unidades[u][2])/np.sum(qtdes[u]):7.3f} |")
-print(f"--------+---------------------------------+-------+--------+---------+------------+")
-print(f"Total   | " + " ".join([f"{np.sum(qtdes, axis=0)[p]:3d}" for p in range(n_perfis)])
-#            Total                      P-Eq                                     Tempo          -   horas de orientação                               Tempo/prof
-+ f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*matriz_peq):6.2f} |  {np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2]:6.1f} |    {(np.sum(qtdes*matriz_tempo) - np.sum(m_unidades[:n_unidades], axis=0)[2])/np.sum(qtdes):7.3f} |")
-print(f"--------+---------------------------------+-------+--------+---------+------------+")
-print("")
-
-print("Parâmetros:")
-print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-print(f"Unidade |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. |   40h   |   20h   | ch media |")
-print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-# Formatos dos números - tem que ser tudo como float, pois ao importar os valores de professor-equivalente, a m_perfis fica toda como float
-formatos =          ['4.0f', '7.2f', '4.0f', '3.0f', '3.0f']
-formatosdiferenca = ['3.0f', '7.2f', '4.0f', '2.0f', '2.0f']
-for u in range(n_unidades):
-    print(f"{m_unidades[u][0]:5s}   | " 
-    + " ".join([f"{np.sum(qtdes[u]*m_perfis[p]):{formatos[p]}} (+{(np.sum(qtdes[u]*m_perfis[p]) - m_unidades[u][p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
-    + f"  {((qtdes[u][4] + qtdes[u][5]) / np.sum(qtdes[u]))*100:5.2f}% |" #40h
-    + f"  {((qtdes[u][6] + qtdes[u][7]) / np.sum(qtdes[u]))*100:5.2f}% |" #20h
-    + f"  {m_unidades[u][1] / np.sum(qtdes[u]):7.3f} |"
-    )
-print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-print(f"Total   | "
-+ " ".join([f"{np.sum(qtdes*m_perfis[p]):{formatos[p]}} (+{np.sum(qtdes*m_perfis[p]) - int(np.sum(m_unidades, axis=0)[p+1]):{formatosdiferenca[p]}}) |" for p in range(n_restricoes)])
-+ f"  {(np.sum(qtdes, axis=0)[4] + np.sum(qtdes, axis=0)[5]) / np.sum(qtdes)*100:5.2f}% |"
-+ f"  {(np.sum(qtdes, axis=0)[6] + np.sum(qtdes, axis=0)[7]) / np.sum(qtdes)*100:5.2f}% |"
-+ f"  {np.sum(m_unidades, axis=0)[1]/np.sum(qtdes):7.3f} |"
-)
-print(f"--------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-print()
-
-# Imprime médias e desvios
-for var in modelos['todos'].variables():
-    if(var.name[0] == 'p' or var.name[0] == 'z'):
-        print(f"{var.name}: {var.value()}")
+if(modo_escolhido == 'todos'):
+    # Pesos
+    print(f"Pesos: {pesos}")
+    # Imprime médias e desvios
+    for var in modelos['todos'].variables():
+        if(var.name[0] == 'p' or var.name[0] == 'z'):
+            print(f"{var.name}: {var.value():.4f}")
 
 # Imprime o modelo completo
 print("")
 print("------------------Modelo:------------------")
-print(modelos['todos'])
+print(modelos[modo_escolhido])
 
 # Fecha arquivo texto
 fileout.close()
 
 #Imprime na tela    
 sys.stdout = original_stdout
-print(f"Situação: {modelos['todos'].status}, {LpStatus[modelos['todos'].status]}")
-objetivo = f"{modelos['todos'].objective.value():.4f}"
-print(f"Objetivo: {objetivo} (na escala de 0 a 1)")
-print(f"Resolvido em {modelos['todos'].solutionTime} segundos")
+print(f"Situação: {modelos[modo_escolhido].status}, {LpStatus[modelos[modo_escolhido].status]}")
+#objetivo = f"{modelos[modo_escolhido].objective.value():.4f}"
+print(f"Objetivo: {resultado} {formato_resultado[modo_escolhido]}")
+print(f"Resolvido em {modelos[modo_escolhido].solutionTime} segundos")
 print("")
 print(f"Verifique o arquivo {filename} para o relatório completo")
 print("")
@@ -444,4 +464,4 @@ print("")
 #salva em planilha
 df = pd.DataFrame(qtdes, columns=['x1','x2','x3','x4','x5','x6','x7','x8'])
 df.insert(0, "Unidade", m_unidades[:, 0])
-df.to_excel(f'CBC_CompletoOrient.xlsx', sheet_name='Resultados', index=False)
+df.to_excel(f'CBC_Completo.xlsx', sheet_name='Resultados', index=False)
