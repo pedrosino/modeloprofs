@@ -11,11 +11,13 @@ import math
 
 # Função para importar os dados da planilha
 def ler_arquivo():
-    global m_unidades, m_perfis, matriz_peq, matriz_tempo, n_restricoes, n_unidades, pesos
+    global m_unidades, m_perfis, matriz_peq, matriz_tempo, n_restricoes, n_unidades, pesos, nomes_restricoes
     # Importa dados do arquivo        
     df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
     m_unidades = df_todas['unidades'].to_numpy()
     m_perfis = df_todas['perfis'].to_numpy()
+    # Os nomes das restrições são as linhas da matriz de perfis
+    nomes_restricoes = m_perfis[:, 0].transpose()[0:n_restricoes]
     # Ajusta matriz
     m_perfis = np.delete(m_perfis, 0, axis=1)
     n_unidades = len(m_unidades)
@@ -32,7 +34,7 @@ def ler_arquivo():
 
 # Função que faz a otimização conforme o modo escolhido
 def otimizar(modo):
-    global fileout, original_stdout, m_unidades, m_perfis, matriz_peq, matriz_tempo, pesos, formato_resultado
+    global fileout, original_stdout, m_unidades, m_perfis, matriz_peq, matriz_tempo, pesos, formato_resultado, nomes_restricoes
     
     # Variáveis de decisão
     nx = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
@@ -211,7 +213,7 @@ def otimizar(modo):
     # Retorna o valor da função objetivo e as quantidades
     return objetivo, qtdes
 
-def imprimir_resultados(qtdes, modo):
+def imprimir_resultados(qtdes):
     # Formata resultados
     print("Resultados:")
     print(f"---------+---------------------------------+-------+--------+----------+------------+")
@@ -261,6 +263,7 @@ m_perfis = None
 matriz_peq = None
 matriz_tempo = None
 pesos = None
+nomes_restricoes = None
 
 # Dados do problema
 n_perfis = 8
@@ -330,15 +333,25 @@ for opt, arg in opts:
     elif opt == '--input':
         arquivo = arg
 
-#verificar modo escolhido
-#e outras opções
+# Verificar modo escolhido
+if(modo_escolhido not in ['num', 'peq', 'tempo', 'ch', 'todos']):
+    modo = 'todos'
+    print("O modo escolhido era inválido. Será utilizado o modo 'todos'.")
+
+# Números totais
+if((min_total and n_min_total < 1) or (max_total and n_max_total < 1)):
+    print("Os números totais especificados são inválidos.")
+
+# Porcentagens
+if(p_quarenta > 1 or p_vinte > 1 or p_quarenta < 0 or p_vinte < 0):
+    print("Os percentuais especificados são inválidos.")
 
 # Lê os dados da planilha
 ler_arquivo()
 
 # Definições das restrições                              
 conectores = np.array([">=", ">=", ">=", "==", "=="])
-nomes_restricoes = np.array(['aulas','h_orientacoes','n_orientacoes','diretor','coords'])
+#nomes_restricoes = np.array(['aulas','h_orientacoes','n_orientacoes','diretor','coords'])
 
 # Critérios/modos
 modos = np.array(['num', 'peq', 'tempo', 'ch'])
@@ -351,12 +364,11 @@ print(f"O modo escolhido foi {modo_escolhido}")
 if(modo_escolhido == 'todos'):
     print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
     
-# Imprime os resultados no arquivo de texto
+# Arquivo de texto de saída
 original_stdout = sys.stdout
 filename = f"CBC completo_{modo_escolhido}_N={n_unidades} {datetime.now().strftime('%H-%M-%S')}.txt"
 fileout =  open(filename, 'w')
 sys.stdout = fileout
-
 
 # Vetor de modelos
 modelos = {}
@@ -414,7 +426,7 @@ else:
         sys.stdout = fileout
         
         # Imprime resultados
-        imprimir_resultados(qtdes, modo)
+        imprimir_resultados(qtdes)
         print("------------------------------------------------------------")
         print("")
         
@@ -431,7 +443,7 @@ else:
 
 # ---- Finalização ----
 # Imprime resultados
-imprimir_resultados(qtdes, 'todos')
+imprimir_resultados(qtdes)
 # Imprime parâmetros
 imprimir_parametros(qtdes)
 
