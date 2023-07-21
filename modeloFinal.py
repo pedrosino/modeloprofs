@@ -165,25 +165,23 @@ for modo in modos:
         modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
         
     # -- Restrições --
-    # No caso do modo de equilíbrio da carga horária não é necessário considerar essas restrições, pois apenas o número total por unidade é levado em conta
-    if(modo != 'ch'):
-        for r in range(n_restricoes):
-            for u in range(n_unidades):
-                match conectores[r]:
-                    case ">=":
-                        modelos[modo] += lpDot(saida[u], m_perfis[r]) >= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
-                    case "==":
-                        modelos[modo] += lpDot(saida[u], m_perfis[r]) == m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
-                    case "<=":
-                        modelos[modo] += lpDot(saida[u], m_perfis[r]) <= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)        
+    for r in range(n_restricoes):
+        for u in range(n_unidades):
+            match conectores[r]:
+                case ">=":
+                    modelos[modo] += lpDot(saida[u], m_perfis[r]) >= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
+                case "==":
+                    modelos[modo] += lpDot(saida[u], m_perfis[r]) == m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
+                case "<=":
+                    modelos[modo] += lpDot(saida[u], m_perfis[r]) <= m_unidades[u][r+1], nomes_restricoes[r] + " " + m_unidades[u][0]#"r " + str(i)
 
-        # Restrições de regimes de trabalho
-        if(quarenta):
-            for u in range(n_unidades):
-                modelos[modo] += saida[u][4] + saida[u][5] - p_quarenta*lpSum(saida[u]) <= 0, f"40 horas {m_unidades[u][0]} <= 10%"
-        if(vinte):
-            for u in range(n_unidades):
-                modelos[modo] += saida[u][6] + saida[u][7] - p_vinte*lpSum(saida[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
+    # Restrições de regimes de trabalho
+    if(quarenta):
+        for u in range(n_unidades):
+            modelos[modo] += saida[u][4] + saida[u][5] - p_quarenta*lpSum(saida[u]) <= 0, f"40 horas {m_unidades[u][0]} <= 10%"
+    if(vinte):
+        for u in range(n_unidades):
+            modelos[modo] += saida[u][6] + saida[u][7] - p_vinte*lpSum(saida[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%"
         
     # Restrições de máximo e mínimo por unidade -> carga horária média
     # ------------------
