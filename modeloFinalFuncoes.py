@@ -11,15 +11,17 @@ import math
 
 # Função para importar os dados da planilha
 def ler_arquivo():
-    global m_unidades, m_perfis, matriz_peq, matriz_tempo, n_restricoes, n_unidades, pesos, nomes_restricoes
+    global m_unidades, m_perfis, matriz_peq, matriz_tempo, n_restricoes, n_unidades, pesos, nomes_restricoes, conectores
     # Importa dados do arquivo        
     df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
     m_unidades = df_todas['unidades'].to_numpy()
     m_perfis = df_todas['perfis'].to_numpy()
     # Os nomes das restrições são as linhas da matriz de perfis
     nomes_restricoes = m_perfis[:, 0].transpose()[0:n_restricoes]
+    conectores = m_perfis[:, n_perfis+1].transpose()[0:n_restricoes]
     # Ajusta matriz
     m_perfis = np.delete(m_perfis, 0, axis=1)
+    m_perfis = np.delete(m_perfis, n_perfis, axis=1)
     n_unidades = len(m_unidades)
     ##matriz_peq = np.array([1.65, 1.65, 1.65, 1.65, 1, 1, 0.6, 0.6]) #professor-equivalente - x1 a x4 = DE, x5 e x6 = 40h, x7 e x8 = 20h
     ##matriz_peq = np.array([1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 0.6, 0.6]) #professor-equivalente - x1 a x6 = DE, x7 e x8 = 20h
@@ -348,10 +350,6 @@ if(p_quarenta > 1 or p_vinte > 1 or p_quarenta < 0 or p_vinte < 0):
 
 # Lê os dados da planilha
 ler_arquivo()
-
-# Definições das restrições                              
-conectores = np.array([">=", ">=", ">=", "==", "=="])
-#nomes_restricoes = np.array(['aulas','h_orientacoes','n_orientacoes','diretor','coords'])
 
 # Critérios/modos
 modos = np.array(['num', 'peq', 'tempo', 'ch'])
