@@ -36,7 +36,7 @@ def ler_arquivo():
 
 # Função que faz a otimização conforme o modo escolhido
 def otimizar(modo):
-    global fileout, original_stdout, m_unidades, m_perfis, matriz_peq, matriz_tempo, pesos, formato_resultado, nomes_restricoes
+    global fileout, original_stdout, m_unidades, m_perfis, matriz_peq, matriz_tempo, pesos, formato_resultado, nomes_restricoes, maxima, minima
     
     # Variáveis de decisão
     nx = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
@@ -45,9 +45,13 @@ def otimizar(modo):
     sys.stdout = original_stdout
     print(f"Modo: {modo}")
     sys.stdout = fileout
-    # Sempre ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
-    minima = True
-    maxima = True
+    # Ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
+    if(modo_escolhido == 'todos' or modo == 'ch'):
+        minima = True
+        maxima = True
+    # No modo tempo é necessário estabelecer a carga horária mínima (ou número máximo)
+    if(modo == 'tempo'):
+        minima = True
     
     # -- Definir o modelo --
     if(modo == 'tempo' or modo == 'todos'):
@@ -81,7 +85,7 @@ def otimizar(modo):
     # soma >= 900/16 -> soma >= 56.25
     # a soma deve estar entre 57 e 75, inclusive
     for u in range(n_unidades):
-        if(maxima):# or modo == 'tempo'):
+        if(maxima):
             modelos[modo] += ch_max*lpSum(saida[u]) >= m_unidades[u][1], f"{m_unidades[u][0]}_chmax: {math.ceil(m_unidades[u][1]/ch_max)}"
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo, que tem 19 aulas apenas
         #if(minima):
@@ -342,11 +346,15 @@ if(modo_escolhido not in ['num', 'peq', 'tempo', 'ch', 'todos']):
 
 # Números totais
 if((min_total and n_min_total < 1) or (max_total and n_max_total < 1)):
-    print("Os números totais especificados são inválidos.")
+    print("Os números totais especificados são inválidos. Essas opções foram desativadas.")
+    min_total = False
+    max_total = False
 
 # Porcentagens
 if(p_quarenta > 1 or p_vinte > 1 or p_quarenta < 0 or p_vinte < 0):
-    print("Os percentuais especificados são inválidos.")
+    print("Os percentuais especificados são inválidos. Essas opções foram desativadas.")
+    quarenta = False
+    vinte = False
 
 # Lê os dados da planilha
 ler_arquivo()
