@@ -45,7 +45,7 @@ P_VINTE = 0.2 # porcentagem máxima aceita
 TEMPO_LIMITE = 30
 # Arquivo com os dados para importação - pode ser alterado pelo usuário ao chamar o programa
 ARQUIVO_ENTRADA = 'importar.xlsx'
-modo_escolhido = 'todos'
+MODO_ESCOLHIDO = 'todos'
 
 # Vetor com formato do resultado conforme o modo
 formato_resultado = dict()
@@ -75,7 +75,7 @@ def ler_arquivo():
     MATRIZ_PEQ = MATRIZ_PERFIS[N_RESTRICOES+1]
     MATRIZ_TEMPO = MATRIZ_PERFIS[N_RESTRICOES] # tempo disponível
     # Lê critérios do AHP
-    df_criterios = pd.read_excel(arquivo, sheet_name='criterios', usecols="A:B").dropna()
+    df_criterios = pd.read_excel(ARQUIVO_ENTRADA, sheet_name='criterios', usecols="A:B").dropna()
     pesos_lidos = df_criterios.to_numpy()
     PESOS = np.delete(pesos_lidos, 0, axis=1).transpose()
     #PESOS = np.array([0.1362, 0.0626, 0.3093, 0.4919]) # valores aproximados
@@ -96,7 +96,7 @@ def otimizar(modo, arquivo_saida, stdout):
     # Ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
     minima = LIMITAR_CH_MINIMA
     maxima = LIMITAR_CH_MAXIMA
-    if modo_escolhido == 'todos' or modo == 'ch':
+    if MODO_ESCOLHIDO == 'todos' or modo == 'ch':
         minima = True
         maxima = True
     # No modo tempo é necessário estabelecer a carga horária mínima (ou número máximo)
@@ -167,7 +167,7 @@ def otimizar(modo, arquivo_saida, stdout):
         modelos[modo] += lpSum(saida) >= n_MIN_TOTAL, f"TotalMin: {n_MIN_TOTAL}"
 
     # Modo de equilíbrio da carga horária
-    if modo == 'ch' or modo == 'todos':
+    if modo in ('ch', 'todos'):
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
         desvios = LpVariable.matrix("zd", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
@@ -223,7 +223,7 @@ def otimizar(modo, arquivo_saida, stdout):
     elif modo == 'peq':
         modelos[modo] += lpSum(saida*MATRIZ_PEQ)
     # No modo tempo é necessário deduzir do tempo calculado as horas
-    #  que serão destinadas às orientações
+    # que serão destinadas às orientações
     elif modo == 'tempo':
         modelos[modo] += lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
     # No modo de equilíbrio a medida de desempenho é o desvio médio
@@ -245,10 +245,12 @@ def otimizar(modo, arquivo_saida, stdout):
     print()
 
     # Ajusta limite
-    if modo_escolhido == 'todos' and modo != 'todos':
+    # Para os modos "intermediários" não é necessário um limite maior que 30 segundos
+    if MODO_ESCOLHIDO == 'todos' and modo != 'todos' and TEMPO_LIMITE > 30:
         novo_limite = 30
     else:
         novo_limite = TEMPO_LIMITE
+
     # Resolver o modelo
     modelos[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=novo_limite))
 
@@ -276,9 +278,7 @@ def otimizar(modo, arquivo_saida, stdout):
     perfil = 0
     for var in modelos[modo].variables():
         if var.name.find('x') == 0:
-            valor = int(var.value())
-            #resultados[index] += f"{valor:2d} "
-            qtdes_saida[index][perfil] = valor
+            qtdes_saida[index][perfil] = int(var.value())
             index += 1
             if index >= N_UNIDADES:
                 index = 0
@@ -346,7 +346,7 @@ for opt, arg in opts:
     elif opt == '-a': # Ativa restrição da carga horária máxima com valor padrão
         LIMITAR_CH_MAXIMA = True
     elif opt == '-m':
-        modo_escolhido = arg
+        MODO_ESCOLHIDO = arg
     elif opt == '-n':
         N_UNIDADES = int(arg)
     elif opt == '-v':
@@ -374,20 +374,20 @@ for opt, arg in opts:
     elif opt == '--limite':
         TEMPO_LIMITE = int(arg)
     elif opt == '--input':
-        arquivo = arg
+        ARQUIVO_ENTRADA = arg
 
-# Verificar modo escolhido
-if modo_escolhido not in ['num', 'peq', 'tempo', 'ch', 'todos']:
-    modo_escolhido = 'todos'
+# Verifica modo escolhido
+if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'ch', 'todos']:
+    MODO_ESCOLHIDO = 'todos'
     print("O modo escolhido era inválido. Será utilizado o modo 'todos'.")
 
-# Números totais
+# Verifica números totais
 if (MIN_TOTAL and n_MIN_TOTAL < 1) or (MAX_TOTAL and n_MAX_TOTAL < 1):
     print("Os números totais especificados são inválidos. Essas opções foram desativadas.")
     MIN_TOTAL = False
     MAX_TOTAL = False
 
-# Porcentagens
+# Verifica porcentagens
 if P_QUARENTA > 1 or P_VINTE > 1 or P_QUARENTA < 0 or P_VINTE < 0:
     print("Os percentuais especificados são inválidos. Essas opções foram desativadas.")
     LIMITAR_QUARENTA = False
@@ -404,13 +404,13 @@ nomes = [str(perfil) + "."
          + MATRIZ_UNIDADES[unidade][0] for unidade in range(N_UNIDADES) for perfil in range(1, N_PERFIS+1)]
 
 print("Bem vindo!")
-print(f"O modo escolhido foi {modo_escolhido}")
-if modo_escolhido == 'todos':
+print(f"O modo escolhido foi {MODO_ESCOLHIDO}")
+if MODO_ESCOLHIDO == 'todos':
     print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
 
 # Arquivo de texto de saída
 original_stdout = sys.stdout
-filename = f"CBC completo_{modo_escolhido}_N={N_UNIDADES} {datetime.now().strftime('%H-%M-%S')}.txt"
+filename = f"CBC completo_{MODO_ESCOLHIDO}_N={N_UNIDADES} {datetime.now().strftime('%H-%M-%S')}.txt"
 fileout =  open(filename, 'w', encoding='utf-8')
 sys.stdout = fileout
 
@@ -418,8 +418,8 @@ sys.stdout = fileout
 modelos = {}
 
 # Conforme o modo escolhido, faz só uma otimização ou todas
-if modo_escolhido != 'todos':
-    resultado_final, qtdes_final = otimizar(modo_escolhido, fileout, original_stdout)
+if MODO_ESCOLHIDO != 'todos':
+    resultado_final, qtdes_final = otimizar(MODO_ESCOLHIDO, fileout, original_stdout)
 else:
     ## Percorre os critérios
     melhores = {}
@@ -497,7 +497,7 @@ imprimir_resultados(qtdes_final)
 # Imprime parâmetros
 imprimir_parametros(qtdes_final)
 
-if modo_escolhido == 'todos':
+if MODO_ESCOLHIDO == 'todos':
     # PESOS
     print(f"PESOS: {PESOS}")
     # Imprime médias e desvios
@@ -508,17 +508,17 @@ if modo_escolhido == 'todos':
 # Imprime o modelo completo
 print("")
 print("------------------Modelo:------------------")
-print(modelos[modo_escolhido])
+print(modelos[MODO_ESCOLHIDO])
 
 # Fecha arquivo texto
 fileout.close()
 
 #Imprime na tela
 sys.stdout = original_stdout
-print(f"Situação: {modelos[modo_escolhido].status}, {LpStatus[modelos[modo_escolhido].status]}")
-#objetivo = f"{modelos[modo_escolhido].objective.value():.4f}"
-print(f"Objetivo: {resultado_final} {formato_resultado[modo_escolhido]}")
-print(f"Resolvido em {modelos[modo_escolhido].solutionTime} segundos")
+print(f"Situação: {modelos[MODO_ESCOLHIDO].status}, {LpStatus[modelos[MODO_ESCOLHIDO].status]}")
+#objetivo = f"{modelos[MODO_ESCOLHIDO].objective.value():.4f}"
+print(f"Objetivo: {resultado_final} {formato_resultado[MODO_ESCOLHIDO]}")
+print(f"Resolvido em {modelos[MODO_ESCOLHIDO].solutionTime} segundos")
 print("")
 print(f"Verifique o arquivo {filename} para o relatório completo")
 print("")
