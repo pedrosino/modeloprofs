@@ -294,20 +294,20 @@ def otimizar(modo, arquivo_saida, stdout):
 def imprimir_resultados(qtdes):
     """Imprime resultados da quantidade de cada perfil em cada unidade"""
     print("Resultados:")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+--------+----------+------------+")
+    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
     print("Unidade  |  " + "  ".join([f"{i: >3}" for i in [f"x{p+1}" for p in range(N_PERFIS)]]) +
-          " | Total |  P-Eq  |   Tempo  | Tempo/prof |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+--------+----------+------------+")
+          " | Total |   P-Eq  |   Tempo  | Tempo/prof |")
+    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
     for unidade in range(N_UNIDADES):
         print(f"{MATRIZ_UNIDADES[unidade][0]:6s}   | "
               + " ".join([f"{qtdes[unidade][p]:4d}" for p in range(N_PERFIS)])
         #                             Total                      P-Eq                                    Tempo                 - horas de orientação                                     Tempo/prof
-        + f" |  {np.sum(qtdes[unidade]):4d} | {np.sum(qtdes[unidade]*MATRIZ_PEQ):6.2f} |  {np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2]:7.2f} |    {(np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2])/np.sum(qtdes[unidade]):7.3f} |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+--------+----------+------------+")
+        + f" |  {np.sum(qtdes[unidade]):4d} | {np.sum(qtdes[unidade]*MATRIZ_PEQ):7.2f} |  {np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2]:7.2f} |    {(np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2])/np.sum(qtdes[unidade]):7.3f} |")
+    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
     print("Total    | " + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
     #            Total                      P-Eq                                     Tempo      -  horas de orientação                                               Tempo/prof
-    + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*MATRIZ_PEQ):6.2f} |  {np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]:7.2f} |    {(np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2])/np.sum(qtdes):7.3f} |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+--------+----------+------------+")
+    + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*MATRIZ_PEQ):7.2f} |  {np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]:7.2f} |    {(np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2])/np.sum(qtdes):7.3f} |")
+    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
     print("")
 
 #-----------------------------------------------------------------------------------------
@@ -527,6 +527,6 @@ print(f"Verifique o arquivo {filename} para o relatório completo")
 print("")
 
 #salva em planilha
-df = pd.DataFrame(qtdes_final, columns=['x1','x2','x3','x4','x5','x6','x7','x8'])
+df = pd.DataFrame(qtdes_final, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
 df.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
 df.to_excel('CBC_Completo.xlsx', sheet_name='Resultados', index=False)
