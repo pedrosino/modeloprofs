@@ -290,24 +290,27 @@ def otimizar(modo, arquivo_saida, stdout):
     # Retorna o valor da função objetivo e as quantidades
     return objetivo, qtdes_saida
 
+#-----------------------------------------------------------------------------------------
 def imprimir_resultados(qtdes):
-    """Formata resultados"""
+    """Imprime resultados da quantidade de cada perfil em cada unidade"""
     print("Resultados:")
-    print("---------+---------------------------------+-------+--------+----------+------------+")
-    print("Unidade  |  x1  x2  x3  x4  x5  x6  x7  x8 | total |   P-Eq |   Tempo  | Tempo/prof |")
-    print("---------+---------------------------------+-------+--------+----------+------------+")
+    print("---------+" + "-----"*N_PERFIS + "-+-------+--------+----------+------------+")
+    print("Unidade  |  " + "  ".join([f"{i: >3}" for i in [f"x{p+1}" for p in range(N_PERFIS)]]) +
+          " | Total |  P-Eq  |   Tempo  | Tempo/prof |")
+    print("---------+" + "-----"*N_PERFIS + "-+-------+--------+----------+------------+")
     for unidade in range(N_UNIDADES):
         print(f"{MATRIZ_UNIDADES[unidade][0]:6s}   | "
-              + " ".join([f"{qtdes[unidade][p]:3d}" for p in range(N_PERFIS)])
+              + " ".join([f"{qtdes[unidade][p]:4d}" for p in range(N_PERFIS)])
         #                             Total                      P-Eq                                    Tempo                 - horas de orientação                                     Tempo/prof
         + f" |  {np.sum(qtdes[unidade]):4d} | {np.sum(qtdes[unidade]*MATRIZ_PEQ):6.2f} |  {np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2]:7.2f} |    {(np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2])/np.sum(qtdes[unidade]):7.3f} |")
-    print("---------+---------------------------------+-------+--------+----------+------------+")
-    print("Total    | " + " ".join([f"{np.sum(qtdes, axis=0)[p]:3d}" for p in range(N_PERFIS)])
-    #            Total                      P-Eq                                     Tempo      -  horas de orientação                               Tempo/prof
+    print("---------+" + "-----"*N_PERFIS + "-+-------+--------+----------+------------+")
+    print("Total    | " + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
+    #            Total                      P-Eq                                     Tempo      -  horas de orientação                                               Tempo/prof
     + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*MATRIZ_PEQ):6.2f} |  {np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]:7.2f} |    {(np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2])/np.sum(qtdes):7.3f} |")
-    print("---------+---------------------------------+-------+--------+----------+------------+")
+    print("---------+" + "-----"*N_PERFIS + "-+-------+--------+----------+------------+")
     print("")
 
+#-----------------------------------------------------------------------------------------
 def imprimir_parametros(qtdes):
     """Imprime os dados de entrada e os resultados obtidos"""
     print("Parâmetros:")
