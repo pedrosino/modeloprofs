@@ -47,7 +47,7 @@ P_VINTE = 0.2 # porcentagem máxima aceita
 # Tempo limite para o programa procurar a solução ótima (em segundos)
 #esse parâmetro pode ser alterado pelo usuário ao chamar o programa
 TEMPO_LIMITE = 30
-modo_escolhido = 'todos'
+MODO_ESCOLHIDO = 'todos'
 
 # Vetor com formato do resultado conforme o modo
 formato_resultado = dict()
