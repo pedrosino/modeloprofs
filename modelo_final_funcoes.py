@@ -31,8 +31,12 @@ CH_MIN = 12
 # Restrição de carga horária média mínima por unidade
 LIMITAR_CH_MAXIMA = False
 CH_MAX = 16
-MAX_TOTAL = False  # Restrição do número máximo total
-MIN_TOTAL = False # Restrição do número mínimo total
+# Restrição do número máximo total
+MAX_TOTAL = False
+N_MAX_TOTAL = None
+# Restrição do número mínimo total
+MIN_TOTAL = False
+N_MIN_TOTAL = None
 # Restrição quanto aos perfis 5 e 6 - ministram grande número de aulas e não participam
 # de pesquisa ou extensão (podem ser considerados como regime de 40h)
 LIMITAR_QUARENTA = False
@@ -84,6 +88,10 @@ def ler_arquivo():
 def otimizar(modo, arquivo_saida, stdout):
     """Função que faz a otimização conforme o modo escolhido"""
 
+    #nomes
+    nomes = [str(perfil) + "_"
+         + MATRIZ_UNIDADES[und][0] for und in range(N_UNIDADES) for perfil in range(1, N_PERFIS+1)]
+
     # Variáveis de decisão
     var_x = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
     saida = np.array(var_x).reshape(N_UNIDADES, N_PERFIS)
@@ -102,7 +110,7 @@ def otimizar(modo, arquivo_saida, stdout):
         minima = True
 
     # -- Definir o modelo --
-    if modo == 'tempo' or modo == 'todos':
+    if modo in ('tempo', 'todos'):
         modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMaximize)
     else:
         modelos[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
@@ -160,9 +168,9 @@ def otimizar(modo, arquivo_saida, stdout):
 
     # Restrição do número total de professores
     if MAX_TOTAL:
-        modelos[modo] += lpSum(saida) <= n_MAX_TOTAL, f"TotalMax: {n_MAX_TOTAL}"
+        modelos[modo] += lpSum(saida) <= N_MAX_TOTAL, f"TotalMax: {N_MAX_TOTAL}"
     if MIN_TOTAL:
-        modelos[modo] += lpSum(saida) >= n_MIN_TOTAL, f"TotalMin: {n_MIN_TOTAL}"
+        modelos[modo] += lpSum(saida) >= N_MIN_TOTAL, f"TotalMin: {N_MIN_TOTAL}"
 
     # Modo de equilíbrio da carga horária
     if modo in ('ch', 'todos'):
@@ -207,7 +215,7 @@ def otimizar(modo, arquivo_saida, stdout):
         # Restrições/cálculos
         # caso seja dado um número exato, é necessário alterar a pontuação do critério 'num'
         # para evitar a divisão por zero
-        if MAX_TOTAL and MIN_TOTAL and n_MAX_TOTAL == n_MIN_TOTAL:
+        if MAX_TOTAL and MIN_TOTAL and N_MAX_TOTAL == N_MIN_TOTAL:
             modelos[modo] += pontuacoes[0] == lpSum(saida)/melhores['num'], "Pontuação número"
         else:
             modelos[modo] += pontuacoes[0] == (lpSum(saida) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
@@ -237,7 +245,7 @@ def otimizar(modo, arquivo_saida, stdout):
     print(f'Unidades: {N_UNIDADES}')
     print(f'CH Maxima: {maxima} {CH_MAX if maxima else ""}')
     print(f'CH Minima: {minima} {CH_MIN if minima else ""}')
-    print(f'Total: {n_MIN_TOTAL if MIN_TOTAL else "-"} a {n_MAX_TOTAL if MAX_TOTAL else "-"}')
+    print(f'Total: {N_MIN_TOTAL if MIN_TOTAL else "-"} a {N_MAX_TOTAL if MAX_TOTAL else "-"}')
     print(f'Vinte: {LIMITAR_VINTE}')
     print(f'Quarenta: {LIMITAR_QUARENTA}')
     print()
@@ -362,10 +370,10 @@ for opt, arg in opts:
         CH_MAX = int(arg)
     elif opt == '--tmin': # Define quantidade total mínima
         MIN_TOTAL = True
-        n_MIN_TOTAL = int(arg)
+        N_MIN_TOTAL = int(arg)
     elif opt == '--tmax': # Define quantidade total máxima
         MAX_TOTAL = True
-        n_MAX_TOTAL = int(arg)
+        N_MAX_TOTAL = int(arg)
     elif opt == '--limite':
         TEMPO_LIMITE = int(arg)
     elif opt == '--input':
@@ -377,7 +385,7 @@ if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'ch', 'todos']:
     print("O modo escolhido era inválido. Será utilizado o modo 'todos'.")
 
 # Verifica números totais
-if (MIN_TOTAL and n_MIN_TOTAL < 1) or (MAX_TOTAL and n_MAX_TOTAL < 1):
+if (MIN_TOTAL and N_MIN_TOTAL < 1) or (MAX_TOTAL and N_MAX_TOTAL < 1):
     print("Os números totais especificados são inválidos. Essas opções foram desativadas.")
     MIN_TOTAL = False
     MAX_TOTAL = False
@@ -390,13 +398,6 @@ if P_QUARENTA > 1 or P_VINTE > 1 or P_QUARENTA < 0 or P_VINTE < 0:
 
 # Lê os dados da planilha
 ler_arquivo()
-
-# Critérios/modos
-modos = np.array(['num', 'peq', 'tempo', 'ch'])
-
-#nomes
-nomes = [str(perfil) + "_"
-         + MATRIZ_UNIDADES[unidade][0] for unidade in range(N_UNIDADES) for perfil in range(1, N_PERFIS+1)]
 
 print("Bem vindo!")
 print(f"O modo escolhido foi {MODO_ESCOLHIDO}")
@@ -416,6 +417,9 @@ modelos = {}
 if MODO_ESCOLHIDO != 'todos':
     resultado_final, qtdes_final = otimizar(MODO_ESCOLHIDO, fileout, original_stdout)
 else:
+    # Critérios/modos
+    modos = np.array(['num', 'peq', 'tempo', 'ch'])
+    
     ## Percorre os critérios
     melhores = {}
     piores = {}
@@ -456,7 +460,7 @@ else:
     #                   |
     # CH_MIN      = 12  --
     numero_max = \
-        round(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MIN) if not MAX_TOTAL else n_MAX_TOTAL
+        round(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MIN) if not MAX_TOTAL else N_MAX_TOTAL
     piores['num'] = numero_max
     piores['peq'] = numero_max*1.65
     piores['tempo'] = 0
@@ -519,6 +523,6 @@ print(f"Verifique o arquivo {filename} para o relatório completo")
 print("")
 
 #salva em planilha
-df = pd.DataFrame(qtdes_final, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
-df.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
-df.to_excel('CBC_Completo.xlsx', sheet_name='Resultados', index=False)
+data_frame = pd.DataFrame(qtdes_final, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
+data_frame.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
+data_frame.to_excel('CBC_Completo.xlsx', sheet_name='Resultados', index=False)
