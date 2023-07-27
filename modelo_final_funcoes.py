@@ -83,8 +83,6 @@ def ler_arquivo():
 
 def otimizar(modo, arquivo_saida, stdout):
     """Função que faz a otimização conforme o modo escolhido"""
-    #global MATRIZ_UNIDADES, MATRIZ_PERFIS, MATRIZ_PEQ, MATRIZ_TEMPO, \
-    #       PESOS, formato_resultado, NOMES_RESTRICOES, maxima, minima
 
     # Variáveis de decisão
     var_x = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
@@ -93,9 +91,9 @@ def otimizar(modo, arquivo_saida, stdout):
     sys.stdout = stdout
     print(f"Modo: {modo}")
     sys.stdout = arquivo_saida
-    # Ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
     minima = LIMITAR_CH_MINIMA
     maxima = LIMITAR_CH_MAXIMA
+    # Ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
     if MODO_ESCOLHIDO == 'todos' or modo == 'ch':
         minima = True
         maxima = True
@@ -274,18 +272,12 @@ def otimizar(modo, arquivo_saida, stdout):
 
     # Extrai as quantidades
     qtdes_saida = np.full((N_UNIDADES, N_PERFIS), 0, dtype=int)
-    index = 0
-    perfil = 0
     for var in modelos[modo].variables():
         if var.name.find('x') == 0:
-            qtdes_saida[index][perfil] = int(var.value())
-            index += 1
-            if index >= N_UNIDADES:
-                index = 0
-                perfil += 1
-            if perfil >= N_PERFIS+1:
-                print(f"i: {index}, p: {perfil}")
-                break
+            _, perfil, unidade = var.name.split("_")
+            perfil = int(perfil) - 1
+            ind_unidade = np.where(MATRIZ_UNIDADES[:N_UNIDADES, 0] == unidade)[0][0]
+            qtdes_saida[ind_unidade][perfil] = int(var.value())
 
     # Retorna o valor da função objetivo e as quantidades
     return objetivo, qtdes_saida
@@ -403,7 +395,7 @@ ler_arquivo()
 modos = np.array(['num', 'peq', 'tempo', 'ch'])
 
 #nomes
-nomes = [str(perfil) + "."
+nomes = [str(perfil) + "_"
          + MATRIZ_UNIDADES[unidade][0] for unidade in range(N_UNIDADES) for perfil in range(1, N_PERFIS+1)]
 
 print("Bem vindo!")
