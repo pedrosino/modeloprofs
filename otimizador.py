@@ -2,8 +2,8 @@
 de uma universidade federal. Desenvolvido na pesquisa do Mestrado Profissional em
 Gestão Organizacional, da Faculdade de Gestão e Negócios, Universidade Federal de Uberlândia,
 por Pedro Santos Guimarães, em 2023"""
-from datetime import datetime
-import sys
+#from datetime import datetime
+#mport sys
 import math
 import tkinter as tk
 from tkinter import ttk
@@ -22,6 +22,7 @@ MATRIZ_TEMPO = None
 PESOS = None
 NOMES_RESTRICOES = None
 QTDES_FINAL = None
+RELATORIO = ""
 
 # Dados do problema
 N_PERFIS = None
@@ -136,13 +137,7 @@ def carregar_arquivo():
 def executar():
     """Executa a otimização"""
     global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL,\
-        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL
-
-    #print(MATRIZ_UNIDADES)
-    #print(MATRIZ_PERFIS)
-    #print(NOMES_RESTRICOES)
-    #print(CONECTORES)
-    #print(PESOS)
+        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO
 
     # Mostra resultados
     grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
@@ -165,8 +160,6 @@ def executar():
         N_MIN_TOTAL = texto_min_total.get()
     TEMPO_LIMITE = val_limite.get()
     MODO_ESCOLHIDO = LISTA_MODOS[combo_var.get()]
-
-    print(MODO_ESCOLHIDO)
 
     # Verifica modo escolhido
     if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'ch', 'todos']:
@@ -200,14 +193,14 @@ def executar():
         print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
 
     # Arquivo de texto de saída
-    original_stdout = sys.stdout
-    filename = f"CBC_{MODO_ESCOLHIDO}_N={N_UNIDADES}_{datetime.now().strftime('%H-%M-%S')}.txt"
-    fileout =  open(filename, 'w', encoding='utf-8')
-    sys.stdout = fileout
+    ##original_stdout = sys.stdout
+    ##filename = f"CBC_{MODO_ESCOLHIDO}_N={N_UNIDADES}_{datetime.now().strftime('%H-%M-%S')}.txt"
+    ##fileout =  open(filename, 'w', encoding='utf-8')
+    ##sys.stdout = fileout
 
     # Conforme o modo escolhido, faz só uma otimização ou todas
     if MODO_ESCOLHIDO != 'todos':
-        resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, fileout, original_stdout, None, None)
+        resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, None, None)
     else:
         # Critérios/modos
         modos = np.array(['num', 'peq', 'tempo', 'ch'])
@@ -260,34 +253,45 @@ def executar():
 
         # Percorre os critérios
         for modo_usado in modos:
-            resultado_modo, qtdes_modo = otimizar(modo_usado, fileout, original_stdout, piores, melhores)
+            texto_resultado = resultado.get()
+            texto_resultado += f"\nModo {modo_usado}: resolvendo ..."
+            resultado.set(texto_resultado)
+            root.update()
+
+            # Obtém resultado e quantidades
+            resultado_modo, qtdes_modo = otimizar(modo_usado, piores, melhores)
 
             # Registra o resultado na lista de melhores casos
             melhores[modo_usado] = resultado_modo
-            sys.stdout = original_stdout
-            print(f"Ok. Resultado: {melhores[modo_usado]}")
-            sys.stdout = fileout
 
             texto_resultado = resultado.get()
-            texto_resultado += f"\nModo {modo_usado} ok. Resultado: {melhores[modo_usado]}"
+            texto_resultado += f"\nTerminado. Resultado: {melhores[modo_usado]}, "\
+                f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
             resultado.set(texto_resultado)
             root.update()
 
             # Imprime resultados
             imprimir_resultados(qtdes_modo)
-            print("------------------------------------------------------------")
-            print("")
+            RELATORIO += "\n------------------------------------------------------------\n"
 
         ##### -----------------Fim da primeira 'rodada'-----------------
-        print("Melhores:")
-        print(melhores)
-        print("Piores:")
-        print(piores)
-        print()
-        print("------------------------------------------------------------")
+        RELATORIO += f"\nMelhores: {melhores}\nPiores: {piores}\n"
+        RELATORIO += "------------------------------------------------------------"
 
         ## Agora uma nova rodada do modelo usando os pesos e as listas de melhores e piores casos
-        resultado_final, QTDES_FINAL = otimizar('todos', fileout, original_stdout, piores, melhores)
+
+        texto_resultado = resultado.get()
+        texto_resultado += f"\n\nModo 'todos': resolvendo ..."
+        resultado.set(texto_resultado)
+        root.update()
+
+        resultado_final, QTDES_FINAL = otimizar('todos', piores, melhores)
+
+        texto_resultado = resultado.get()
+        texto_resultado += f"\nTerminado. Resultado: {resultado_final}, "\
+            f"resolvido em {MODELOS['todos'].solutionTime:.3f} segundos"
+        resultado.set(texto_resultado)
+        root.update()
 
     # ---- Finalização ----
     # Imprime resultados
@@ -297,28 +301,21 @@ def executar():
 
     if MODO_ESCOLHIDO == 'todos':
         # PESOS
-        print(f"PESOS: {PESOS}")
+        RELATORIO += f"\nPESOS: {PESOS}"
         # Imprime médias e desvios
         for variable in MODELOS['todos'].variables():
             if variable.name[0] == 'p' or variable.name[0] == 'z':
-                print(f"{variable.name}: {variable.value():.4f}")
+                RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
 
     # Imprime o modelo completo
-    print("")
-    print("------------------Modelo:------------------")
-    print(MODELOS[MODO_ESCOLHIDO])
-
-    # Fecha arquivo texto
-    fileout.close()
+    RELATORIO += "\n\n------------------Modelo:------------------"
+    RELATORIO += f"\n{MODELOS[MODO_ESCOLHIDO]}"
 
     #Imprime na tela
-    sys.stdout = original_stdout
     print(f"Situação: {MODELOS[MODO_ESCOLHIDO].status}, {LpStatus[MODELOS[MODO_ESCOLHIDO].status]}")
     #objetivo = f"{MODELOS[MODO_ESCOLHIDO].objective.value():.4f}"
     print(f"Objetivo: {resultado_final} {FORMATO_RESULTADO[MODO_ESCOLHIDO]}")
     print(f"Resolvido em {MODELOS[MODO_ESCOLHIDO].solutionTime} segundos")
-    print("")
-    print(f"Verifique o arquivo {filename} para o relatório completo")
     print("")
 
     texto_resultado = resultado.get()
@@ -343,9 +340,9 @@ def executar():
     # Ajusta a altura do widget para mostrar todas as linhas
     text_aba.config(height=num_linhas, width=8 + N_PERFIS*5)
 
-def otimizar(modo, arquivo_saida, stdout, piores, melhores):
+def otimizar(modo, piores, melhores):
     """Função que faz a otimização conforme o modo escolhido"""
-    #global MODELOS
+    global RELATORIO
 
     #nomes
     nomes = [str(perfil) + "_"
@@ -355,9 +352,6 @@ def otimizar(modo, arquivo_saida, stdout, piores, melhores):
     var_x = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
     saida = np.array(var_x).reshape(N_UNIDADES, N_PERFIS)
 
-    sys.stdout = stdout
-    print(f"Modo: {modo}")
-    sys.stdout = arquivo_saida
     minima = LIMITAR_CH_MINIMA
     maxima = LIMITAR_CH_MAXIMA
     # Ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
@@ -500,14 +494,14 @@ def otimizar(modo, arquivo_saida, stdout, piores, melhores):
         MODELOS[modo] += lpSum(pontuacoes*PESOS)
 
     # Imprime os resultados no arquivo txt
-    print(f'Modo: {modo}')
-    print(f'Unidades: {N_UNIDADES}')
-    print(f'CH Maxima: {maxima} {CH_MAX if maxima else ""}')
-    print(f'CH Minima: {minima} {CH_MIN if minima else ""}')
-    print(f'Total: {N_MIN_TOTAL if MIN_TOTAL else "-"} a {N_MAX_TOTAL if MAX_TOTAL else "-"}')
-    print(f'Vinte: {LIMITAR_VINTE}')
-    print(f'Quarenta: {LIMITAR_QUARENTA}')
-    print()
+    RELATORIO += f'\nModo: {modo}'
+    RELATORIO += f'\nUnidades: {N_UNIDADES}'
+    RELATORIO += f'\nCH Maxima: {maxima} {CH_MAX if maxima else ""}'
+    RELATORIO += f'\nCH Minima: {minima} {CH_MIN if minima else ""}'
+    RELATORIO += f'\nTotal: {N_MIN_TOTAL if MIN_TOTAL else "-"} a ' \
+        f'{N_MAX_TOTAL if MAX_TOTAL else "-"}\n'
+    #RELATORIO += f'Vinte: {LIMITAR_VINTE}'
+    #RELATORIO += f'Quarenta: {LIMITAR_QUARENTA}'
 
     # Ajusta limite
     # Para os modos "intermediários" não é necessário um limite maior que 30 segundos
@@ -520,7 +514,7 @@ def otimizar(modo, arquivo_saida, stdout, piores, melhores):
     MODELOS[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=novo_limite))
 
     # Resultados
-    print(f"Situação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}")
+    RELATORIO += f"\nSituação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}"
     # Para cada critério o resultado é em um formato diferente
     if modo == 'ch':
         objetivo = MODELOS[modo].objective.value()
@@ -533,9 +527,8 @@ def otimizar(modo, arquivo_saida, stdout, piores, melhores):
     elif modo == 'todos':
         objetivo = round(MODELOS[modo].objective.value(), 4)
 
-    print(f"Objetivo: {objetivo} {FORMATO_RESULTADO[modo]}")
-    print(f"Resolvido em {MODELOS[modo].solutionTime} segundos")
-    print("")
+    RELATORIO += f"\nObjetivo: {objetivo} {FORMATO_RESULTADO[modo]}"
+    RELATORIO += f"\nResolvido em {MODELOS[modo].solutionTime:.3f} segundos\n"
 
     # Extrai as quantidades
     qtdes_saida = np.full((N_UNIDADES, N_PERFIS), 0, dtype=int)
@@ -549,52 +542,78 @@ def otimizar(modo, arquivo_saida, stdout, piores, melhores):
     # Retorna o valor da função objetivo e as quantidades
     return objetivo, qtdes_saida
 
+
 def imprimir_resultados(qtdes):
     """Imprime resultados da quantidade de cada perfil em cada unidade"""
-    print("Resultados:")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
-    print("Unidade  |  " + "  ".join([f"{i: >3}" for i in [f"x{p+1}" for p in range(N_PERFIS)]]) +
-          " | Total |   P-Eq  |   Tempo  | Tempo/prof |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
+    global RELATORIO
+    RELATORIO += "\nResultados:"
+    # Cabeçalho
+    RELATORIO += "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
+    RELATORIO += "\nUnidade  |  " \
+        + "  ".join([f"{i: >3}" for i in [f"x{p+1}" for p in range(N_PERFIS)]]) \
+        + " | Total |   P-Eq  |   Tempo  | Tempo/prof |"
+    RELATORIO += "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
+    # Uma linha por unidade
     for unidade in range(N_UNIDADES):
-        print(f"{MATRIZ_UNIDADES[unidade][0]:6s}   | "
-              + " ".join([f"{qtdes[unidade][p]:4d}" for p in range(N_PERFIS)])
-        #                             Total                      P-Eq                                    Tempo                 - horas de orientação                                     Tempo/prof
-        + f" |  {np.sum(qtdes[unidade]):4d} | {np.sum(qtdes[unidade]*MATRIZ_PEQ):7.2f} |  {np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2]:7.2f} |    {(np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2])/np.sum(qtdes[unidade]):7.3f} |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
-    print("Total    | " + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
-    #            Total                      P-Eq                                     Tempo      -  horas de orientação                                               Tempo/prof
-    + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*MATRIZ_PEQ):7.2f} |  {np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]:7.2f} |    {(np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2])/np.sum(qtdes):7.3f} |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
-    print("")
+        total = np.sum(qtdes[unidade])
+        peq = np.sum(qtdes[unidade]*MATRIZ_PEQ)
+        tempo = np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2]
+        RELATORIO += f"\n{MATRIZ_UNIDADES[unidade][0]:6s}   | " \
+            + " ".join([f"{qtdes[unidade][p]:4d}" for p in range(N_PERFIS)]) \
+            + f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
 
-#-----------------------------------------------------------------------------------------
+    # Totais
+    RELATORIO += "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
+    RELATORIO += "\nTotal    | " \
+        + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
+    total = np.sum(qtdes)
+    peq = np.sum(qtdes*MATRIZ_PEQ)
+    tempo = np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
+    RELATORIO += f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
+    RELATORIO += "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+\n"
+
+
 def imprimir_parametros(qtdes):
     """Imprime os dados de entrada e os resultados obtidos"""
-    print("Parâmetros:")
-    print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-    print("Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. |   40h   |   20h   | ch media |")
-    print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+    global RELATORIO
+    RELATORIO += "\nParâmetros:"
+    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+"
+    RELATORIO += "\nUnidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. |   40h   |   20h   | ch media |"
+    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+"
     # Formatos dos números - tem que ser tudo como float, pois ao importar os valores de
     # professor-equivalente, a MATRIZ_PERFIS fica toda como float
     formatos =          ['4.0f', '7.2f', '4.0f', '3.0f', '3.0f']
     formatosdiferenca = ['3.0f', '7.2f', '4.0f', '2.0f', '2.0f']
+
+    # Uma linha por unidade
     for unidade in range(N_UNIDADES):
-        print(f"{MATRIZ_UNIDADES[unidade][0]:6s}   | "
-        + " ".join([f"{np.sum(qtdes[unidade]*MATRIZ_PERFIS[p]):{formatos[p]}} (+{(np.sum(qtdes[unidade]*MATRIZ_PERFIS[p]) - MATRIZ_UNIDADES[unidade][p+1]):{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)])
-        + f"  {((qtdes[unidade][4] + qtdes[unidade][5]) / np.sum(qtdes[unidade]))*100:5.2f}% |" #40h
-        + f"  {((qtdes[unidade][6] + qtdes[unidade][7]) / np.sum(qtdes[unidade]))*100:5.2f}% |" #20h
-        + f"  {MATRIZ_UNIDADES[unidade][1] / np.sum(qtdes[unidade]):7.3f} |"
-        )
-    print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-    print("Total    | "
-    + " ".join([f"{np.sum(qtdes*MATRIZ_PERFIS[p]):{formatos[p]}} (+{np.sum(qtdes*MATRIZ_PERFIS[p]) - int(np.sum(MATRIZ_UNIDADES, axis=0)[p+1]):{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)])
-    + f"  {(np.sum(qtdes, axis=0)[4] + np.sum(qtdes, axis=0)[5]) / np.sum(qtdes)*100:5.2f}% |"
-    + f"  {(np.sum(qtdes, axis=0)[6] + np.sum(qtdes, axis=0)[7]) / np.sum(qtdes)*100:5.2f}% |"
-    + f"  {np.sum(MATRIZ_UNIDADES, axis=0)[1]/np.sum(qtdes):7.3f} |"
-    )
-    print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-    print()
+        total_unidade = np.sum(qtdes[unidade])
+        valores_perfis = [np.sum(qtdes[unidade]*MATRIZ_PERFIS[p]) for p in range(N_RESTRICOES)]
+        diferencas = [valores_perfis[p] - MATRIZ_UNIDADES[unidade][p+1] for p in range(N_RESTRICOES)]
+        strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} " \
+                          f"(+{diferencas[p]:{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)]
+        string_final = " ".join(strings_perfis)
+
+        RELATORIO += f"\n{MATRIZ_UNIDADES[unidade][0]:6s}   | " + string_final \
+            + f"  {((qtdes[unidade][4] + qtdes[unidade][5]) / total_unidade)*100:5.2f}% |" \
+            + f"  {((qtdes[unidade][6] + qtdes[unidade][7]) / total_unidade)*100:5.2f}% |" \
+            + f"  {MATRIZ_UNIDADES[unidade][1] / total_unidade:7.3f} |"
+
+    # Totais
+    total = np.sum(qtdes)
+    valores_perfis = [np.sum(qtdes*MATRIZ_PERFIS[p]) for p in range(N_RESTRICOES)]
+    diferencas = [valores_perfis[p] - int(np.sum(MATRIZ_UNIDADES, axis=0)[p+1]) for p in range(N_RESTRICOES)]
+    strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} " \
+                      f"(+{diferencas[p]:{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)]
+    string_final = " ".join(strings_perfis)
+
+    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+"
+    RELATORIO += "\nTotal    | " + string_final \
+        + f"  {(np.sum(qtdes, axis=0)[4] + np.sum(qtdes, axis=0)[5]) / total*100:5.2f}% |" \
+        + f"  {(np.sum(qtdes, axis=0)[6] + np.sum(qtdes, axis=0)[7]) / total*100:5.2f}% |" \
+        + f"  {np.sum(MATRIZ_UNIDADES, axis=0)[1]/total:7.3f} |"
+    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+\n"
+
 
 def exportar_txt():
     """Função para exportar os resultados em formato .txt"""
@@ -602,7 +621,9 @@ def exportar_txt():
         initialfile="Relatório.txt", filetypes=[("Arquivos de Texto", "*.txt")])
     if nome_arquivo:
         with open(nome_arquivo, "w", encoding='UTF-8') as arquivo:
-            arquivo.write(text_aba.get("1.0", tk.END))
+            #arquivo.write(text_aba.get("1.0", tk.END))
+            arquivo.write(RELATORIO)
+
 
 def exportar_planilha():
     """Função para exportar as quantidades finais em uma planilha"""
@@ -612,7 +633,6 @@ def exportar_planilha():
         # Transforma em dataframe com cabeçalho e unidades
         data_frame = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
         data_frame.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
-        print(data_frame)
         data_frame.to_excel(nome_arquivo, sheet_name='Resultados', index=False, engine="openpyxl")
 
 ### Fim das funçõoes ###
@@ -722,27 +742,7 @@ combobox = ttk.Combobox(grupo, textvariable=combo_var, values=list(LISTA_MODOS.k
                         state="readonly")
 combobox.grid(row=6, column=1, padx=10, pady=10)
 combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
-#combobox.set("Todos")
-#combo_var.set("Todos")
 
-# Radiobuttons
-'''label2 = ttk.Label(grupo, text="Escolha uma opção")
-label2.grid(row=7, column=0, padx=10, pady=10)
-
-radio_var = tk.StringVar()
-
-radio1 = ttk.Radiobutton(grupo, text="Planejar", variable=radio_var, value="Planejar",
-                         command=verifica_executar)
-radio1.grid(row=7, column=1, padx=10, pady=10, sticky='w')
-
-radio2 = ttk.Radiobutton(grupo, text="Operar", variable=radio_var, value="Operar",
-                         command=verifica_executar)
-radio2.grid(row=8, column=1, padx=10, pady=10, sticky='w')
-
-radio3 = ttk.Radiobutton(grupo, text="Fazer", variable=radio_var, value="Fazer",
-                         command=verifica_executar)
-radio3.grid(row=9, column=1, padx=10, pady=10, sticky='w')
-'''
 # Botão para executar
 botaoExecutar = ttk.Button(grupo, text="Executar", state=tk.DISABLED, command=executar)
 botaoExecutar.grid(row=10, column=0, padx=10, pady=10)
