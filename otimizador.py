@@ -73,7 +73,7 @@ MODO_ESCOLHIDO = 'todos'
 
 def verifica_executar():
     """Habilita ou desabilita o botão Executar"""
-    if combo_var.get() and radio_var.get():
+    if combo_var.get(): # and radio_var.get():
         botaoExecutar['state'] = tk.NORMAL
     else:
         botaoExecutar['state'] = tk.DISABLED
@@ -143,6 +143,12 @@ def executar():
     #print(CONECTORES)
     #print(PESOS)
 
+    # Mostra resultados
+    grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
+
+    # Limpa tabela
+    text_aba.delete("1.0", tk.END)
+
     # Captura opções e valores escolhidos
     LIMITAR_CH_MAXIMA = bool_maxima.get()
     LIMITAR_CH_MINIMA = bool_minima.get()
@@ -178,6 +184,15 @@ def executar():
     #    LIMITAR_QUARENTA = False
     #    LIMITAR_VINTE = False
 
+    ###grupo_resultados.grid()
+
+    texto_resultado = f"Bem vindo!\nO modo escolhido foi {MODO_ESCOLHIDO}"
+    if MODO_ESCOLHIDO == 'todos':
+        texto_resultado += "\nPrimeiramente vamos definir os parâmetros para cada critério/objetivo"
+
+    resultado.set(texto_resultado)
+    root.update()
+
     print("Bem vindo!")
     print(f"O modo escolhido foi {MODO_ESCOLHIDO}")
     if MODO_ESCOLHIDO == 'todos':
@@ -185,7 +200,7 @@ def executar():
 
     # Arquivo de texto de saída
     original_stdout = sys.stdout
-    filename = f"CBC completo_{MODO_ESCOLHIDO}_N={N_UNIDADES} {datetime.now().strftime('%H-%M-%S')}.txt"
+    filename = f"CBC_{MODO_ESCOLHIDO}_N={N_UNIDADES}_{datetime.now().strftime('%H-%M-%S')}.txt"
     fileout =  open(filename, 'w', encoding='utf-8')
     sys.stdout = fileout
 
@@ -252,6 +267,11 @@ def executar():
             print(f"Ok. Resultado: {melhores[modo_usado]}")
             sys.stdout = fileout
 
+            texto_resultado = resultado.get()
+            texto_resultado += f"\nModo {modo_usado} ok. Resultado: {melhores[modo_usado]}"
+            resultado.set(texto_resultado)
+            root.update()
+
             # Imprime resultados
             imprimir_resultados(qtdes_modo)
             print("------------------------------------------------------------")
@@ -300,12 +320,28 @@ def executar():
     print(f"Verifique o arquivo {filename} para o relatório completo")
     print("")
 
-    resultado.config(text=f"{qtdes_final}")
+    texto_resultado = resultado.get()
+    texto_resultado += f"\nSituação: {MODELOS[MODO_ESCOLHIDO].status}, " \
+        f"{LpStatus[MODELOS[MODO_ESCOLHIDO].status]}"
+    texto_resultado += f"\nObjetivo: {resultado_final} {FORMATO_RESULTADO[MODO_ESCOLHIDO]}"
+    texto_resultado += f"\nResolvido em {MODELOS[MODO_ESCOLHIDO].solutionTime} segundos"
+
+    resultado.set(texto_resultado)
+    root.update()
 
     #salva em planilha
     data_frame = pd.DataFrame(qtdes_final, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
     data_frame.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
     data_frame.to_excel('CBC_Completo.xlsx', sheet_name='Resultados', index=False)
+
+    # Mostra na tabela
+    text_aba.insert(tk.END, data_frame.to_string(index=False))
+
+    # Obtém o número total de linhas do texto
+    num_linhas = int(text_aba.index(tk.END).split('.', maxsplit=1)[0])
+
+    # Ajusta a altura do widget para mostrar todas as linhas
+    text_aba.config(height=num_linhas, width=8 + N_PERFIS*5)
 
 def otimizar(modo, arquivo_saida, stdout, piores, melhores):
     """Função que faz a otimização conforme o modo escolhido"""
@@ -667,11 +703,11 @@ combobox = ttk.Combobox(grupo, textvariable=combo_var, values=list(LISTA_MODOS.k
                         state="readonly")
 combobox.grid(row=6, column=1, padx=10, pady=10)
 combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
-combobox.set("Todos")
-combo_var.set("Todos")
+#combobox.set("Todos")
+#combo_var.set("Todos")
 
 # Radiobuttons
-label2 = ttk.Label(grupo, text="Escolha uma opção")
+'''label2 = ttk.Label(grupo, text="Escolha uma opção")
 label2.grid(row=7, column=0, padx=10, pady=10)
 
 radio_var = tk.StringVar()
@@ -687,7 +723,7 @@ radio2.grid(row=8, column=1, padx=10, pady=10, sticky='w')
 radio3 = ttk.Radiobutton(grupo, text="Fazer", variable=radio_var, value="Fazer",
                          command=verifica_executar)
 radio3.grid(row=9, column=1, padx=10, pady=10, sticky='w')
-
+'''
 # Botão para executar
 botaoExecutar = ttk.Button(grupo, text="Executar", state=tk.DISABLED, command=executar)
 botaoExecutar.grid(row=10, column=0, padx=10, pady=10)
@@ -695,8 +731,21 @@ botaoExecutar.grid(row=10, column=0, padx=10, pady=10)
 # Inicialmente oculta as opções
 grupo.grid_forget()
 
-# Dummy para ajustar as colunas
-resultado = tk.Label(root)
-resultado.grid(row=8, column=0, padx=10, pady=10)
+# Grupo dos resultados
+grupo_resultados = ttk.LabelFrame(root, text="Resultados")
+grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
+
+resultado = tk.StringVar()
+label_resultado = tk.Label(grupo_resultados, textvariable=resultado)
+label_resultado.grid(row=0, column=0, padx=10, pady=10)
+
+label_aba = tk.Label(grupo_resultados, text="Distribuição:")
+label_aba.grid(row=1, column=0, padx=10, pady=10)
+
+text_aba = tk.Text(grupo_resultados, height=10, width=60)
+text_aba.grid(row=2, column=0, padx=10, pady=10)
+
+# Inicialmente oculta os resultados
+grupo_resultados.grid_forget()
 
 root.mainloop()
