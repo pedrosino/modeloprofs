@@ -21,6 +21,7 @@ MATRIZ_PEQ = None
 MATRIZ_TEMPO = None
 PESOS = None
 NOMES_RESTRICOES = None
+QTDES_FINAL = None
 
 # Dados do problema
 N_PERFIS = None
@@ -135,7 +136,7 @@ def carregar_arquivo():
 def executar():
     """Executa a otimização"""
     global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL,\
-        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO
+        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL
 
     #print(MATRIZ_UNIDADES)
     #print(MATRIZ_PERFIS)
@@ -206,7 +207,7 @@ def executar():
 
     # Conforme o modo escolhido, faz só uma otimização ou todas
     if MODO_ESCOLHIDO != 'todos':
-        resultado_final, qtdes_final = otimizar(MODO_ESCOLHIDO, fileout, original_stdout, None, None)
+        resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, fileout, original_stdout, None, None)
     else:
         # Critérios/modos
         modos = np.array(['num', 'peq', 'tempo', 'ch'])
@@ -286,13 +287,13 @@ def executar():
         print("------------------------------------------------------------")
 
         ## Agora uma nova rodada do modelo usando os pesos e as listas de melhores e piores casos
-        resultado_final, qtdes_final = otimizar('todos', fileout, original_stdout, piores, melhores)
+        resultado_final, QTDES_FINAL = otimizar('todos', fileout, original_stdout, piores, melhores)
 
     # ---- Finalização ----
     # Imprime resultados
-    imprimir_resultados(qtdes_final)
+    imprimir_resultados(QTDES_FINAL)
     # Imprime parâmetros
-    imprimir_parametros(qtdes_final)
+    imprimir_parametros(QTDES_FINAL)
 
     if MODO_ESCOLHIDO == 'todos':
         # PESOS
@@ -329,10 +330,9 @@ def executar():
     resultado.set(texto_resultado)
     root.update()
 
-    #salva em planilha
-    data_frame = pd.DataFrame(qtdes_final, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
+    # Transforma em dataframe com cabeçalho e unidades
+    data_frame = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
     data_frame.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
-    data_frame.to_excel('CBC_Completo.xlsx', sheet_name='Resultados', index=False)
 
     # Mostra na tabela
     text_aba.insert(tk.END, data_frame.to_string(index=False))
@@ -596,6 +596,25 @@ def imprimir_parametros(qtdes):
     print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
     print()
 
+def exportar_txt():
+    """Função para exportar os resultados em formato .txt"""
+    nome_arquivo = filedialog.asksaveasfilename(defaultextension=".txt",
+        initialfile="Relatório.txt", filetypes=[("Arquivos de Texto", "*.txt")])
+    if nome_arquivo:
+        with open(nome_arquivo, "w", encoding='UTF-8') as arquivo:
+            arquivo.write(text_aba.get("1.0", tk.END))
+
+def exportar_planilha():
+    """Função para exportar as quantidades finais em uma planilha"""
+    nome_arquivo = filedialog.asksaveasfilename(defaultextension=".xlsx",
+        initialfile="Distribuição.xlsx", filetypes=[("Arquivos do Excel", "*.xlsx")])
+    if nome_arquivo:
+        # Transforma em dataframe com cabeçalho e unidades
+        data_frame = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
+        data_frame.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
+        print(data_frame)
+        data_frame.to_excel(nome_arquivo, sheet_name='Resultados', index=False, engine="openpyxl")
+
 ### Fim das funçõoes ###
 
 root = tk.Tk()
@@ -744,6 +763,12 @@ label_aba.grid(row=1, column=0, padx=10, pady=10)
 
 text_aba = tk.Text(grupo_resultados, height=10, width=60)
 text_aba.grid(row=2, column=0, padx=10, pady=10)
+
+botaoRelatorio = tk.Button(grupo_resultados, text="Baixar relatório", command=exportar_txt)
+botaoRelatorio.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+
+botaoPlanilha = tk.Button(grupo_resultados, text="Baixar planilha", command=exportar_planilha)
+botaoPlanilha.grid(row=3, column=0, padx=10, pady=10, sticky='e')
 
 # Inicialmente oculta os resultados
 grupo_resultados.grid_forget()
