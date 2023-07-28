@@ -406,7 +406,7 @@ if MODO_ESCOLHIDO == 'todos':
 
 # Arquivo de texto de saída
 original_stdout = sys.stdout
-filename = f"CBC completo_{MODO_ESCOLHIDO}_N={N_UNIDADES} {datetime.now().strftime('%H-%M-%S')}.txt"
+filename = f"CBC_{MODO_ESCOLHIDO}_N={N_UNIDADES}_{datetime.now().strftime('%H-%M-%S')}.txt"
 fileout =  open(filename, 'w', encoding='utf-8')
 sys.stdout = fileout
 
@@ -419,7 +419,7 @@ if MODO_ESCOLHIDO != 'todos':
 else:
     # Critérios/modos
     modos = np.array(['num', 'peq', 'tempo', 'ch'])
-    
+
     ## Percorre os critérios
     melhores = {}
     piores = {}
