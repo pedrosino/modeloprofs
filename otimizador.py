@@ -586,9 +586,9 @@ def imprimir_parametros(qtdes):
     """Imprime os dados de entrada e os resultados obtidos"""
     global RELATORIO
     RELATORIO += "\nParâmetros:"
-    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+"
-    RELATORIO += "\nUnidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. |   40h   |   20h   | ch media |"
-    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+"
+    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+----------+"
+    RELATORIO += "\nUnidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |"
+    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+----------+"
     # Formatos dos números - tem que ser tudo como float, pois ao importar os valores de
     # professor-equivalente, a MATRIZ_PERFIS fica toda como float
     formatos =          ['4.0f', '7.2f', '4.0f', '3.0f', '3.0f']
@@ -604,8 +604,6 @@ def imprimir_parametros(qtdes):
         string_final = " ".join(strings_perfis)
 
         RELATORIO += f"\n{MATRIZ_UNIDADES[unidade][0]:6s}   | " + string_final \
-            + f"  {((qtdes[unidade][4] + qtdes[unidade][5]) / total_unidade)*100:5.2f}% |" \
-            + f"  {((qtdes[unidade][6] + qtdes[unidade][7]) / total_unidade)*100:5.2f}% |" \
             + f"  {MATRIZ_UNIDADES[unidade][1] / total_unidade:7.3f} |"
 
     # Totais
