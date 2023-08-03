@@ -294,48 +294,73 @@ def otimizar(modo, arquivo_saida, stdout):
 def imprimir_resultados(qtdes):
     """Imprime resultados da quantidade de cada perfil em cada unidade"""
     print("Resultados:")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
+    borda_cabecalho = "---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
+    print(borda_cabecalho)
     print("Unidade  |  " + "  ".join([f"{i: >3}" for i in [f"x{p+1}" for p in range(N_PERFIS)]]) +
           " | Total |   P-Eq  |   Tempo  | Tempo/prof |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
+    print(borda_cabecalho)
+    # Uma linha por unidade
     for unidade in range(N_UNIDADES):
+        total = np.sum(qtdes[unidade])
+        peq = np.sum(qtdes[unidade]*MATRIZ_PEQ)
+        tempo = np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2]
         print(f"{MATRIZ_UNIDADES[unidade][0]:6s}   | "
-              + " ".join([f"{qtdes[unidade][p]:4d}" for p in range(N_PERFIS)])
-        #                             Total                      P-Eq                                    Tempo                 - horas de orientação                                     Tempo/prof
-        + f" |  {np.sum(qtdes[unidade]):4d} | {np.sum(qtdes[unidade]*MATRIZ_PEQ):7.2f} |  {np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2]:7.2f} |    {(np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2])/np.sum(qtdes[unidade]):7.3f} |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
+            + " ".join([f"{qtdes[unidade][p]:4d}" for p in range(N_PERFIS)])
+            + f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |")
+
+    # Totais
+    print(borda_cabecalho)
+    total = np.sum(qtdes)
+    peq = np.sum(qtdes*MATRIZ_PEQ)
+    tempo = np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
     print("Total    | " + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
-    #            Total                      P-Eq                                     Tempo      -  horas de orientação                                               Tempo/prof
-    + f" |  {np.sum(qtdes):4d} | {np.sum(qtdes*MATRIZ_PEQ):7.2f} |  {np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]:7.2f} |    {(np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2])/np.sum(qtdes):7.3f} |")
-    print("---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+")
+        + f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |")
+    print(borda_cabecalho)
     print("")
 
 #-----------------------------------------------------------------------------------------
 def imprimir_parametros(qtdes):
     """Imprime os dados de entrada e os resultados obtidos"""
     print("Parâmetros:")
-    print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+    borda_cabecalho = "---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+"
+    print(borda_cabecalho)
     print("Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. |   40h   |   20h   | ch media |")
-    print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+    print(borda_cabecalho)
     # Formatos dos números - tem que ser tudo como float, pois ao importar os valores de
     # professor-equivalente, a MATRIZ_PERFIS fica toda como float
     formatos =          ['4.0f', '7.2f', '4.0f', '3.0f', '3.0f']
     formatosdiferenca = ['3.0f', '7.2f', '4.0f', '2.0f', '2.0f']
+
+    # Uma linha por unidade
     for unidade in range(N_UNIDADES):
-        print(f"{MATRIZ_UNIDADES[unidade][0]:6s}   | "
-        + " ".join([f"{np.sum(qtdes[unidade]*MATRIZ_PERFIS[p]):{formatos[p]}} (+{(np.sum(qtdes[unidade]*MATRIZ_PERFIS[p]) - MATRIZ_UNIDADES[unidade][p+1]):{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)])
+        total_unidade = np.sum(qtdes[unidade])
+        valores_perfis = [np.sum(qtdes[unidade]*MATRIZ_PERFIS[p]) for p in range(N_RESTRICOES)]
+        diferencas = [valores_perfis[p] - MATRIZ_UNIDADES[unidade][p+1] for p in range(N_RESTRICOES)]
+        strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} " \
+                          f"(+{diferencas[p]:{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)]
+        string_final = " ".join(strings_perfis)
+
+        print(f"{MATRIZ_UNIDADES[unidade][0]:6s}   | " + string_final
         + f"  {((qtdes[unidade][4] + qtdes[unidade][5]) / np.sum(qtdes[unidade]))*100:5.2f}% |" #40h
         + f"  {((qtdes[unidade][6] + qtdes[unidade][7]) / np.sum(qtdes[unidade]))*100:5.2f}% |" #20h
         + f"  {MATRIZ_UNIDADES[unidade][1] / np.sum(qtdes[unidade]):7.3f} |"
         )
-    print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
-    print("Total    | "
-    + " ".join([f"{np.sum(qtdes*MATRIZ_PERFIS[p]):{formatos[p]}} (+{np.sum(qtdes*MATRIZ_PERFIS[p]) - int(np.sum(MATRIZ_UNIDADES, axis=0)[p+1]):{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)])
+
+    # Totais
+    total = np.sum(qtdes)
+    valores_perfis = [np.sum(qtdes*MATRIZ_PERFIS[p]) for p in range(N_RESTRICOES)]
+    diferencas = [valores_perfis[p] - int(np.sum(MATRIZ_UNIDADES, axis=0)[p+1]) for p in range(N_RESTRICOES)]
+    strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} " \
+                      f"(+{diferencas[p]:{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)]
+    string_final = " ".join(strings_perfis)
+
+    print(borda_cabecalho)
+    print("Total    | " + string_final
     + f"  {(np.sum(qtdes, axis=0)[4] + np.sum(qtdes, axis=0)[5]) / np.sum(qtdes)*100:5.2f}% |"
     + f"  {(np.sum(qtdes, axis=0)[6] + np.sum(qtdes, axis=0)[7]) / np.sum(qtdes)*100:5.2f}% |"
     + f"  {np.sum(MATRIZ_UNIDADES, axis=0)[1]/np.sum(qtdes):7.3f} |"
     )
-    print("---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+")
+    print(borda_cabecalho)
     print()
 
 #### fim das funções ####

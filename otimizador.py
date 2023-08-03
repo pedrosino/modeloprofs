@@ -573,12 +573,13 @@ def imprimir_resultados(qtdes):
             + f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
 
     # Totais
-    RELATORIO += borda_cabecalho
-    RELATORIO += "\nTotal    | " \
-        + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
     total = np.sum(qtdes)
     peq = np.sum(qtdes*MATRIZ_PEQ)
     tempo = np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
+
+    RELATORIO += borda_cabecalho
+    RELATORIO += "\nTotal    | " \
+        + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
     RELATORIO += f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
     RELATORIO += borda_cabecalho + "\n"
 
