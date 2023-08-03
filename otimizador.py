@@ -556,12 +556,13 @@ def imprimir_resultados(qtdes):
     """Imprime resultados da quantidade de cada perfil em cada unidade"""
     global RELATORIO
     RELATORIO += "\nResultados:"
+    borda_cabecalho = "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
     # Cabeçalho
-    RELATORIO += "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
+    RELATORIO += borda_cabecalho
     RELATORIO += "\nUnidade  |  " \
         + "  ".join([f"{i: >3}" for i in [f"x{p+1}" for p in range(N_PERFIS)]]) \
         + " | Total |   P-Eq  |   Tempo  | Tempo/prof |"
-    RELATORIO += "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
+    RELATORIO += borda_cabecalho
     # Uma linha por unidade
     for unidade in range(N_UNIDADES):
         total = np.sum(qtdes[unidade])
@@ -572,14 +573,14 @@ def imprimir_resultados(qtdes):
             + f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
 
     # Totais
-    RELATORIO += "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
+    RELATORIO += borda_cabecalho
     RELATORIO += "\nTotal    | " \
         + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
     total = np.sum(qtdes)
     peq = np.sum(qtdes*MATRIZ_PEQ)
     tempo = np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
     RELATORIO += f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
-    RELATORIO += "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+\n"
+    RELATORIO += borda_cabecalho + "\n"
 
 
 def imprimir_parametros(qtdes):
