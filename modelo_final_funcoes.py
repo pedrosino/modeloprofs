@@ -476,6 +476,8 @@ else:
 
         # Imprime resultados
         imprimir_resultados(qtdes_modo)
+        # Imprime parâmetros
+        imprimir_parametros(qtdes_modo)
         print("------------------------------------------------------------")
         print("")
 
