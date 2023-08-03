@@ -586,9 +586,21 @@ def imprimir_parametros(qtdes):
     """Imprime os dados de entrada e os resultados obtidos"""
     global RELATORIO
     RELATORIO += "\nParâmetros:"
-    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+----------+"
-    RELATORIO += "\nUnidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |"
-    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+----------+"
+    borda_cabecalho = "\n---------+-------------+--------------------+--------------+-----------+-----------+----------+"
+    linha_cabecalho = "\nUnidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |"
+    # Se houver restrições em algum perfil, acrescenta colunas
+    if len(RESTRICOES_PERCENTUAIS) > 0:
+        for restricao in RESTRICOES_PERCENTUAIS:
+            # Acrescenta ao cabeçalho
+            perfis = restricao['perfis']
+            texto = 'P ' + ','.join(str(p+1) for p in perfis)
+            texto = texto.center(11) + '|'
+            borda_cabecalho += "-----------+"
+            linha_cabecalho += texto
+
+    RELATORIO += borda_cabecalho
+    RELATORIO += linha_cabecalho
+    RELATORIO += borda_cabecalho
     # Formatos dos números - tem que ser tudo como float, pois ao importar os valores de
     # professor-equivalente, a MATRIZ_PERFIS fica toda como float
     formatos =          ['4.0f', '7.2f', '4.0f', '3.0f', '3.0f']
@@ -605,6 +617,14 @@ def imprimir_parametros(qtdes):
 
         RELATORIO += f"\n{MATRIZ_UNIDADES[unidade][0]:6s}   | " + string_final \
             + f"  {MATRIZ_UNIDADES[unidade][1] / total_unidade:7.3f} |"
+        # Se houver restrições em algum perfil, acrescenta colunas
+        if len(RESTRICOES_PERCENTUAIS) > 0:
+            for restricao in RESTRICOES_PERCENTUAIS:
+                perfis = restricao['perfis']
+                # Calcula percentuais
+                quantidade = sum(qtdes[unidade][perfil] for perfil in perfis)
+                perc_unidade = quantidade / total_unidade * 100
+                RELATORIO += f"   {perc_unidade:6.2f}% |"
 
     # Totais
     total = np.sum(qtdes)
@@ -614,12 +634,19 @@ def imprimir_parametros(qtdes):
                       f"(+{diferencas[p]:{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)]
     string_final = " ".join(strings_perfis)
 
-    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+"
+    RELATORIO += borda_cabecalho
     RELATORIO += "\nTotal    | " + string_final \
-        + f"  {(np.sum(qtdes, axis=0)[4] + np.sum(qtdes, axis=0)[5]) / total*100:5.2f}% |" \
-        + f"  {(np.sum(qtdes, axis=0)[6] + np.sum(qtdes, axis=0)[7]) / total*100:5.2f}% |" \
         + f"  {np.sum(MATRIZ_UNIDADES, axis=0)[1]/total:7.3f} |"
-    RELATORIO += "\n---------+-------------+--------------------+--------------+-----------+-----------+---------+---------+----------+\n"
+    # Se houver restrições em algum perfil, acrescenta colunas
+    if len(RESTRICOES_PERCENTUAIS) > 0:
+        for restricao in RESTRICOES_PERCENTUAIS:
+            perfis = restricao['perfis']
+            # Quantidade total
+            quantidade_total = np.sum(qtdes[:, perfis])
+            print(quantidade_total)
+            perc_total = quantidade_total / total * 100
+            RELATORIO += f"   {perc_total:6.2f}% |"
+    RELATORIO += borda_cabecalho + "\n"
 
 
 def exportar_txt():
@@ -663,7 +690,7 @@ def clique_ok(opcoes, var_sinal, var_percentual, janela, var_erro, label_erro):
     #print(f"{sinal} {percentual}%")
     # Registra a restrição definida
     texto_perfis = var_perfis.get()
-    texto_perfis += '. Perfis (' + ','.join(str(e) for e in escolhidos) \
+    texto_perfis += '. Perfis (' + ','.join(str(e+1) for e in escolhidos) \
         + f') {sinal} {percentual}%\n'
     var_perfis.set(texto_perfis)
 
