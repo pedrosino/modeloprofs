@@ -4,6 +4,7 @@ Gestão Organizacional, da Faculdade de Gestão e Negócios, Universidade Federa
 por Pedro Santos Guimarães, em 2023"""
 #from datetime import datetime
 #mport sys
+from datetime import datetime
 import math
 import tkinter as tk
 from tkinter import ttk
@@ -23,6 +24,7 @@ PESOS = None
 NOMES_RESTRICOES = None
 QTDES_FINAL = None
 RELATORIO = ""
+RESTRICOES_PERCENTUAIS = []
 
 # Dados do problema
 N_PERFIS = None
@@ -80,6 +82,7 @@ def verifica_executar():
     else:
         botaoExecutar['state'] = tk.DISABLED
 
+
 def verifica_check_boxes():
     """Habilita ou desabilita os campos de texto conforme o checkbox"""
     if bool_minima.get():
@@ -101,6 +104,7 @@ def verifica_check_boxes():
         entrada_N_MAX_total['state'] = tk.NORMAL
     else:
         entrada_N_MAX_total['state'] = tk.DISABLED
+
 
 def carregar_arquivo():
     """Carrega os dados da planilha"""
@@ -134,10 +138,14 @@ def carregar_arquivo():
         grupo.grid(row=2, column=0, padx=10, pady=10)
         verifica_check_boxes()
 
+
 def executar():
     """Executa a otimização"""
     global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL,\
         TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO
+
+    # Limpa relatório
+    RELATORIO = f"Relatório da execução do otimizador\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
 
     # Mostra resultados
     grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
@@ -172,12 +180,6 @@ def executar():
         MIN_TOTAL = False
         MAX_TOTAL = False
 
-    # Verifica porcentagens
-    #if P_QUARENTA > 1 or P_VINTE > 1 or P_QUARENTA < 0 or P_VINTE < 0:
-    #    print("Os percentuais especificados são inválidos. Essas opções foram desativadas.")
-    #    LIMITAR_QUARENTA = False
-    #    LIMITAR_VINTE = False
-
     ###grupo_resultados.grid()
 
     texto_resultado = f"Bem vindo!\nO modo escolhido foi {MODO_ESCOLHIDO}"
@@ -186,17 +188,6 @@ def executar():
 
     resultado.set(texto_resultado)
     root.update()
-
-    print("Bem vindo!")
-    print(f"O modo escolhido foi {MODO_ESCOLHIDO}")
-    if MODO_ESCOLHIDO == 'todos':
-        print("Primeiramente vamos definir os parâmetros para cada critério/objetivo")
-
-    # Arquivo de texto de saída
-    ##original_stdout = sys.stdout
-    ##filename = f"CBC_{MODO_ESCOLHIDO}_N={N_UNIDADES}_{datetime.now().strftime('%H-%M-%S')}.txt"
-    ##fileout =  open(filename, 'w', encoding='utf-8')
-    ##sys.stdout = fileout
 
     # Conforme o modo escolhido, faz só uma otimização ou todas
     if MODO_ESCOLHIDO != 'todos':
@@ -244,8 +235,8 @@ def executar():
         #                   d2
         #                   |
         # CH_MIN      = 12  --
-        numero_max = \
-            round(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MIN) if not MAX_TOTAL else N_MAX_TOTAL
+        numero_max = round(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MIN) \
+            if not MAX_TOTAL else N_MAX_TOTAL
         piores['num'] = numero_max
         piores['peq'] = numero_max*1.65
         piores['tempo'] = 0
@@ -272,6 +263,8 @@ def executar():
 
             # Imprime resultados
             imprimir_resultados(qtdes_modo)
+            # Imprime parâmetros
+            imprimir_parametros(qtdes_modo)
             RELATORIO += "\n------------------------------------------------------------\n"
 
         ##### -----------------Fim da primeira 'rodada'-----------------
@@ -281,7 +274,7 @@ def executar():
         ## Agora uma nova rodada do modelo usando os pesos e as listas de melhores e piores casos
 
         texto_resultado = resultado.get()
-        texto_resultado += f"\n\nModo 'todos': resolvendo ..."
+        texto_resultado += "\n\nModo 'todos': resolvendo ..."
         resultado.set(texto_resultado)
         root.update()
 
@@ -311,13 +304,6 @@ def executar():
     RELATORIO += "\n\n------------------Modelo:------------------"
     RELATORIO += f"\n{MODELOS[MODO_ESCOLHIDO]}"
 
-    #Imprime na tela
-    print(f"Situação: {MODELOS[MODO_ESCOLHIDO].status}, {LpStatus[MODELOS[MODO_ESCOLHIDO].status]}")
-    #objetivo = f"{MODELOS[MODO_ESCOLHIDO].objective.value():.4f}"
-    print(f"Objetivo: {resultado_final} {FORMATO_RESULTADO[MODO_ESCOLHIDO]}")
-    print(f"Resolvido em {MODELOS[MODO_ESCOLHIDO].solutionTime} segundos")
-    print("")
-
     texto_resultado = resultado.get()
     texto_resultado += f"\nSituação: {MODELOS[MODO_ESCOLHIDO].status}, " \
         f"{LpStatus[MODELOS[MODO_ESCOLHIDO].status]}"
@@ -339,6 +325,7 @@ def executar():
 
     # Ajusta a altura do widget para mostrar todas as linhas
     text_aba.config(height=num_linhas, width=8 + N_PERFIS*5)
+
 
 def otimizar(modo, piores, melhores):
     """Função que faz a otimização conforme o modo escolhido"""
@@ -385,15 +372,37 @@ def otimizar(modo, piores, melhores):
                         <= MATRIZ_UNIDADES[unidade][restricao+1], \
                         NOMES_RESTRICOES[restricao] + " " + MATRIZ_UNIDADES[unidade][0]
 
-    # Restrições de regimes de trabalho
-    if LIMITAR_QUARENTA:
-        for unidade in range(N_UNIDADES):
-            MODELOS[modo] += saida[unidade][4] + saida[unidade][5] - P_QUARENTA*lpSum(saida[unidade]) \
-                <= 0, f"40 horas {MATRIZ_UNIDADES[unidade][0]} <= 10%"
-    if LIMITAR_VINTE:
-        for unidade in range(N_UNIDADES):
-            MODELOS[modo] += saida[unidade][6] + saida[unidade][7] - P_VINTE*lpSum(saida[unidade]) \
-                <= 0, f"20 horas {MATRIZ_UNIDADES[unidade][0]} <= 20%"
+    # Restrições de percentual por perfil
+    if len(RESTRICOES_PERCENTUAIS) > 0:
+        for restricao in RESTRICOES_PERCENTUAIS:
+            # Calcula coeficientes dos perfis
+            percentual = restricao['percentual']
+            perfis = restricao['perfis']
+            sinal = restricao['sinal']
+            coeficientes = [1 - percentual if p in perfis else percentual*-1 for p in range(N_PERFIS)]
+            #coeficientes = [restricao['percentual']*-1] * N_PERFIS
+            #for p in restricao['perfis']:
+            #    coeficientes[p] = 1 - restricao['percentual']
+
+            # Nome da restrição
+            nome_restricao = "Perfis (" + ",".join(str(p) for p in perfis) \
+                + f") {sinal} {percentual*100}% "
+            # Monta a restrição conforme o sinal escolhido
+            for unidade in range(N_UNIDADES):
+                match sinal:
+                    case '<':
+                        MODELOS[modo] += lpSum(saida[unidade]*coeficientes) < 0, \
+                            nome_restricao + MATRIZ_UNIDADES[unidade][0]
+                    case '<=':
+                        MODELOS[modo] += lpSum(saida[unidade]*coeficientes) <= 0, \
+                            nome_restricao + MATRIZ_UNIDADES[unidade][0]
+                    case '>':
+                        MODELOS[modo] += lpSum(saida[unidade]*coeficientes) > 0, \
+                            nome_restricao + MATRIZ_UNIDADES[unidade][0]
+                    case '>=':
+                        MODELOS[modo] += lpSum(saida[unidade]*coeficientes) >= 0, \
+                            nome_restricao + MATRIZ_UNIDADES[unidade][0]
+
 
     # Restrições de máximo e mínimo por unidade -> carga horária média
     # ------------------
@@ -635,11 +644,97 @@ def exportar_planilha():
         data_frame.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
         data_frame.to_excel(nome_arquivo, sheet_name='Resultados', index=False, engine="openpyxl")
 
+
+def clique_ok(opcoes, var_sinal, var_percentual, janela, var_erro, label_erro):
+    """Verifica e captura os valores selecionados"""
+    escolhidos = [i for i, opcao in enumerate(opcoes) if opcao.get() == 1]
+
+    sinal = var_sinal.get()
+    if sinal not in ['<', '<=', '>', '>=']:
+        var_erro.set('Sinal inválido!')
+        label_erro.config(bg='#f0a869', fg='#87190b')
+        return
+
+    percentual = var_percentual.get()
+    if percentual <= 0 or percentual > 100:
+        var_erro.set('Percentual deve ser maior que 0 e menor ou igual a 100.')
+        label_erro.config(bg='#f0a869', fg='#87190b')
+        return
+
+    #print("Selecionados:", escolhidos)
+    #print(f"{sinal} {percentual}%")
+    # Registra a restrição definida
+    texto_perfis = var_perfis.get()
+    texto_perfis += '. Perfis (' + ','.join(str(e) for e in escolhidos) \
+        + f') {sinal} {percentual}%\n'
+    var_perfis.set(texto_perfis)
+
+    # Acrescenta à lista de restrições
+    nova_restricao = {
+        'perfis' : escolhidos,
+        'sinal' : sinal,
+        'percentual' : percentual/100
+    }
+    RESTRICOES_PERCENTUAIS.append(nova_restricao)
+
+    # Fecha janela
+    janela.destroy()
+
+
+def janela_perfis():
+    """Abre uma janela para o usuário selecionar os perfis que deseja limitar"""
+    #global janela_nova#, opcoes, var_sinal, var_percentual
+    janela_nova = tk.Toplevel(root)
+    janela_nova.geometry("+320+220")
+
+    tk.Label(janela_nova, text="Selecione os perfis:").grid(row=0, column=0)
+
+    # Lista de perfis
+    grupo_perfis = ttk.LabelFrame(janela_nova)
+    grupo_perfis.grid(row=1, column=0)
+    lista_opcoes = []
+    for perfil in range(8):
+        texto = f"Perfil {perfil+1}"
+        var = tk.IntVar()
+        check_button = tk.Checkbutton(grupo_perfis, text=texto, variable=var)
+        check_button.pack(anchor='w')
+        lista_opcoes.append(var)
+
+    # Sinal da operação
+    grupo_sinal = ttk.LabelFrame(janela_nova)
+    grupo_sinal.grid(row=1, column=1)
+    label_sinal = tk.Label(grupo_sinal, text="A soma das quantidades desses perfis deverá ser")
+    label_sinal.grid(row=0, column=0)
+    variavel_sinal = tk.StringVar()
+    combo_sinal = ttk.Combobox(grupo_sinal, textvariable=variavel_sinal,
+                               values=['<', '<=', '>', '>='], state="readonly")
+    combo_sinal.grid(row=1, column=0, sticky='w')
+
+    # Valor do percentual
+    variavel_percentual = tk.IntVar()
+    texto_percentual = tk.Entry(grupo_sinal, textvariable=variavel_percentual, width=5)
+    texto_percentual.grid(row=1, column=1, sticky='w')
+    tk.Label(grupo_sinal, text="%").grid(row=1, column=2, sticky='w')
+
+    # Botões
+    botao_salvar = tk.Button(janela_nova, text="Salvar",
+        command=lambda: clique_ok(lista_opcoes, variavel_sinal, variavel_percentual, janela_nova, var_erro, texto_erro))
+    botao_salvar.grid(row=2, column=1, sticky='w')
+    botao_cancelar = tk.Button(janela_nova, text="Cancelar", command=lambda: janela_nova.destroy())
+    botao_cancelar.grid(row=2, column=1, sticky='e')
+
+    # Label para mensagem de erro
+    var_erro = tk.StringVar()
+    texto_erro = tk.Label(janela_nova, name="erro", textvariable=var_erro)
+    texto_erro.grid(row=3, column=0, columnspan=3)
+
 ### Fim das funçõoes ###
 
 root = tk.Tk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
-#root.geometry("1200x600")
+# From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
+root.geometry("+300+200")
+root.minsize(600,400)
 
 # Título
 textoTitulo = tk.Label(root, text="Bem vindo.", anchor="w", justify="left",
@@ -733,7 +828,15 @@ entrada_tempo_limite.grid(row=5, column=1, padx=10, pady=10)
 
 ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1)
 
-# Combobox
+# Limitações nos perfis
+botao_perfil = tk.Button(grupo, text="Limitar perfis", command=janela_perfis)
+botao_perfil.grid(row=5, column=3, padx=10, pady=10)
+
+var_perfis = tk.StringVar()
+label_perfis = ttk.Label(grupo, textvariable=var_perfis)
+label_perfis.grid(row=5, column=4, padx=10, pady=10)
+
+# Combobox critério
 label1 = ttk.Label(grupo, text="Critério:")
 label1.grid(row=6, column=0, padx=10, pady=10)
 
