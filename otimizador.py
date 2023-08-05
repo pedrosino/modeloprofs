@@ -130,7 +130,7 @@ def carregar_arquivo():
     # Lê critérios do AHP
     df_criterios = pd.read_excel(arquivo, sheet_name='criterios', usecols="A:B").dropna()
     pesos_lidos = df_criterios.to_numpy()
-    PESOS = np.delete(pesos_lidos, 0, axis=1).transpose()
+    PESOS = np.delete(pesos_lidos, 0, axis=1).transpose().reshape(4)
 
     # Se a importação teve sucesso
     if(len(MATRIZ_UNIDADES) and len(MATRIZ_PERFIS)):
@@ -180,8 +180,6 @@ def executar():
         MIN_TOTAL = False
         MAX_TOTAL = False
 
-    ###grupo_resultados.grid()
-
     texto_resultado = f"Bem vindo!\nO modo escolhido foi {MODO_ESCOLHIDO}"
     if MODO_ESCOLHIDO == 'todos':
         texto_resultado += "\nPrimeiramente vamos definir os parâmetros para cada critério/objetivo"
@@ -191,6 +189,10 @@ def executar():
 
     # Conforme o modo escolhido, faz só uma otimização ou todas
     if MODO_ESCOLHIDO != 'todos':
+        texto_resultado = resultado.get()
+        texto_resultado += "\nResolvendo ..."
+        resultado.set(texto_resultado)
+        root.update()
         resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, None, None)
     else:
         # Critérios/modos
@@ -267,6 +269,13 @@ def executar():
             imprimir_parametros(qtdes_modo)
             RELATORIO += "\n------------------------------------------------------------\n"
 
+            if modo_usado == 'ch':
+                # Imprime médias e desvios
+                for variable in MODELOS[modo_usado].variables():
+                    nomes_busca = ['modulo', 'media']
+                    if any(nome in variable.name for nome in nomes_busca):
+                        RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
+
         ##### -----------------Fim da primeira 'rodada'-----------------
         RELATORIO += f"\nMelhores: {melhores}\nPiores: {piores}\n"
         RELATORIO += "------------------------------------------------------------"
@@ -297,7 +306,8 @@ def executar():
         RELATORIO += f"\nPESOS: {PESOS}"
         # Imprime médias e desvios
         for variable in MODELOS['todos'].variables():
-            if variable.name[0] == 'p' or variable.name[0] == 'z':
+            nomes_busca = ['p_', 'modulo', 'media']
+            if any(nome in variable.name for nome in nomes_busca):
                 RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
 
     # Imprime o modelo completo
@@ -308,7 +318,7 @@ def executar():
     texto_resultado += f"\nSituação: {MODELOS[MODO_ESCOLHIDO].status}, " \
         f"{LpStatus[MODELOS[MODO_ESCOLHIDO].status]}"
     texto_resultado += f"\nObjetivo: {resultado_final} {FORMATO_RESULTADO[MODO_ESCOLHIDO]}"
-    texto_resultado += f"\nResolvido em {MODELOS[MODO_ESCOLHIDO].solutionTime} segundos"
+    texto_resultado += f"\nResolvido em {MODELOS[MODO_ESCOLHIDO].solutionTime:.3f} segundos"
 
     resultado.set(texto_resultado)
     root.update()
@@ -417,8 +427,8 @@ def otimizar(modo, piores, melhores):
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
         # que tem 19 aulas apenas
         #if minima:
-        #    MODELOS[modo] += CH_MIN*lpSum(saida[u]) <= MATRIZ_UNIDADES[u][1], \
-        # f"{MATRIZ_UNIDADES[u][0]}_chmin: {int(MATRIZ_UNIDADES[u][1]/CH_MIN)}"
+        #    MODELOS[modo] += CH_MIN*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
+        # f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {int(MATRIZ_UNIDADES[unidade][1]/CH_MIN)}"
 
     # Restrições no geral
     if maxima:
@@ -438,9 +448,10 @@ def otimizar(modo, piores, melhores):
     if modo in ('ch', 'todos'):
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
-        desvios = LpVariable.matrix("zd", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
-        medias = LpVariable.matrix("zm", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
-        media_geral = LpVariable("zmg", cat="Continuous", lowBound=0)
+        modulos = LpVariable.matrix("modulo", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
+        consts = LpVariable.matrix("b", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Binary")
+        medias = LpVariable.matrix("media", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
+        media_geral = LpVariable("media_geral", cat="Continuous", lowBound=0)
 
         # Como a média seria uma função não linear (aulas/professores), foi feita uma
         # aproximação com uma reta que passa pelos dois pontos extremos dados pelos
@@ -453,7 +464,7 @@ def otimizar(modo, piores, melhores):
         coef = (CH_MIN - CH_MAX) / (x_1 - x_0)
 
         # O cálculo da média é inserido no modelo como uma restrição
-        MODELOS[modo] += media_geral == coef*lpSum(saida[:N_UNIDADES]) + CH_MIN + CH_MAX, "Media geral"
+        MODELOS[modo] += media_geral == coef*lpSum(saida) + CH_MIN + CH_MAX, "Media geral"
 
         for unidade in range(N_UNIDADES):
             x1u = MATRIZ_UNIDADES[unidade][1] / CH_MIN
@@ -465,10 +476,28 @@ def otimizar(modo, piores, melhores):
             # Cálculo do desvio
             # O desvio é dado pelo módulo da subtração, porém o PuLP não aceita a função abs()
             # Assim, são colocadas duas restrições, uma usando o valor positivo e outra o negativo
-            MODELOS[modo] += desvios[unidade] >= medias[unidade] - media_geral, \
-                f"{MATRIZ_UNIDADES[unidade][0]}_up"
-            MODELOS[modo] += desvios[unidade] >= -1*(medias[unidade] - media_geral), \
-                f"{MATRIZ_UNIDADES[unidade][0]}_low"
+            ## https://optimization.cbe.cornell.edu/index.php?title=Optimization_with_absolute_values
+            ## https://lpsolve.sourceforge.net/5.5/absolute.htm
+            #MODELOS[modo] += desvios[unidade] >= medias[unidade] - media_geral, \
+            #    f"{MATRIZ_UNIDADES[unidade][0]}_up"
+            #MODELOS[modo] += desvios[unidade] >= -1*(medias[unidade] - media_geral), \
+            #    f"{MATRIZ_UNIDADES[unidade][0]}_low"
+
+            m_grande = 10000
+            # desvio
+            #MODELOS[modo] += desvios[unidade] == medias[unidade] - media_geral, \
+            #    f"{MATRIZ_UNIDADES[unidade][0]}_desvio"
+            # X + M * B >= x'
+            MODELOS[modo] += medias[unidade] - media_geral + m_grande*consts[unidade] >= modulos[unidade], \
+                f"X + M * B >= x' {MATRIZ_UNIDADES[unidade][0]}"
+            # -X + M * (1-B) >= x'
+            MODELOS[modo] += -1*(medias[unidade] - media_geral) + m_grande*(1-consts[unidade]) >= modulos[unidade], \
+                f"-X + M * (1-B) >= x' {MATRIZ_UNIDADES[unidade][0]}"
+            # modulo
+            MODELOS[modo] += modulos[unidade] >= medias[unidade] - media_geral, \
+                f"{MATRIZ_UNIDADES[unidade][0]}_mod1"
+            MODELOS[modo] += modulos[unidade] >= -1*(medias[unidade] - media_geral), \
+                f"{MATRIZ_UNIDADES[unidade][0]}_mod2"
 
     # Modo com todos os critérios
     if modo == 'todos':
@@ -483,7 +512,7 @@ def otimizar(modo, piores, melhores):
             MODELOS[modo] += pontuacoes[0] == (lpSum(saida) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
         MODELOS[modo] += pontuacoes[1] == (lpSum(saida*MATRIZ_PEQ) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq"
         MODELOS[modo] += pontuacoes[2] == (lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
-        MODELOS[modo] += pontuacoes[3] == (lpSum(desvios[:N_UNIDADES])/N_UNIDADES - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
+        MODELOS[modo] += pontuacoes[3] == (lpSum(modulos[:N_UNIDADES])/N_UNIDADES - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
 
     # -- Função objetivo --
     if modo == 'num':
@@ -496,7 +525,7 @@ def otimizar(modo, piores, melhores):
         MODELOS[modo] += lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
     # No modo de equilíbrio a medida de desempenho é o desvio médio
     elif modo == 'ch':
-        MODELOS[modo] += lpSum(desvios[:N_UNIDADES])/N_UNIDADES
+        MODELOS[modo] += lpSum(modulos[:N_UNIDADES])/N_UNIDADES
     elif modo == 'todos':
         # O objetivo é maximimizar a pontuação dada pela soma de cada
         # pontuação multiplicada por seu peso
@@ -520,13 +549,13 @@ def otimizar(modo, piores, melhores):
         novo_limite = TEMPO_LIMITE
 
     # Resolver o modelo
-    MODELOS[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=novo_limite))
+    MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=novo_limite))
 
     # Resultados
     RELATORIO += f"\nSituação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}"
     # Para cada critério o resultado é em um formato diferente
     if modo == 'ch':
-        objetivo = MODELOS[modo].objective.value()
+        objetivo = round(MODELOS[modo].objective.value(), 4)
     elif modo == 'peq':
         objetivo = round(MODELOS[modo].objective.value(), 2)
     elif modo == 'num':
@@ -657,7 +686,6 @@ def exportar_txt():
         initialfile="Relatório.txt", filetypes=[("Arquivos de Texto", "*.txt")])
     if nome_arquivo:
         with open(nome_arquivo, "w", encoding='UTF-8') as arquivo:
-            #arquivo.write(text_aba.get("1.0", tk.END))
             arquivo.write(RELATORIO)
 
 
