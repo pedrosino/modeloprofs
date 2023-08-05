@@ -788,7 +788,7 @@ def janela_perfis():
 root = tk.Tk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
-root.geometry("+300+200")
+root.geometry("+300+100")
 root.minsize(600,400)
 
 # Título
@@ -913,7 +913,7 @@ grupo_resultados = ttk.LabelFrame(root, text="Resultados")
 grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
 
 resultado = tk.StringVar()
-label_resultado = tk.Label(grupo_resultados, textvariable=resultado)
+label_resultado = tk.Label(grupo_resultados, textvariable=resultado, anchor="w", justify="left")
 label_resultado.grid(row=0, column=0, padx=10, pady=10)
 
 label_aba = tk.Label(grupo_resultados, text="Distribuição:")
