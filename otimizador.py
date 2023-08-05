@@ -48,7 +48,9 @@ FORMATO_RESULTADO = {}
 FORMATO_RESULTADO['num'] = 'professores'
 FORMATO_RESULTADO['peq'] = 'prof-equivalente'
 FORMATO_RESULTADO['tempo'] = 'horas'
+FORMATO_RESULTADO['tempo-reverso'] = 'horas'
 FORMATO_RESULTADO['ch'] = 'aulas/prof'
+FORMATO_RESULTADO['ch-reverso'] = 'aulas/prof'
 FORMATO_RESULTADO['todos'] = '(na escala de 0 a 1)'
 
 # Restrição de carga horária média máxima por unidade
@@ -112,6 +114,9 @@ def carregar_arquivo():
            N_PERFIS, PESOS, NOMES_RESTRICOES, CONECTORES
     # Importa dados do arquivo
     arquivo = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
+
+    nomeArquivo.set(arquivo.split("/")[-1])
+    root.update()
 
     df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
     MATRIZ_UNIDADES = df_todas['unidades'].to_numpy()
@@ -196,7 +201,7 @@ def executar():
         resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, None, None)
     else:
         # Critérios/modos
-        modos = np.array(['num', 'peq', 'tempo', 'ch'])
+        modos = np.array(['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso'])
 
         # Lista dos melhores e piores casos
         melhores = {}
@@ -241,8 +246,8 @@ def executar():
             if not MAX_TOTAL else N_MAX_TOTAL
         piores['num'] = numero_max
         piores['peq'] = numero_max*1.65
-        piores['tempo'] = 0
-        piores['ch'] = (CH_MAX - CH_MIN)/2
+        ##piores['tempo'] = 0
+        ##piores['ch'] = (CH_MAX - CH_MIN)/2
 
         # Percorre os critérios
         for modo_usado in modos:
@@ -255,11 +260,19 @@ def executar():
             resultado_modo, qtdes_modo = otimizar(modo_usado, piores, melhores)
 
             # Registra o resultado na lista de melhores casos
-            melhores[modo_usado] = resultado_modo
+            if 'reverso' not in modo_usado:
+                melhores[modo_usado] = resultado_modo
+            # ou na de piores casos
+            else:
+                piores[modo_usado.split('-')[0]] = resultado_modo
 
             texto_resultado = resultado.get()
-            texto_resultado += f"\nTerminado. Resultado: {melhores[modo_usado]}, "\
-                f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
+            if 'reverso' not in modo_usado:
+                texto_resultado += f"\nTerminado. Resultado: {melhores[modo_usado]}, "\
+                    f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
+            else:
+                texto_resultado += f"\nTerminado. Resultado: {piores[modo_usado.split('-')[0]]}, "\
+                    f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
             resultado.set(texto_resultado)
             root.update()
 
@@ -269,7 +282,8 @@ def executar():
             imprimir_parametros(qtdes_modo)
             RELATORIO += "\n------------------------------------------------------------\n"
 
-            if modo_usado == 'ch':
+            #if modo_usado == 'ch':
+            if 'ch' in modo_usado:
                 # Imprime médias e desvios
                 for variable in MODELOS[modo_usado].variables():
                     nomes_busca = ['modulo', 'media']
@@ -352,15 +366,16 @@ def otimizar(modo, piores, melhores):
     minima = LIMITAR_CH_MINIMA
     maxima = LIMITAR_CH_MAXIMA
     # Ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
-    if MODO_ESCOLHIDO == 'todos' or modo == 'ch':
+    if MODO_ESCOLHIDO == 'todos' or 'ch' in modo:#modo == 'ch':
         minima = True
         maxima = True
     # No modo tempo é necessário estabelecer a carga horária mínima (ou número máximo)
-    if modo == 'tempo':
+    #if modo == 'tempo':
+    if 'tempo' in modo:
         minima = True
 
     # -- Definir o modelo --
-    if modo in ('tempo', 'todos'):
+    if modo in ('tempo', 'ch-reverso', 'todos'):
         MODELOS[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMaximize)
     else:
         MODELOS[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
@@ -445,7 +460,7 @@ def otimizar(modo, piores, melhores):
         MODELOS[modo] += lpSum(saida) >= N_MIN_TOTAL, f"TotalMin: {N_MIN_TOTAL}"
 
     # Modo de equilíbrio da carga horária
-    if modo in ('ch', 'todos'):
+    if modo in ('ch', 'ch-reverso', 'todos'):
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
         modulos = LpVariable.matrix("modulo", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
@@ -521,10 +536,12 @@ def otimizar(modo, piores, melhores):
         MODELOS[modo] += lpSum(saida*MATRIZ_PEQ)
     # No modo tempo é necessário deduzir do tempo calculado as horas
     # que serão destinadas às orientações
-    elif modo == 'tempo':
+    #elif modo == 'tempo':
+    elif 'tempo' in modo:
         MODELOS[modo] += lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
     # No modo de equilíbrio a medida de desempenho é o desvio médio
-    elif modo == 'ch':
+    #elif modo == 'ch':
+    elif 'ch' in modo:
         MODELOS[modo] += lpSum(modulos[:N_UNIDADES])/N_UNIDADES
     elif modo == 'todos':
         # O objetivo é maximimizar a pontuação dada pela soma de cada
@@ -554,13 +571,15 @@ def otimizar(modo, piores, melhores):
     # Resultados
     RELATORIO += f"\nSituação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}"
     # Para cada critério o resultado é em um formato diferente
-    if modo == 'ch':
+    #if modo == 'ch':
+    if 'ch' in modo:
         objetivo = round(MODELOS[modo].objective.value(), 4)
     elif modo == 'peq':
         objetivo = round(MODELOS[modo].objective.value(), 2)
     elif modo == 'num':
         objetivo = int(MODELOS[modo].objective.value())
-    elif modo == 'tempo':
+    #elif modo == 'tempo':
+    elif 'tempo' in modo:
         objetivo = MODELOS[modo].objective.value()
     elif modo == 'todos':
         objetivo = round(MODELOS[modo].objective.value(), 4)
@@ -812,6 +831,11 @@ textoBotao.grid(row=1, column=0)
 # Botão para selecionar o arquivo
 botaoArquivo = ttk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arquivo)
 botaoArquivo.grid(row=1, column=1, padx=10, pady=10)
+
+# Label com nome do arquivo
+nomeArquivo = tk.StringVar()
+label_nome_arquivo = tk.Label(grupo_arq, textvariable=nomeArquivo)
+label_nome_arquivo.grid(row=1, column=2, padx=10, pady=10)
 
 # Grupo opções
 grupo = ttk.LabelFrame(root, text="Opções")
