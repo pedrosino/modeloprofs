@@ -788,7 +788,7 @@ def janela_perfis():
 root = tk.Tk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
-root.geometry("+300+200")
+root.geometry("+300+100")
 root.minsize(600,400)
 
 # Título
