@@ -225,29 +225,14 @@ def executar():
         # e registrar o valor ótimo obtido para ser a base da escala. Para esses dois critérios
         # a escala é invertida, ou seja, quanto mais professores, menor a pontuação.
         # No caso do critério 3 a lógica é inversa, quanto mais tempo disponível, melhor o
-        # cenário. O pior caso é quando não há tempo nenhum (valor 0), e o melhor caso deve
-        # ser determinado resolvendo o modelo usando esse critério.
+        # cenário. O melhor caso deve ser determinado resolvendo o modelo usando esse critério,
+        # e o pior caso fazendo uma otimização inversa.
         # Para o critério 4, o melhor caso é determinado pela solução inicial do modelo com
-        # este critério. O pior caso é quando metade das unidades estiver na carga horária
-        # máxima e a outra metade na mínima. A média geral seria o valor intermediário entre
-        # as duas e o desvio total é dado por N_UNIDADES*(CH_MAX - CH_MIN)/2
-        # Exemplo:
-        #
-        # CH_MAX      = 16  --   d1 = d2 = (CH_MAX - CH_MIN)/2
-        #                   |
-        #                   d1   desvio total = N_UNIDADES/2*d1 + N_UNIDADES/2*d2
-        #                   |
-        # média geral = 14  --   desvio total = N_UNIDADES*d1 = N_UNIDADES*(CH_MAX - CH_MIN)/2
-        #                   |
-        #                   d2
-        #                   |
-        # CH_MIN      = 12  --
+        # este critério e o pior caso também com uma otimização inversa.
         numero_max = round(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MIN) \
             if not MAX_TOTAL else N_MAX_TOTAL
         piores['num'] = numero_max
         piores['peq'] = numero_max*1.65
-        ##piores['tempo'] = 0
-        ##piores['ch'] = (CH_MAX - CH_MIN)/2
 
         # Percorre os critérios
         for modo_usado in modos:
@@ -280,27 +265,28 @@ def executar():
             imprimir_resultados(qtdes_modo)
             # Imprime parâmetros
             imprimir_parametros(qtdes_modo)
-            RELATORIO += "\n------------------------------------------------------------\n"
 
-            #if modo_usado == 'ch':
+            # Para os modos de carga horária, imprime as médias e desvios
             if 'ch' in modo_usado:
-                # Imprime médias e desvios
                 for variable in MODELOS[modo_usado].variables():
                     nomes_busca = ['modulo', 'media']
                     if any(nome in variable.name for nome in nomes_busca):
                         RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
+
+            RELATORIO += "\n------------------------------------------------------------\n"
 
         ##### -----------------Fim da primeira 'rodada'-----------------
         RELATORIO += f"\nMelhores: {melhores}\nPiores: {piores}\n"
         RELATORIO += "------------------------------------------------------------"
 
         ## Agora uma nova rodada do modelo usando os pesos e as listas de melhores e piores casos
-
+        # Atualiza o texto do resultado
         texto_resultado = resultado.get()
         texto_resultado += "\n\nModo 'todos': resolvendo ..."
         resultado.set(texto_resultado)
         root.update()
 
+        # Otimização com o modo 'todos'
         resultado_final, QTDES_FINAL = otimizar('todos', piores, melhores)
 
         texto_resultado = resultado.get()
@@ -366,11 +352,10 @@ def otimizar(modo, piores, melhores):
     minima = LIMITAR_CH_MINIMA
     maxima = LIMITAR_CH_MAXIMA
     # Ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
-    if MODO_ESCOLHIDO == 'todos' or 'ch' in modo:#modo == 'ch':
+    if MODO_ESCOLHIDO == 'todos' or 'ch' in modo:
         minima = True
         maxima = True
     # No modo tempo é necessário estabelecer a carga horária mínima (ou número máximo)
-    #if modo == 'tempo':
     if 'tempo' in modo:
         minima = True
 
@@ -405,9 +390,6 @@ def otimizar(modo, piores, melhores):
             perfis = restricao['perfis']
             sinal = restricao['sinal']
             coeficientes = [1 - percentual if p in perfis else percentual*-1 for p in range(N_PERFIS)]
-            #coeficientes = [restricao['percentual']*-1] * N_PERFIS
-            #for p in restricao['perfis']:
-            #    coeficientes[p] = 1 - restricao['percentual']
 
             # Nome da restrição
             nome_restricao = "Perfis (" + ",".join(str(p) for p in perfis) \
@@ -428,8 +410,7 @@ def otimizar(modo, piores, melhores):
                         MODELOS[modo] += lpSum(saida[unidade]*coeficientes) >= 0, \
                             nome_restricao + MATRIZ_UNIDADES[unidade][0]
 
-
-    # Restrições de máximo e mínimo por unidade -> carga horária média
+    # Restrições de carga horária média:
     # ------------------
     # Exemplo para 900 aulas, considerando-se carga horária média mínima de 12 aulas e máxima de 16
     # soma <= 900/12 -> soma <= 75
@@ -441,9 +422,11 @@ def otimizar(modo, piores, melhores):
                 f"{MATRIZ_UNIDADES[unidade][0]}_chmax: {math.ceil(MATRIZ_UNIDADES[unidade][1]/CH_MAX)}"
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
         # que tem 19 aulas apenas
-        #if minima:
-        #    MODELOS[modo] += CH_MIN*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
-        # f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {int(MATRIZ_UNIDADES[unidade][1]/CH_MIN)}"
+        # No modo tempo-reverso e ch-reverso é preciso estabelecer um mínimo coerente por unidade
+        # Foi adotado 9 aulas por professor (vide acima).
+        if minima and 'reverso' in modo:
+            MODELOS[modo] += 9*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
+                f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {int(MATRIZ_UNIDADES[unidade][1]/9)}"
 
     # Restrições no geral
     if maxima:
@@ -463,9 +446,11 @@ def otimizar(modo, piores, melhores):
     if modo in ('ch', 'ch-reverso', 'todos'):
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
-        modulos = LpVariable.matrix("modulo", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
+        modulos = LpVariable.matrix("modulo", MATRIZ_UNIDADES[:N_UNIDADES, 0], \
+                                    cat="Continuous", lowBound=0)
         consts = LpVariable.matrix("b", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Binary")
-        medias = LpVariable.matrix("media", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
+        medias = LpVariable.matrix("media", MATRIZ_UNIDADES[:N_UNIDADES, 0], \
+                                   cat="Continuous", lowBound=0)
         media_geral = LpVariable("media_geral", cat="Continuous", lowBound=0)
 
         # Como a média seria uma função não linear (aulas/professores), foi feita uma
@@ -481,6 +466,7 @@ def otimizar(modo, piores, melhores):
         # O cálculo da média é inserido no modelo como uma restrição
         MODELOS[modo] += media_geral == coef*lpSum(saida) + CH_MIN + CH_MAX, "Media geral"
 
+        # O mesmo raciocínio é feito para cada unidade
         for unidade in range(N_UNIDADES):
             x1u = MATRIZ_UNIDADES[unidade][1] / CH_MIN
             x0u = MATRIZ_UNIDADES[unidade][1] / CH_MAX
@@ -519,7 +505,7 @@ def otimizar(modo, piores, melhores):
         # Variáveis com as pontuações
         pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBound=1)
         # Restrições/cálculos
-        # caso seja dado um número exato, é necessário alterar a pontuação do critério 'num'
+        # Caso seja dado um número exato, é necessário alterar a pontuação do critério 'num'
         # para evitar a divisão por zero
         if MAX_TOTAL and MIN_TOTAL and N_MAX_TOTAL == N_MIN_TOTAL:
             MODELOS[modo] += pontuacoes[0] == lpSum(saida)/melhores['num'], "Pontuação número"
@@ -536,11 +522,9 @@ def otimizar(modo, piores, melhores):
         MODELOS[modo] += lpSum(saida*MATRIZ_PEQ)
     # No modo tempo é necessário deduzir do tempo calculado as horas
     # que serão destinadas às orientações
-    #elif modo == 'tempo':
     elif 'tempo' in modo:
         MODELOS[modo] += lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
     # No modo de equilíbrio a medida de desempenho é o desvio médio
-    #elif modo == 'ch':
     elif 'ch' in modo:
         MODELOS[modo] += lpSum(modulos[:N_UNIDADES])/N_UNIDADES
     elif modo == 'todos':
@@ -550,14 +534,9 @@ def otimizar(modo, piores, melhores):
 
     # Imprime os resultados no arquivo txt
     RELATORIO += f'\nModo: {modo}'
-    RELATORIO += f'\nUnidades: {N_UNIDADES}'
     RELATORIO += f'\nCH Maxima: {maxima} {CH_MAX if maxima else ""}'
     RELATORIO += f'\nCH Minima: {minima} {CH_MIN if minima else ""}'
-    RELATORIO += f'\nTotal: {N_MIN_TOTAL if MIN_TOTAL else "-"} a ' \
-        f'{N_MAX_TOTAL if MAX_TOTAL else "-"}\n'
-    #RELATORIO += f'Vinte: {LIMITAR_VINTE}'
-    #RELATORIO += f'Quarenta: {LIMITAR_QUARENTA}'
-
+    
     # Ajusta limite
     # Para os modos "intermediários" não é necessário um limite maior que 30 segundos
     if MODO_ESCOLHIDO == 'todos' and modo != 'todos' and TEMPO_LIMITE > 30:
@@ -571,14 +550,12 @@ def otimizar(modo, piores, melhores):
     # Resultados
     RELATORIO += f"\nSituação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}"
     # Para cada critério o resultado é em um formato diferente
-    #if modo == 'ch':
     if 'ch' in modo:
         objetivo = round(MODELOS[modo].objective.value(), 4)
     elif modo == 'peq':
         objetivo = round(MODELOS[modo].objective.value(), 2)
     elif modo == 'num':
         objetivo = int(MODELOS[modo].objective.value())
-    #elif modo == 'tempo':
     elif 'tempo' in modo:
         objetivo = MODELOS[modo].objective.value()
     elif modo == 'todos':
