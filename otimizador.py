@@ -6,6 +6,7 @@ por Pedro Santos Guimarães, em 2023"""
 #mport sys
 from datetime import datetime
 import math
+import os
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
@@ -48,7 +49,9 @@ FORMATO_RESULTADO = {}
 FORMATO_RESULTADO['num'] = 'professores'
 FORMATO_RESULTADO['peq'] = 'prof-equivalente'
 FORMATO_RESULTADO['tempo'] = 'horas'
+FORMATO_RESULTADO['tempo-reverso'] = 'horas'
 FORMATO_RESULTADO['ch'] = 'aulas/prof'
+FORMATO_RESULTADO['ch-reverso'] = 'aulas/prof'
 FORMATO_RESULTADO['todos'] = '(na escala de 0 a 1)'
 
 # Restrição de carga horária média máxima por unidade
@@ -113,6 +116,9 @@ def carregar_arquivo():
     # Importa dados do arquivo
     arquivo = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
 
+    nomeArquivo.set(arquivo.split("/")[-1])
+    root.update()
+
     df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
     MATRIZ_UNIDADES = df_todas['unidades'].to_numpy()
     MATRIZ_PERFIS = df_todas['perfis'].to_numpy()
@@ -143,9 +149,6 @@ def executar():
     """Executa a otimização"""
     global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL,\
         TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO
-
-    # Limpa relatório
-    RELATORIO = f"Relatório da execução do otimizador\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
 
     # Mostra resultados
     grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
@@ -180,6 +183,32 @@ def executar():
         MIN_TOTAL = False
         MAX_TOTAL = False
 
+    # Inicia relatório
+    RELATORIO = f"Relatório da execução do otimizador\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
+    RELATORIO += f'\nModo escolhido: {MODO_ESCOLHIDO}'
+    RELATORIO += f'\nUnidades: {N_UNIDADES}'
+    RELATORIO += f'\nCH Maxima: {LIMITAR_CH_MAXIMA} {CH_MAX if LIMITAR_CH_MAXIMA else ""}'
+    RELATORIO += f'\nCH Minima: {LIMITAR_CH_MINIMA} {CH_MIN if LIMITAR_CH_MINIMA else ""}'
+    RELATORIO += f'\nTotal: {N_MIN_TOTAL if MIN_TOTAL else "-"} a ' \
+        f'{N_MAX_TOTAL if MAX_TOTAL else "-"}'
+    # Se houver restrições em algum perfil, imprime aqui
+    if len(RESTRICOES_PERCENTUAIS) > 0:
+        for restricao in RESTRICOES_PERCENTUAIS:
+            # Calcula coeficientes dos perfis
+            percentual = restricao['percentual']
+            perfis = restricao['perfis']
+            sinal = restricao['sinal']
+            RELATORIO += '\nPerfis (' + ','.join(str(p) for p in perfis) \
+                + f') {sinal} {percentual*100}%'
+
+    # Imprime unidades
+    imprimir_unidades()
+
+    # Imprime perfis
+    imprimir_perfis()
+
+    RELATORIO += '\n------------------------------------------------------------\n'
+
     texto_resultado = f"Bem vindo!\nO modo escolhido foi {MODO_ESCOLHIDO}"
     if MODO_ESCOLHIDO == 'todos':
         texto_resultado += "\nPrimeiramente vamos definir os parâmetros para cada critério/objetivo"
@@ -196,7 +225,7 @@ def executar():
         resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, None, None)
     else:
         # Critérios/modos
-        modos = np.array(['num', 'peq', 'tempo', 'ch'])
+        modos = np.array(['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso'])
 
         # Lista dos melhores e piores casos
         melhores = {}
@@ -220,29 +249,14 @@ def executar():
         # e registrar o valor ótimo obtido para ser a base da escala. Para esses dois critérios
         # a escala é invertida, ou seja, quanto mais professores, menor a pontuação.
         # No caso do critério 3 a lógica é inversa, quanto mais tempo disponível, melhor o
-        # cenário. O pior caso é quando não há tempo nenhum (valor 0), e o melhor caso deve
-        # ser determinado resolvendo o modelo usando esse critério.
+        # cenário. O melhor caso deve ser determinado resolvendo o modelo usando esse critério,
+        # e o pior caso fazendo uma otimização inversa.
         # Para o critério 4, o melhor caso é determinado pela solução inicial do modelo com
-        # este critério. O pior caso é quando metade das unidades estiver na carga horária
-        # máxima e a outra metade na mínima. A média geral seria o valor intermediário entre
-        # as duas e o desvio total é dado por N_UNIDADES*(CH_MAX - CH_MIN)/2
-        # Exemplo:
-        #
-        # CH_MAX      = 16  --   d1 = d2 = (CH_MAX - CH_MIN)/2
-        #                   |
-        #                   d1   desvio total = N_UNIDADES/2*d1 + N_UNIDADES/2*d2
-        #                   |
-        # média geral = 14  --   desvio total = N_UNIDADES*d1 = N_UNIDADES*(CH_MAX - CH_MIN)/2
-        #                   |
-        #                   d2
-        #                   |
-        # CH_MIN      = 12  --
+        # este critério e o pior caso também com uma otimização inversa.
         numero_max = round(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MIN) \
             if not MAX_TOTAL else N_MAX_TOTAL
         piores['num'] = numero_max
         piores['peq'] = numero_max*1.65
-        piores['tempo'] = 0
-        piores['ch'] = (CH_MAX - CH_MIN)/2
 
         # Percorre os critérios
         for modo_usado in modos:
@@ -255,11 +269,19 @@ def executar():
             resultado_modo, qtdes_modo = otimizar(modo_usado, piores, melhores)
 
             # Registra o resultado na lista de melhores casos
-            melhores[modo_usado] = resultado_modo
+            if 'reverso' not in modo_usado:
+                melhores[modo_usado] = resultado_modo
+            # ou na de piores casos
+            else:
+                piores[modo_usado.split('-')[0]] = resultado_modo
 
             texto_resultado = resultado.get()
-            texto_resultado += f"\nTerminado. Resultado: {melhores[modo_usado]}, "\
-                f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
+            if 'reverso' not in modo_usado:
+                texto_resultado += f"\nTerminado. Resultado: {melhores[modo_usado]}, "\
+                    f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
+            else:
+                texto_resultado += f"\nTerminado. Resultado: {piores[modo_usado.split('-')[0]]}, "\
+                    f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
             resultado.set(texto_resultado)
             root.update()
 
@@ -267,26 +289,28 @@ def executar():
             imprimir_resultados(qtdes_modo)
             # Imprime parâmetros
             imprimir_parametros(qtdes_modo)
-            RELATORIO += "\n------------------------------------------------------------\n"
 
-            if modo_usado == 'ch':
-                # Imprime médias e desvios
+            # Para os modos de carga horária, imprime as médias e desvios
+            if 'ch' in modo_usado:
                 for variable in MODELOS[modo_usado].variables():
                     nomes_busca = ['modulo', 'media']
                     if any(nome in variable.name for nome in nomes_busca):
                         RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
+
+            RELATORIO += "\n------------------------------------------------------------\n"
 
         ##### -----------------Fim da primeira 'rodada'-----------------
         RELATORIO += f"\nMelhores: {melhores}\nPiores: {piores}\n"
         RELATORIO += "------------------------------------------------------------"
 
         ## Agora uma nova rodada do modelo usando os pesos e as listas de melhores e piores casos
-
+        # Atualiza o texto do resultado
         texto_resultado = resultado.get()
         texto_resultado += "\n\nModo 'todos': resolvendo ..."
         resultado.set(texto_resultado)
         root.update()
 
+        # Otimização com o modo 'todos'
         resultado_final, QTDES_FINAL = otimizar('todos', piores, melhores)
 
         texto_resultado = resultado.get()
@@ -312,7 +336,9 @@ def executar():
 
     # Imprime o modelo completo
     RELATORIO += "\n\n------------------Modelo:------------------"
-    RELATORIO += f"\n{MODELOS[MODO_ESCOLHIDO]}"
+    ## https://stackoverflow.com/a/1140967/3059369
+    modelo = f"\n{MODELOS[MODO_ESCOLHIDO]}"
+    RELATORIO += "".join([s for s in modelo.splitlines(True) if s.strip("\r\n")])
 
     texto_resultado = resultado.get()
     texto_resultado += f"\nSituação: {MODELOS[MODO_ESCOLHIDO].status}, " \
@@ -352,15 +378,15 @@ def otimizar(modo, piores, melhores):
     minima = LIMITAR_CH_MINIMA
     maxima = LIMITAR_CH_MAXIMA
     # Ativa carga horária mínima e máxima, para que todos os modos tenham as mesmas restrições
-    if MODO_ESCOLHIDO == 'todos' or modo == 'ch':
+    if MODO_ESCOLHIDO == 'todos' or 'ch' in modo:
         minima = True
         maxima = True
     # No modo tempo é necessário estabelecer a carga horária mínima (ou número máximo)
-    if modo == 'tempo':
+    if 'tempo' in modo:
         minima = True
 
     # -- Definir o modelo --
-    if modo in ('tempo', 'todos'):
+    if modo in ('tempo', 'ch-reverso', 'todos'):
         MODELOS[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMaximize)
     else:
         MODELOS[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
@@ -390,9 +416,6 @@ def otimizar(modo, piores, melhores):
             perfis = restricao['perfis']
             sinal = restricao['sinal']
             coeficientes = [1 - percentual if p in perfis else percentual*-1 for p in range(N_PERFIS)]
-            #coeficientes = [restricao['percentual']*-1] * N_PERFIS
-            #for p in restricao['perfis']:
-            #    coeficientes[p] = 1 - restricao['percentual']
 
             # Nome da restrição
             nome_restricao = "Perfis (" + ",".join(str(p) for p in perfis) \
@@ -413,8 +436,7 @@ def otimizar(modo, piores, melhores):
                         MODELOS[modo] += lpSum(saida[unidade]*coeficientes) >= 0, \
                             nome_restricao + MATRIZ_UNIDADES[unidade][0]
 
-
-    # Restrições de máximo e mínimo por unidade -> carga horária média
+    # Restrições de carga horária média:
     # ------------------
     # Exemplo para 900 aulas, considerando-se carga horária média mínima de 12 aulas e máxima de 16
     # soma <= 900/12 -> soma <= 75
@@ -426,9 +448,11 @@ def otimizar(modo, piores, melhores):
                 f"{MATRIZ_UNIDADES[unidade][0]}_chmax: {math.ceil(MATRIZ_UNIDADES[unidade][1]/CH_MAX)}"
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
         # que tem 19 aulas apenas
-        #if minima:
-        #    MODELOS[modo] += CH_MIN*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
-        # f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {int(MATRIZ_UNIDADES[unidade][1]/CH_MIN)}"
+        # No modo tempo-reverso e ch-reverso é preciso estabelecer um mínimo coerente por unidade
+        # Foi adotado 9 aulas por professor (vide acima).
+        if minima and 'reverso' in modo:
+            MODELOS[modo] += 9*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
+                f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {int(MATRIZ_UNIDADES[unidade][1]/9)}"
 
     # Restrições no geral
     if maxima:
@@ -445,12 +469,14 @@ def otimizar(modo, piores, melhores):
         MODELOS[modo] += lpSum(saida) >= N_MIN_TOTAL, f"TotalMin: {N_MIN_TOTAL}"
 
     # Modo de equilíbrio da carga horária
-    if modo in ('ch', 'todos'):
+    if modo in ('ch', 'ch-reverso', 'todos'):
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
-        modulos = LpVariable.matrix("modulo", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
+        modulos = LpVariable.matrix("modulo", MATRIZ_UNIDADES[:N_UNIDADES, 0], \
+                                    cat="Continuous", lowBound=0)
         consts = LpVariable.matrix("b", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Binary")
-        medias = LpVariable.matrix("media", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Continuous", lowBound=0)
+        medias = LpVariable.matrix("media", MATRIZ_UNIDADES[:N_UNIDADES, 0], \
+                                   cat="Continuous", lowBound=0)
         media_geral = LpVariable("media_geral", cat="Continuous", lowBound=0)
 
         # Como a média seria uma função não linear (aulas/professores), foi feita uma
@@ -466,6 +492,7 @@ def otimizar(modo, piores, melhores):
         # O cálculo da média é inserido no modelo como uma restrição
         MODELOS[modo] += media_geral == coef*lpSum(saida) + CH_MIN + CH_MAX, "Media geral"
 
+        # O mesmo raciocínio é feito para cada unidade
         for unidade in range(N_UNIDADES):
             x1u = MATRIZ_UNIDADES[unidade][1] / CH_MIN
             x0u = MATRIZ_UNIDADES[unidade][1] / CH_MAX
@@ -504,7 +531,7 @@ def otimizar(modo, piores, melhores):
         # Variáveis com as pontuações
         pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBound=1)
         # Restrições/cálculos
-        # caso seja dado um número exato, é necessário alterar a pontuação do critério 'num'
+        # Caso seja dado um número exato, é necessário alterar a pontuação do critério 'num'
         # para evitar a divisão por zero
         if MAX_TOTAL and MIN_TOTAL and N_MAX_TOTAL == N_MIN_TOTAL:
             MODELOS[modo] += pontuacoes[0] == lpSum(saida)/melhores['num'], "Pontuação número"
@@ -521,10 +548,10 @@ def otimizar(modo, piores, melhores):
         MODELOS[modo] += lpSum(saida*MATRIZ_PEQ)
     # No modo tempo é necessário deduzir do tempo calculado as horas
     # que serão destinadas às orientações
-    elif modo == 'tempo':
+    elif 'tempo' in modo:
         MODELOS[modo] += lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
     # No modo de equilíbrio a medida de desempenho é o desvio médio
-    elif modo == 'ch':
+    elif 'ch' in modo:
         MODELOS[modo] += lpSum(modulos[:N_UNIDADES])/N_UNIDADES
     elif modo == 'todos':
         # O objetivo é maximimizar a pontuação dada pela soma de cada
@@ -533,13 +560,8 @@ def otimizar(modo, piores, melhores):
 
     # Imprime os resultados no arquivo txt
     RELATORIO += f'\nModo: {modo}'
-    RELATORIO += f'\nUnidades: {N_UNIDADES}'
     RELATORIO += f'\nCH Maxima: {maxima} {CH_MAX if maxima else ""}'
     RELATORIO += f'\nCH Minima: {minima} {CH_MIN if minima else ""}'
-    RELATORIO += f'\nTotal: {N_MIN_TOTAL if MIN_TOTAL else "-"} a ' \
-        f'{N_MAX_TOTAL if MAX_TOTAL else "-"}\n'
-    #RELATORIO += f'Vinte: {LIMITAR_VINTE}'
-    #RELATORIO += f'Quarenta: {LIMITAR_QUARENTA}'
 
     # Ajusta limite
     # Para os modos "intermediários" não é necessário um limite maior que 30 segundos
@@ -554,13 +576,13 @@ def otimizar(modo, piores, melhores):
     # Resultados
     RELATORIO += f"\nSituação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}"
     # Para cada critério o resultado é em um formato diferente
-    if modo == 'ch':
+    if 'ch' in modo:
         objetivo = round(MODELOS[modo].objective.value(), 4)
     elif modo == 'peq':
         objetivo = round(MODELOS[modo].objective.value(), 2)
     elif modo == 'num':
         objetivo = int(MODELOS[modo].objective.value())
-    elif modo == 'tempo':
+    elif 'tempo' in modo:
         objetivo = MODELOS[modo].objective.value()
     elif modo == 'todos':
         objetivo = round(MODELOS[modo].objective.value(), 4)
@@ -584,6 +606,7 @@ def otimizar(modo, piores, melhores):
 def imprimir_resultados(qtdes):
     """Imprime resultados da quantidade de cada perfil em cada unidade"""
     global RELATORIO
+
     RELATORIO += "\nResultados:"
     borda_cabecalho = "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
     # Cabeçalho
@@ -616,6 +639,7 @@ def imprimir_resultados(qtdes):
 def imprimir_parametros(qtdes):
     """Imprime os dados de entrada e os resultados obtidos"""
     global RELATORIO
+
     RELATORIO += "\nParâmetros:"
     borda_cabecalho = "\n---------+-------------+--------------------+--------------+-----------+-----------+----------+"
     linha_cabecalho = "\nUnidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |"
@@ -679,6 +703,65 @@ def imprimir_parametros(qtdes):
             RELATORIO += f"   {perc_total:6.2f}% |"
     RELATORIO += borda_cabecalho + "\n"
 
+
+def imprimir_unidades():
+    """Imprime os dados de entrada das unidades"""
+    global RELATORIO
+
+    RELATORIO += "\n\nUnidades:"
+    borda_cabecalho = "\n---------+-------+--------------+------------+---------+---------+"
+    linha_cabecalho = "\nUnidade  | aulas | horas_orient | num_orient | diretor | coords. |"
+
+    RELATORIO += borda_cabecalho
+    RELATORIO += linha_cabecalho
+    RELATORIO += borda_cabecalho
+    # Formatos dos números - tem que ser tudo como float, pois ao importar os valores de
+    # professor-equivalente, a MATRIZ_PERFIS fica toda como float
+    formatos =          ['5.0f', '12.2f', '10.0f', '7.0f', '7.0f']
+
+    # Uma linha por unidade
+    for unidade in range(N_UNIDADES):
+        valores_restricoes = [MATRIZ_UNIDADES[unidade][p+1] for p in range(N_RESTRICOES)]
+        strings_restricoes = [f"{valores_restricoes[p]:{formatos[p]}} |" for p in range(N_RESTRICOES)]
+        string_final = " ".join(strings_restricoes)
+
+        RELATORIO += f"\n{MATRIZ_UNIDADES[unidade][0]:6s}   | " + string_final
+
+    # Totais
+    valores_perfis = [np.sum(MATRIZ_UNIDADES, axis=0)[p+1] for p in range(N_RESTRICOES)]
+    strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} |" for p in range(N_RESTRICOES)]
+    string_final = " ".join(strings_perfis)
+
+    RELATORIO += borda_cabecalho
+    RELATORIO += "\nTotal    | " + string_final
+    RELATORIO += borda_cabecalho + "\n"
+
+
+def imprimir_perfis():
+    """Imprime os perfis utilizados"""
+    global RELATORIO
+
+    RELATORIO += '\nPerfis:'
+    borda_cabecalho = '\n---------------+' + '------+'*N_PERFIS
+    linha_cabecalho = '\nCaracterística |' \
+        + "".join([f"  {i: >3} |" for i in [f"p{p+1}" for p in range(N_PERFIS)]])
+        #+ ''.join([f'  P{p+1}  |' for p in range(N_PERFIS)])
+
+    RELATORIO += borda_cabecalho
+    RELATORIO += linha_cabecalho
+    RELATORIO += borda_cabecalho
+
+    for restricao in range(N_RESTRICOES):
+        RELATORIO += f'\n{NOMES_RESTRICOES[restricao]:14s} | ' \
+            + ' '.join([f'{MATRIZ_PERFIS[restricao][p]:4.0f} |' for p in range(N_PERFIS)])
+
+    RELATORIO += '\nOutras ativ.   | ' \
+        + ' '.join([f'{MATRIZ_PERFIS[N_RESTRICOES][p]:4.0f} |' for p in range(N_PERFIS)])
+
+    RELATORIO += '\nProf-equiv.    | ' \
+        + ' '.join([f'{MATRIZ_PERFIS[N_RESTRICOES+1][p]:4.2f} |' for p in range(N_PERFIS)])
+
+    RELATORIO += borda_cabecalho + "\n"
 
 def exportar_txt():
     """Função para exportar os resultados em formato .txt"""
@@ -812,6 +895,11 @@ textoBotao.grid(row=1, column=0)
 # Botão para selecionar o arquivo
 botaoArquivo = ttk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arquivo)
 botaoArquivo.grid(row=1, column=1, padx=10, pady=10)
+
+# Label com nome do arquivo
+nomeArquivo = tk.StringVar()
+label_nome_arquivo = tk.Label(grupo_arq, textvariable=nomeArquivo)
+label_nome_arquivo.grid(row=1, column=2, padx=10, pady=10)
 
 # Grupo opções
 grupo = ttk.LabelFrame(root, text="Opções")
