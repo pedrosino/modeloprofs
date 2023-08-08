@@ -356,11 +356,30 @@ def executar():
     # Mostra na tabela
     text_aba.insert(tk.END, data_frame.to_string(index=False))
 
+    # Altura máxima
+    altura_maxima = 18
+
     # Obtém o número total de linhas do texto
     num_linhas = int(text_aba.index(tk.END).split('.', maxsplit=1)[0])
 
-    # Ajusta a altura do widget para mostrar todas as linhas
-    text_aba.config(height=num_linhas, width=8 + N_PERFIS*5)
+    # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
+    if num_linhas <= altura_maxima:
+        text_aba.config(height=num_linhas, width=8 + N_PERFIS*5)
+        scrollbar.grid_forget()  # Oculta a barra de rolagem
+    else:
+        text_aba.config(height=altura_maxima, width=8 + N_PERFIS*5)
+        scrollbar.grid(row=2, column=1, sticky="ns")  # Mostra a barra de rolagem vertical
+
+    altura_janela = root.winfo_height()
+    altura_tela = root.winfo_screenheight()
+    print(f"{altura_janela} e {altura_tela}")
+    # Verifica o tamanho da janela
+    if altura_tela - altura_janela < 150:
+        print("Reduzir")
+        text_aba.config(height=)
+        root.geometry(f"{root.winfo_width()}x{altura_tela - 150}")
+        root.update()
+        print(root.winfo_height())
 
 
 def otimizar(modo, piores, melhores):
@@ -799,9 +818,6 @@ def clique_ok(opcoes, var_sinal, var_percentual, janela, var_erro, label_erro):
         label_erro.config(bg='#f0a869', fg='#87190b')
         return
 
-    #print("Selecionados:", escolhidos)
-    #print(f"{sinal} {percentual}%")
-    # Registra a restrição definida
     texto_perfis = var_perfis.get()
     texto_perfis += '. Perfis (' + ','.join(str(e+1) for e in escolhidos) \
         + f') {sinal} {percentual}%\n'
@@ -840,9 +856,9 @@ def janela_perfis():
 
     # Sinal da operação
     grupo_sinal = ttk.LabelFrame(janela_nova)
-    grupo_sinal.grid(row=1, column=1)
+    grupo_sinal.grid(row=1, column=1, columnspan=2)
     label_sinal = tk.Label(grupo_sinal, text="A soma das quantidades desses perfis deverá ser")
-    label_sinal.grid(row=0, column=0)
+    label_sinal.grid(row=0, column=0, columnspan=3)
     variavel_sinal = tk.StringVar()
     combo_sinal = ttk.Combobox(grupo_sinal, textvariable=variavel_sinal,
                                values=['<', '<=', '>', '>='], state="readonly")
@@ -851,20 +867,24 @@ def janela_perfis():
     # Valor do percentual
     variavel_percentual = tk.IntVar()
     texto_percentual = tk.Entry(grupo_sinal, textvariable=variavel_percentual, width=5)
-    texto_percentual.grid(row=1, column=1, sticky='w')
-    tk.Label(grupo_sinal, text="%").grid(row=1, column=2, sticky='w')
+    texto_percentual.grid(row=1, column=1, sticky='e')
+    tk.Label(grupo_sinal, text="% do total").grid(row=1, column=2, sticky='w')
 
     # Botões
-    botao_salvar = tk.Button(janela_nova, text="Salvar",
+    # Alterar o 'background' do bottão do ttk na verdade muda só a cor da borda
+    # Por isso foram usados botões normais
+    botao_salvar = tk.Button(janela_nova, text="Salvar", bg="#afed80", width=10,
         command=lambda: clique_ok(lista_opcoes, variavel_sinal, variavel_percentual, janela_nova, var_erro, texto_erro))
-    botao_salvar.grid(row=2, column=1, sticky='w')
-    botao_cancelar = tk.Button(janela_nova, text="Cancelar", command=lambda: janela_nova.destroy())
-    botao_cancelar.grid(row=2, column=1, sticky='e')
+    botao_salvar.grid(row=2, column=1)
+    botao_cancelar = tk.Button(janela_nova, text="Cancelar", bg="#f2cc63", width=10,
+        command=lambda: janela_nova.destroy())
+    botao_cancelar.grid(row=2, column=2)
 
     # Label para mensagem de erro
     var_erro = tk.StringVar()
     texto_erro = tk.Label(janela_nova, name="erro", textvariable=var_erro)
     texto_erro.grid(row=3, column=0, columnspan=3)
+
 
 ### Fim das funçõoes ###
 
@@ -874,15 +894,14 @@ root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guima
 root.geometry("+300+100")
 root.minsize(600,400)
 
+# Tamanho da fonte para todos os objetos
+fonte = font.nametofont('TkDefaultFont')
+fonte.configure(size=10)
+
 # Título
 textoTitulo = tk.Label(root, text="Bem vindo.", anchor="w", justify="left",
                        font=font.Font(weight="bold"))
 textoTitulo.grid(sticky='W', row=0, column=0, padx=10, pady=10)
-
-# Texto instruções
-#textoBotao = tk.Label(root, text="Primeiro escolha o arquivo no botão abaixo.\n\
-#                                  Depois verifique as opções e clique em Executar.")
-#textoBotao.grid(row=0, column=3)
 
 # Grupo arquivo
 grupo_arq = ttk.LabelFrame(root)
@@ -893,7 +912,7 @@ textoBotao = tk.Label(grupo_arq, text="Escolha o arquivo:")
 textoBotao.grid(row=1, column=0)
 
 # Botão para selecionar o arquivo
-botaoArquivo = ttk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arquivo)
+botaoArquivo = tk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arquivo)
 botaoArquivo.grid(row=1, column=1, padx=10, pady=10)
 
 # Label com nome do arquivo
@@ -1007,8 +1026,14 @@ label_resultado.grid(row=0, column=0, padx=10, pady=10)
 label_aba = tk.Label(grupo_resultados, text="Distribuição:")
 label_aba.grid(row=1, column=0, padx=10, pady=10)
 
-text_aba = tk.Text(grupo_resultados, height=10, width=60)
+# Adicionando a barra de rolagem vertical
+scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
+
+text_aba = tk.Text(grupo_resultados, height=10, width=60, yscrollcommand=scrollbar.set)
 text_aba.grid(row=2, column=0, padx=10, pady=10)
+
+# Configurando a barra de rolagem para rolar o texto no Text widget
+scrollbar.config(command=text_aba.yview)
 
 botaoRelatorio = tk.Button(grupo_resultados, text="Baixar relatório", command=exportar_txt)
 botaoRelatorio.grid(row=3, column=0, padx=10, pady=10, sticky='w')
