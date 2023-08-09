@@ -140,7 +140,7 @@ def carregar_arquivo():
     # Se a importação teve sucesso
     if(len(MATRIZ_UNIDADES) and len(MATRIZ_PERFIS)):
         # Mostra as opções
-        grupo.grid(row=2, column=0, padx=10, pady=10)
+        grupo_opcoes.grid(row=2, column=0, padx=10, pady=10)
         verifica_check_boxes()
         atualiza_tela()
 
@@ -888,11 +888,19 @@ def janela_perfis():
 
 
 def atualiza_tela():
+    """Função para atualizar o tamanho do canvas após acrescentar elementos ao frame"""
     frame.update_idletasks()
     canvas.update_idletasks()
     canvas.config(height=frame.winfo_reqheight(), width=frame.winfo_reqwidth())
     canvas.config(scrollregion=canvas.bbox("all"))
     root.update()
+
+
+def rolar(event):
+    """Ativa a rolagem do canvas com a roda do mouse"""
+    if canvas.winfo_exists():
+        canvas.yview_scroll(-event.delta//120, "units")
+
 
 ### Fim das funçõoes ###
 
@@ -910,14 +918,17 @@ canvas.grid(row=0, column=0, sticky="nsew")
 frame = tk.Frame(canvas, background="#ffa")
 
 # Barra de rolagem
-barra = tk.Scrollbar(root, orient="vertical", command=canvas.yview)
+barra = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
 #barra.grid(row=0, column=1, sticky="ns")
 
 canvas.configure(yscrollcommand=barra.set)
 
 canvas.create_window((4,4), window=frame, anchor='nw')
 
-frame.bind("<Configure>", lambda event, canvas=canvas: canvas.configure(scrollregion=canvas.bbox("all")))
+canvas.bind_all("<MouseWheel>", rolar)
+
+frame.bind("<Configure>", lambda event,
+    canvas=canvas: canvas.configure(scrollregion=canvas.bbox("all")))
 
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
@@ -949,18 +960,20 @@ label_nome_arquivo = tk.Label(grupo_arq, textvariable=nomeArquivo)
 label_nome_arquivo.grid(row=1, column=2, padx=10, pady=10)
 
 # Grupo opções
-grupo = ttk.LabelFrame(frame, text="Opções")
-grupo.grid(row=2, column=0, padx=10, pady=10)
+estilo = ttk.Style()
+estilo.configure('Op.TLabelframe', background='#acf')
+grupo_opcoes = ttk.LabelFrame(frame, text="Opções", style='Op.TLabelframe')
+grupo_opcoes.grid(row=2, column=0, padx=10, pady=10)
 
 # Checkbox para ch minima
 bool_minima = tk.BooleanVar(value=True)
-checkbox_minima = tk.Checkbutton(grupo, text="CH mínima: ", variable=bool_minima,
+checkbox_minima = tk.Checkbutton(grupo_opcoes, text="CH mínima: ", variable=bool_minima,
                                  command=verifica_check_boxes)
 checkbox_minima.grid(row=3, column=0, padx=10, pady=10)
 
 # campo texto
 texto_ch_min = tk.IntVar(value=12)
-entrada_CH_MIN = tk.Entry(grupo, textvariable=texto_ch_min, width=5)
+entrada_CH_MIN = tk.Entry(grupo_opcoes, textvariable=texto_ch_min, width=5)
 entrada_CH_MIN.grid(row=3, column=1, padx=10, pady=10)
 
 ToolTip(checkbox_minima, msg="Ativar carga horária média máxima por unidade", delay=0.1)
@@ -968,13 +981,13 @@ ToolTip(entrada_CH_MIN, msg="Valor da carga horária máxima", delay=0.1)
 
 # Checkbox para ch maxima
 bool_maxima = tk.BooleanVar(value=True)
-checkbox_maxima = tk.Checkbutton(grupo, text="CH máxima: ", variable=bool_maxima,
+checkbox_maxima = tk.Checkbutton(grupo_opcoes, text="CH máxima: ", variable=bool_maxima,
                                  command=verifica_check_boxes)
 checkbox_maxima.grid(row=4, column=0, padx=10, pady=10)
 
 # campo texto
 texto_ch_max = tk.IntVar(value=16)
-entrada_CH_MAX = tk.Entry(grupo, textvariable=texto_ch_max, width=5)
+entrada_CH_MAX = tk.Entry(grupo_opcoes, textvariable=texto_ch_max, width=5)
 entrada_CH_MAX.grid(row=4, column=1, padx=10, pady=10)
 
 ToolTip(checkbox_maxima, msg="Ativar carga horária média mínima geral (para toda a Universidade)",
@@ -983,13 +996,13 @@ ToolTip(entrada_CH_MAX, msg="Valor da carga horária mínima", delay=0.1)
 
 # Checkbox para total minimo
 bool_min_total = tk.BooleanVar(value=False)
-checkbox_min_total = tk.Checkbutton(grupo, text="Total mínimo: ",
+checkbox_min_total = tk.Checkbutton(grupo_opcoes, text="Total mínimo: ",
     variable=bool_min_total, command=verifica_check_boxes)
 checkbox_min_total.grid(row=3, column=3, padx=10, pady=10)
 
 # campo texto
 texto_min_total = tk.IntVar()
-entrada_N_MIN_total = tk.Entry(grupo, textvariable=texto_min_total, width=5)
+entrada_N_MIN_total = tk.Entry(grupo_opcoes, textvariable=texto_min_total, width=5)
 entrada_N_MIN_total.grid(row=3, column=4, padx=10, pady=10)
 
 ToolTip(checkbox_min_total, msg="Ativar número mínimo total de professores", delay=0.1)
@@ -997,13 +1010,13 @@ ToolTip(entrada_N_MIN_total, msg="Valor do mínimo total", delay=0.1)
 
 # Checkbox para total maxima
 bool_max_total = tk.BooleanVar(value=False)
-checkbox_max_total = tk.Checkbutton(grupo, text="Total máximo: ",
+checkbox_max_total = tk.Checkbutton(grupo_opcoes, text="Total máximo: ",
     variable=bool_max_total, command=verifica_check_boxes)
 checkbox_max_total.grid(row=4, column=3, padx=10, pady=10)
 
 # campo texto
 texto_max_total = tk.IntVar()
-entrada_N_MAX_total = tk.Entry(grupo, textvariable=texto_max_total, width=5)
+entrada_N_MAX_total = tk.Entry(grupo_opcoes, textvariable=texto_max_total, width=5)
 entrada_N_MAX_total.grid(row=4, column=4, padx=10, pady=10)
 
 ToolTip(checkbox_max_total, msg="Ativar número máximo total de professores", delay=0.1)
@@ -1011,37 +1024,37 @@ ToolTip(entrada_N_MAX_total, msg="Valor do máximo total", delay=0.1)
 
 # Tempo limite
 val_limite = tk.IntVar(value=30)
-label_limite = tk.Label(grupo, text="Tempo limite:")
+label_limite = tk.Label(grupo_opcoes, text="Tempo limite:")
 label_limite.grid(row=5, column=0, padx=10, pady=10)
-entrada_tempo_limite = tk.Entry(grupo, textvariable=val_limite, width=5)
+entrada_tempo_limite = tk.Entry(grupo_opcoes, textvariable=val_limite, width=5)
 entrada_tempo_limite.grid(row=5, column=1, padx=10, pady=10)
 
 ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1)
 
 # Limitações nos perfis
-botao_perfil = tk.Button(grupo, text="Limitar perfis", command=janela_perfis)
+botao_perfil = tk.Button(grupo_opcoes, text="Limitar perfis", command=janela_perfis)
 botao_perfil.grid(row=5, column=3, padx=10, pady=10)
 
 var_perfis = tk.StringVar()
-label_perfis = ttk.Label(grupo, textvariable=var_perfis)
+label_perfis = ttk.Label(grupo_opcoes, textvariable=var_perfis)
 label_perfis.grid(row=5, column=4, padx=10, pady=10)
 
 # Combobox critério
-label1 = ttk.Label(grupo, text="Critério:")
+label1 = ttk.Label(grupo_opcoes, text="Critério:")
 label1.grid(row=6, column=0, padx=10, pady=10)
 
 combo_var = tk.StringVar()
-combobox = ttk.Combobox(grupo, textvariable=combo_var, values=list(LISTA_MODOS.keys()),
+combobox = ttk.Combobox(grupo_opcoes, textvariable=combo_var, values=list(LISTA_MODOS.keys()),
                         state="readonly")
 combobox.grid(row=6, column=1, padx=10, pady=10)
 combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
 
 # Botão para executar
-botaoExecutar = ttk.Button(grupo, text="Executar", state=tk.DISABLED, command=executar)
+botaoExecutar = ttk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED, command=executar)
 botaoExecutar.grid(row=10, column=0, padx=10, pady=10)
 
 # Inicialmente oculta as opções
-grupo.grid_forget()
+grupo_opcoes.grid_forget()
 
 # Grupo dos resultados
 grupo_resultados = ttk.LabelFrame(frame, text="Resultados")
