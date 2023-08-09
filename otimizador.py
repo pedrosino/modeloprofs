@@ -80,9 +80,10 @@ MODO_ESCOLHIDO = 'todos'
 def verifica_executar():
     """Habilita ou desabilita o botão Executar"""
     if combo_var.get(): # and radio_var.get():
-        botaoExecutar['state'] = tk.NORMAL
+        botao_executar['state'] = tk.NORMAL
+        botao_executar.configure(bg="#ddd")
     else:
-        botaoExecutar['state'] = tk.DISABLED
+        botao_executar['state'] = tk.DISABLED
 
 
 def verifica_check_boxes():
@@ -115,7 +116,7 @@ def carregar_arquivo():
     # Importa dados do arquivo
     arquivo = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
 
-    nomeArquivo.set(arquivo.split("/")[-1])
+    nome_arquivo.set(arquivo.split("/")[-1])
     root.update()
 
     df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
@@ -140,7 +141,7 @@ def carregar_arquivo():
     # Se a importação teve sucesso
     if(len(MATRIZ_UNIDADES) and len(MATRIZ_PERFIS)):
         # Mostra as opções
-        grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='n')
+        grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nw')
         verifica_check_boxes()
         atualiza_tela()
 
@@ -185,8 +186,8 @@ def executar():
         MAX_TOTAL = False
 
     # Inicia relatório
-    RELATORIO = f"Relatório da execução do otimizador" \
-        + "\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
+    RELATORIO = "Relatório da execução do otimizador" \
+        + f"\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
     RELATORIO += f'\nModo escolhido: {MODO_ESCOLHIDO}'
     RELATORIO += f'\nUnidades: {N_UNIDADES}'
     RELATORIO += f'\nCH Maxima: {LIMITAR_CH_MAXIMA} {CH_MAX if LIMITAR_CH_MAXIMA else ""}'
@@ -211,7 +212,7 @@ def executar():
 
     RELATORIO += '\n------------------------------------------------------------\n'
 
-    texto_resultado = f"Bem vindo!\nO modo escolhido foi {MODO_ESCOLHIDO}"
+    texto_resultado = f"O modo escolhido foi {MODO_ESCOLHIDO}"
     if MODO_ESCOLHIDO == 'todos':
         texto_resultado += "\nPrimeiramente vamos definir os parâmetros para cada critério/objetivo"
 
@@ -908,7 +909,7 @@ root = tk.Tk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
 root.geometry("+300+100")
-root.minsize(600,400)
+root.minsize(700,400)
 
 # Cria o canvas
 canvas = tk.Canvas(root, borderwidth=0)
@@ -942,25 +943,30 @@ fonte = font.nametofont('TkDefaultFont')
 fonte.configure(size=10)
 
 # Título
-textoTitulo = tk.Label(frame, text="Bem vindo.", anchor="w", justify="left",
-                       font=font.Font(weight="bold"))
-textoTitulo.grid(sticky='W', row=0, column=0, padx=10, pady=10)
+TEXTO_TITULO = """Bem vindo.
+Escolha o arquivo no botão abaixo, depois ajuste as opções e clique em Executar.
+Dependendo da situação o programa pode levar um certo tempo para encontrar a solução ótima.
+Os passos executados serão mostrados ao lado direito e ao final a distribuição será exibida na tela.
+Você poderá baixar um relatório completo ou a planilha com a distribuição clicando nos botões."""
+
+label_titulo = tk.Label(frame, text=TEXTO_TITULO, anchor="w", justify="left")
+label_titulo.grid(sticky='W', row=0, column=0, padx=10, pady=10, columnspan=2)
 
 # Grupo arquivo
 grupo_arq = ttk.LabelFrame(frame)
 grupo_arq.grid(row=1, column=0, rowspan=1, padx=10, pady=10, sticky='nw')
 
 # Texto botão arquivo
-textoBotao = tk.Label(grupo_arq, text="Escolha o arquivo:")
-textoBotao.grid(row=1, column=0)
+texto_botao = tk.Label(grupo_arq, text="Escolha o arquivo:")
+texto_botao.grid(row=1, column=0)
 
 # Botão para selecionar o arquivo
-botaoArquivo = tk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arquivo)
-botaoArquivo.grid(row=1, column=1, padx=10, pady=10)
+botao_arquivo = tk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arquivo, bg="#ddd")
+botao_arquivo.grid(row=1, column=1, padx=10, pady=10)
 
 # Label com nome do arquivo
-nomeArquivo = tk.StringVar()
-label_nome_arquivo = tk.Label(grupo_arq, textvariable=nomeArquivo)
+nome_arquivo = tk.StringVar()
+label_nome_arquivo = tk.Label(grupo_arq, textvariable=nome_arquivo)
 label_nome_arquivo.grid(row=1, column=2, padx=10, pady=10)
 
 # Grupo opções
@@ -1042,8 +1048,8 @@ label_perfis = ttk.Label(grupo_opcoes, textvariable=var_perfis)
 label_perfis.grid(row=5, column=4, padx=10, pady=10)
 
 # Combobox critério
-label1 = ttk.Label(grupo_opcoes, text="Critério:")
-label1.grid(row=6, column=0, padx=10, pady=10)
+label_criterio = ttk.Label(grupo_opcoes, text="Critério:")
+label_criterio.grid(row=6, column=0, padx=10, pady=10)
 
 combo_var = tk.StringVar()
 combobox = ttk.Combobox(grupo_opcoes, textvariable=combo_var, values=list(LISTA_MODOS.keys()),
@@ -1052,8 +1058,8 @@ combobox.grid(row=6, column=1, padx=10, pady=10)
 combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
 
 # Botão para executar
-botaoExecutar = ttk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED, command=executar)
-botaoExecutar.grid(row=10, column=0, padx=10, pady=10)
+botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED, command=executar, width=10)
+botao_executar.grid(row=10, column=0, padx=10, pady=10)
 
 # Inicialmente oculta as opções
 grupo_opcoes.grid_forget()
@@ -1078,11 +1084,13 @@ text_aba.grid(row=2, column=0, padx=10, pady=10)
 # Configurando a barra de rolagem para rolar o texto no Text widget
 scrollbar.config(command=text_aba.yview)
 
-botaoRelatorio = tk.Button(grupo_resultados, text="Baixar relatório", command=exportar_txt)
-botaoRelatorio.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+botao_relatorio = tk.Button(grupo_resultados, text="Baixar relatório", command=exportar_txt,
+                            bg="#ddd")
+botao_relatorio.grid(row=3, column=0, padx=10, pady=10, sticky='w')
 
-botaoPlanilha = tk.Button(grupo_resultados, text="Baixar planilha", command=exportar_planilha)
-botaoPlanilha.grid(row=3, column=0, padx=10, pady=10, sticky='e')
+botao_planilha = tk.Button(grupo_resultados, text="Baixar planilha", command=exportar_planilha,
+                           bg="#ddd")
+botao_planilha.grid(row=3, column=0, padx=10, pady=10, sticky='e')
 
 # Inicialmente oculta os resultados
 grupo_resultados.grid_forget()
