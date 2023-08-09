@@ -140,7 +140,7 @@ def carregar_arquivo():
     # Se a importação teve sucesso
     if(len(MATRIZ_UNIDADES) and len(MATRIZ_PERFIS)):
         # Mostra as opções
-        grupo_opcoes.grid(row=2, column=0, padx=10, pady=10)
+        grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='n')
         verifica_check_boxes()
         atualiza_tela()
 
@@ -151,7 +151,7 @@ def executar():
         TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO
 
     # Mostra resultados
-    grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
+    grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nw')
     atualiza_tela()
 
     # Limpa tabela
@@ -911,11 +911,11 @@ root.geometry("+300+100")
 root.minsize(600,400)
 
 # Cria o canvas
-canvas = tk.Canvas(root, borderwidth=0, background="#fff")
+canvas = tk.Canvas(root, borderwidth=0)
 canvas.grid(row=0, column=0, sticky="nsew")
 
 # Frame dentro do canvas
-frame = tk.Frame(canvas, background="#ffa")
+frame = tk.Frame(canvas)
 
 # Barra de rolagem
 barra = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
@@ -933,6 +933,10 @@ frame.bind("<Configure>", lambda event,
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
+# Configure a primeira linha para expandir verticalmente
+frame.grid_rowconfigure(1, weight=0)
+frame.grid_rowconfigure(2, weight=1)
+
 # Tamanho da fonte para todos os objetos
 fonte = font.nametofont('TkDefaultFont')
 fonte.configure(size=10)
@@ -944,7 +948,7 @@ textoTitulo.grid(sticky='W', row=0, column=0, padx=10, pady=10)
 
 # Grupo arquivo
 grupo_arq = ttk.LabelFrame(frame)
-grupo_arq.grid(row=1, column=0, padx=10, pady=10, sticky='w')
+grupo_arq.grid(row=1, column=0, rowspan=1, padx=10, pady=10, sticky='nw')
 
 # Texto botão arquivo
 textoBotao = tk.Label(grupo_arq, text="Escolha o arquivo:")
@@ -960,10 +964,8 @@ label_nome_arquivo = tk.Label(grupo_arq, textvariable=nomeArquivo)
 label_nome_arquivo.grid(row=1, column=2, padx=10, pady=10)
 
 # Grupo opções
-estilo = ttk.Style()
-estilo.configure('Op.TLabelframe', background='#acf')
-grupo_opcoes = ttk.LabelFrame(frame, text="Opções", style='Op.TLabelframe')
-grupo_opcoes.grid(row=2, column=0, padx=10, pady=10)
+grupo_opcoes = ttk.LabelFrame(frame, text="Opções")
+grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nw')
 
 # Checkbox para ch minima
 bool_minima = tk.BooleanVar(value=True)
@@ -1058,14 +1060,14 @@ grupo_opcoes.grid_forget()
 
 # Grupo dos resultados
 grupo_resultados = ttk.LabelFrame(frame, text="Resultados")
-grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
+grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nsew')
 
 resultado = tk.StringVar()
 label_resultado = tk.Label(grupo_resultados, textvariable=resultado, anchor="w", justify="left")
 label_resultado.grid(row=0, column=0, padx=10, pady=10)
 
 label_aba = tk.Label(grupo_resultados, text="Distribuição:")
-label_aba.grid(row=1, column=0, padx=10, pady=10)
+label_aba.grid(row=1, column=0, padx=10, pady=10, sticky='w')
 
 # Adicionando a barra de rolagem vertical
 scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
