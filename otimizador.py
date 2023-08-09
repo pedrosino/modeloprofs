@@ -116,7 +116,7 @@ def carregar_arquivo():
     # Importa dados do arquivo
     arquivo = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
 
-    nome_arquivo.set(arquivo.split("/")[-1])
+    var_nome_arquivo.set(arquivo.split("/")[-1])
     root.update()
 
     df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
@@ -965,12 +965,13 @@ botao_arquivo = tk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arqu
 botao_arquivo.grid(row=1, column=1, padx=10, pady=10)
 
 # Label com nome do arquivo
-nome_arquivo = tk.StringVar()
-label_nome_arquivo = tk.Label(grupo_arq, textvariable=nome_arquivo)
+var_nome_arquivo = tk.StringVar()
+label_nome_arquivo = tk.Label(grupo_arq, textvariable=var_nome_arquivo)
 label_nome_arquivo.grid(row=1, column=2, padx=10, pady=10)
 
 # Grupo opções
-grupo_opcoes = ttk.LabelFrame(frame, text="Opções")
+ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 10, 'bold'))
+grupo_opcoes = ttk.LabelFrame(frame, text="Opções", style='Bold.TLabelframe')
 grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nw')
 
 # Checkbox para ch minima
@@ -1040,7 +1041,7 @@ entrada_tempo_limite.grid(row=5, column=1, padx=10, pady=10)
 ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1)
 
 # Limitações nos perfis
-botao_perfil = tk.Button(grupo_opcoes, text="Limitar perfis", command=janela_perfis)
+botao_perfil = tk.Button(grupo_opcoes, text="Limitar perfis", command=janela_perfis, bg="#ddd")
 botao_perfil.grid(row=5, column=3, padx=10, pady=10)
 
 var_perfis = tk.StringVar()
@@ -1058,19 +1059,20 @@ combobox.grid(row=6, column=1, padx=10, pady=10)
 combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
 
 # Botão para executar
-botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED, command=executar, width=10)
+botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED,
+                           command=executar, width=10)
 botao_executar.grid(row=10, column=0, padx=10, pady=10)
 
 # Inicialmente oculta as opções
 grupo_opcoes.grid_forget()
 
 # Grupo dos resultados
-grupo_resultados = ttk.LabelFrame(frame, text="Resultados")
+grupo_resultados = ttk.LabelFrame(frame, text="Resultados", style='Bold.TLabelframe')
 grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nsew')
 
 resultado = tk.StringVar()
 label_resultado = tk.Label(grupo_resultados, textvariable=resultado, anchor="w", justify="left")
-label_resultado.grid(row=0, column=0, padx=10, pady=10)
+label_resultado.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
 label_aba = tk.Label(grupo_resultados, text="Distribuição:")
 label_aba.grid(row=1, column=0, padx=10, pady=10, sticky='w')
