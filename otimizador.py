@@ -6,7 +6,6 @@ por Pedro Santos Guimarães, em 2023"""
 #mport sys
 from datetime import datetime
 import math
-import os
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
@@ -143,6 +142,7 @@ def carregar_arquivo():
         # Mostra as opções
         grupo.grid(row=2, column=0, padx=10, pady=10)
         verifica_check_boxes()
+        atualiza_tela()
 
 
 def executar():
@@ -152,6 +152,7 @@ def executar():
 
     # Mostra resultados
     grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
+    atualiza_tela()
 
     # Limpa tabela
     text_aba.delete("1.0", tk.END)
@@ -184,7 +185,8 @@ def executar():
         MAX_TOTAL = False
 
     # Inicia relatório
-    RELATORIO = f"Relatório da execução do otimizador\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
+    RELATORIO = f"Relatório da execução do otimizador" \
+        + "\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
     RELATORIO += f'\nModo escolhido: {MODO_ESCOLHIDO}'
     RELATORIO += f'\nUnidades: {N_UNIDADES}'
     RELATORIO += f'\nCH Maxima: {LIMITAR_CH_MAXIMA} {CH_MAX if LIMITAR_CH_MAXIMA else ""}'
@@ -221,7 +223,7 @@ def executar():
         texto_resultado = resultado.get()
         texto_resultado += "\nResolvendo ..."
         resultado.set(texto_resultado)
-        root.update()
+        atualiza_tela()
         resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, None, None)
     else:
         # Critérios/modos
@@ -263,7 +265,7 @@ def executar():
             texto_resultado = resultado.get()
             texto_resultado += f"\nModo {modo_usado}: resolvendo ..."
             resultado.set(texto_resultado)
-            root.update()
+            atualiza_tela()
 
             # Obtém resultado e quantidades
             resultado_modo, qtdes_modo = otimizar(modo_usado, piores, melhores)
@@ -283,7 +285,7 @@ def executar():
                 texto_resultado += f"\nTerminado. Resultado: {piores[modo_usado.split('-')[0]]}, "\
                     f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
             resultado.set(texto_resultado)
-            root.update()
+            atualiza_tela()
 
             # Imprime resultados
             imprimir_resultados(qtdes_modo)
@@ -308,7 +310,7 @@ def executar():
         texto_resultado = resultado.get()
         texto_resultado += "\n\nModo 'todos': resolvendo ..."
         resultado.set(texto_resultado)
-        root.update()
+        atualiza_tela()
 
         # Otimização com o modo 'todos'
         resultado_final, QTDES_FINAL = otimizar('todos', piores, melhores)
@@ -317,7 +319,7 @@ def executar():
         texto_resultado += f"\nTerminado. Resultado: {resultado_final}, "\
             f"resolvido em {MODELOS['todos'].solutionTime:.3f} segundos"
         resultado.set(texto_resultado)
-        root.update()
+        atualiza_tela()
 
     # ---- Finalização ----
     # Imprime resultados
@@ -347,7 +349,7 @@ def executar():
     texto_resultado += f"\nResolvido em {MODELOS[MODO_ESCOLHIDO].solutionTime:.3f} segundos"
 
     resultado.set(texto_resultado)
-    root.update()
+    atualiza_tela()
 
     # Transforma em dataframe com cabeçalho e unidades
     data_frame = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
@@ -365,21 +367,20 @@ def executar():
     # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
     if num_linhas <= altura_maxima:
         text_aba.config(height=num_linhas, width=8 + N_PERFIS*5)
-        scrollbar.grid_forget()  # Oculta a barra de rolagem
     else:
         text_aba.config(height=altura_maxima, width=8 + N_PERFIS*5)
-        scrollbar.grid(row=2, column=1, sticky="ns")  # Mostra a barra de rolagem vertical
+        scrollbar.grid(row=2, column=1, sticky="ns")
+
+    atualiza_tela()
 
     altura_janela = root.winfo_height()
     altura_tela = root.winfo_screenheight()
     print(f"{altura_janela} e {altura_tela}")
     # Verifica o tamanho da janela
     if altura_tela - altura_janela < 150:
-        print("Reduzir")
-        text_aba.config(height=)
-        root.geometry(f"{root.winfo_width()}x{altura_tela - 150}")
-        root.update()
-        print(root.winfo_height())
+        barra.grid(row=0, column=1, sticky="ns")
+        root.geometry(f"{root.winfo_width()}x{altura_tela - 150}+{root.winfo_rootx()}+10")
+        atualiza_tela()
 
 
 def otimizar(modo, piores, melhores):
@@ -886,6 +887,13 @@ def janela_perfis():
     texto_erro.grid(row=3, column=0, columnspan=3)
 
 
+def atualiza_tela():
+    frame.update_idletasks()
+    canvas.update_idletasks()
+    canvas.config(height=frame.winfo_reqheight(), width=frame.winfo_reqwidth())
+    canvas.config(scrollregion=canvas.bbox("all"))
+    root.update()
+
 ### Fim das funçõoes ###
 
 root = tk.Tk()
@@ -894,17 +902,37 @@ root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guima
 root.geometry("+300+100")
 root.minsize(600,400)
 
+# Cria o canvas
+canvas = tk.Canvas(root, borderwidth=0, background="#fff")
+canvas.grid(row=0, column=0, sticky="nsew")
+
+# Frame dentro do canvas
+frame = tk.Frame(canvas, background="#ffa")
+
+# Barra de rolagem
+barra = tk.Scrollbar(root, orient="vertical", command=canvas.yview)
+#barra.grid(row=0, column=1, sticky="ns")
+
+canvas.configure(yscrollcommand=barra.set)
+
+canvas.create_window((4,4), window=frame, anchor='nw')
+
+frame.bind("<Configure>", lambda event, canvas=canvas: canvas.configure(scrollregion=canvas.bbox("all")))
+
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
+
 # Tamanho da fonte para todos os objetos
 fonte = font.nametofont('TkDefaultFont')
 fonte.configure(size=10)
 
 # Título
-textoTitulo = tk.Label(root, text="Bem vindo.", anchor="w", justify="left",
+textoTitulo = tk.Label(frame, text="Bem vindo.", anchor="w", justify="left",
                        font=font.Font(weight="bold"))
 textoTitulo.grid(sticky='W', row=0, column=0, padx=10, pady=10)
 
 # Grupo arquivo
-grupo_arq = ttk.LabelFrame(root)
+grupo_arq = ttk.LabelFrame(frame)
 grupo_arq.grid(row=1, column=0, padx=10, pady=10, sticky='w')
 
 # Texto botão arquivo
@@ -921,7 +949,7 @@ label_nome_arquivo = tk.Label(grupo_arq, textvariable=nomeArquivo)
 label_nome_arquivo.grid(row=1, column=2, padx=10, pady=10)
 
 # Grupo opções
-grupo = ttk.LabelFrame(root, text="Opções")
+grupo = ttk.LabelFrame(frame, text="Opções")
 grupo.grid(row=2, column=0, padx=10, pady=10)
 
 # Checkbox para ch minima
@@ -1016,7 +1044,7 @@ botaoExecutar.grid(row=10, column=0, padx=10, pady=10)
 grupo.grid_forget()
 
 # Grupo dos resultados
-grupo_resultados = ttk.LabelFrame(root, text="Resultados")
+grupo_resultados = ttk.LabelFrame(frame, text="Resultados")
 grupo_resultados.grid(row=1, column=5, padx=10, pady=10, rowspan=2)
 
 resultado = tk.StringVar()
