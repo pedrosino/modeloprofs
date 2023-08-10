@@ -376,7 +376,6 @@ def executar():
 
     altura_janela = root.winfo_height()
     altura_tela = root.winfo_screenheight()
-    print(f"{altura_janela} e {altura_tela}")
     # Verifica o tamanho da janela
     if altura_tela - altura_janela < 150:
         barra.grid(row=0, column=1, sticky="ns")
@@ -845,7 +844,7 @@ def janela_perfis():
 
     # Lista de perfis
     grupo_perfis = ttk.LabelFrame(janela_nova)
-    grupo_perfis.grid(row=1, column=0)
+    grupo_perfis.grid(row=1, column=0, rowspan=2)
     lista_opcoes = []
     for perfil in range(8):
         texto = f"Perfil {perfil+1}"
@@ -856,7 +855,7 @@ def janela_perfis():
 
     # Sinal da operação
     grupo_sinal = ttk.LabelFrame(janela_nova)
-    grupo_sinal.grid(row=1, column=1, columnspan=2)
+    grupo_sinal.grid(row=1, column=1, columnspan=2, sticky='s')
     label_sinal = tk.Label(grupo_sinal, text="A soma das quantidades desses perfis deverá ser")
     label_sinal.grid(row=0, column=0, columnspan=3)
     variavel_sinal = tk.StringVar()
@@ -875,10 +874,10 @@ def janela_perfis():
     # Por isso foram usados botões normais
     botao_salvar = tk.Button(janela_nova, text="Salvar", bg="#afed80", width=10,
         command=lambda: clique_ok(lista_opcoes, variavel_sinal, variavel_percentual, janela_nova, var_erro, texto_erro))
-    botao_salvar.grid(row=2, column=1)
+    botao_salvar.grid(row=2, column=1, sticky='n', pady=10)
     botao_cancelar = tk.Button(janela_nova, text="Cancelar", bg="#f2cc63", width=10,
         command=lambda: janela_nova.destroy())
-    botao_cancelar.grid(row=2, column=2)
+    botao_cancelar.grid(row=2, column=2, sticky='n', pady=10)
 
     # Label para mensagem de erro
     var_erro = tk.StringVar()
