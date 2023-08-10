@@ -24,7 +24,7 @@ PESOS = None
 NOMES_RESTRICOES = None
 QTDES_FINAL = None
 RELATORIO = ""
-RESTRICOES_PERCENTUAIS = []
+RESTRICOES_PERCENTUAIS = {}
 
 # Dados do problema
 N_PERFIS = None
@@ -196,12 +196,12 @@ def executar():
         f'{N_MAX_TOTAL if MAX_TOTAL else "-"}'
     # Se houver restrições em algum perfil, imprime aqui
     if len(RESTRICOES_PERCENTUAIS) > 0:
-        for restricao in RESTRICOES_PERCENTUAIS:
+        for restricao in RESTRICOES_PERCENTUAIS.values():
             # Calcula coeficientes dos perfis
             percentual = restricao['percentual']
             perfis = restricao['perfis']
             sinal = restricao['sinal']
-            RELATORIO += '\nPerfis (' + ','.join(str(p) for p in perfis) \
+            RELATORIO += '\nPerfis (' + ','.join(str(p+1) for p in perfis) \
                 + f') {sinal} {percentual*100}%'
 
     # Imprime unidades
@@ -430,7 +430,7 @@ def otimizar(modo, piores, melhores):
 
     # Restrições de percentual por perfil
     if len(RESTRICOES_PERCENTUAIS) > 0:
-        for restricao in RESTRICOES_PERCENTUAIS:
+        for restricao in RESTRICOES_PERCENTUAIS.values():
             # Calcula coeficientes dos perfis
             percentual = restricao['percentual']
             perfis = restricao['perfis']
@@ -663,7 +663,7 @@ def imprimir_parametros(qtdes):
     linha_cabecalho = "\nUnidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |"
     # Se houver restrições em algum perfil, acrescenta colunas
     if len(RESTRICOES_PERCENTUAIS) > 0:
-        for restricao in RESTRICOES_PERCENTUAIS:
+        for restricao in RESTRICOES_PERCENTUAIS.values():
             # Acrescenta ao cabeçalho
             perfis = restricao['perfis']
             texto = 'P ' + ','.join(str(p+1) for p in perfis)
@@ -692,7 +692,7 @@ def imprimir_parametros(qtdes):
             + f"  {MATRIZ_UNIDADES[unidade][1] / total_unidade:7.3f} |"
         # Se houver restrições em algum perfil, acrescenta colunas
         if len(RESTRICOES_PERCENTUAIS) > 0:
-            for restricao in RESTRICOES_PERCENTUAIS:
+            for restricao in RESTRICOES_PERCENTUAIS.values():
                 perfis = restricao['perfis']
                 # Calcula percentuais
                 quantidade = sum(qtdes[unidade][perfil] for perfil in perfis)
@@ -712,11 +712,10 @@ def imprimir_parametros(qtdes):
         + f"  {np.sum(MATRIZ_UNIDADES, axis=0)[1]/total:7.3f} |"
     # Se houver restrições em algum perfil, acrescenta colunas
     if len(RESTRICOES_PERCENTUAIS) > 0:
-        for restricao in RESTRICOES_PERCENTUAIS:
+        for restricao in RESTRICOES_PERCENTUAIS.values():
             perfis = restricao['perfis']
             # Quantidade total
             quantidade_total = np.sum(qtdes[:, perfis])
-            print(quantidade_total)
             perc_total = quantidade_total / total * 100
             RELATORIO += f"   {perc_total:6.2f}% |"
     RELATORIO += borda_cabecalho + "\n"
@@ -801,7 +800,18 @@ def exportar_planilha():
         data_frame.to_excel(nome_arquivo, sheet_name='Resultados', index=False, engine="openpyxl")
 
 
-def clique_ok(opcoes, var_sinal, var_percentual, janela, var_erro, label_erro):
+def excluir_restricao(nome, frame_excluir):
+    """Exclui a restição percentual de perfil(s)"""
+    RESTRICOES_PERCENTUAIS.pop(nome)
+    frame_excluir.destroy()
+
+
+def formata_erro(label):
+    """Formata o label do erro"""
+    label.config(bg='#f0a869', fg='#87190b')
+
+
+def clique_ok(opcoes, variavel_sinal, variavel_percentual, janela, var_erro, label_erro):
     """Verifica e captura os valores selecionados"""
     escolhidos = [i for i, opcao in enumerate(opcoes) if opcao.get() == 1]
 
@@ -823,10 +833,21 @@ def clique_ok(opcoes, var_sinal, var_percentual, janela, var_erro, label_erro):
         formata_erro(label_erro)
         return
 
-    texto_perfis = var_perfis.get()
-    texto_perfis += '. Perfis (' + ','.join(str(e+1) for e in escolhidos) \
-        + f') {sinal} {percentual}%\n'
-    var_perfis.set(texto_perfis)
+    # Texto para o label
+    texto_perfis = '. Perfis (' + ','.join(str(e+1) for e in escolhidos) \
+        + f') {sinal} {percentual}%'
+    nome_restricao = 'p' + ','.join(str(e+1) for e in escolhidos) + f'{sinal}{percentual}'
+
+    # Cria um novo frame para a linha de labels
+    frame_labels = tk.Frame(frame_perfis)
+    frame_labels.pack()
+    label_perfil = tk.Label(frame_labels, text=texto_perfis, bg="#abc")
+    label_perfil.pack(side=tk.LEFT)
+
+    label_excluir = tk.Label(frame_labels, text='[X]', bg="#abc", fg="#a00")
+    label_excluir.pack(side=tk.LEFT)
+
+    label_excluir.bind("<Button-1>", lambda e:excluir_restricao(nome_restricao, frame_labels))
 
     # Acrescenta à lista de restrições
     nova_restricao = {
@@ -834,7 +855,7 @@ def clique_ok(opcoes, var_sinal, var_percentual, janela, var_erro, label_erro):
         'sinal' : sinal,
         'percentual' : percentual/100
     }
-    RESTRICOES_PERCENTUAIS.append(nova_restricao)
+    RESTRICOES_PERCENTUAIS[nome_restricao] = nova_restricao
 
     # Fecha janela
     janela.destroy()
@@ -1047,9 +1068,9 @@ ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", dela
 botao_perfil = tk.Button(grupo_opcoes, text="Limitar perfis", command=janela_perfis, bg="#ddd")
 botao_perfil.grid(row=5, column=3, padx=10, pady=10)
 
-var_perfis = tk.StringVar()
-label_perfis = ttk.Label(grupo_opcoes, textvariable=var_perfis)
-label_perfis.grid(row=5, column=4, padx=10, pady=10)
+# Frame para a lista de limitações
+frame_perfis = tk.Frame(grupo_opcoes)
+frame_perfis.grid(row=5, column=4, padx=10, pady=10)
 
 # Combobox critério
 label_criterio = ttk.Label(grupo_opcoes, text="Critério:")
