@@ -465,15 +465,17 @@ def otimizar(modo, piores, melhores):
     # a soma deve estar entre 57 e 75, inclusive
     for unidade in range(N_UNIDADES):
         if maxima:
+            n_min = math.ceil(MATRIZ_UNIDADES[unidade][1]/CH_MAX)
             MODELOS[modo] += CH_MAX*lpSum(saida[unidade]) >= MATRIZ_UNIDADES[unidade][1], \
-                f"{MATRIZ_UNIDADES[unidade][0]}_chmax: {math.ceil(MATRIZ_UNIDADES[unidade][1]/CH_MAX)}"
+                f"{MATRIZ_UNIDADES[unidade][0]}_chmax: {n_min}"
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
         # que tem 19 aulas apenas
         # No modo tempo-reverso e ch-reverso é preciso estabelecer um mínimo coerente por unidade
         # Foi adotado 9 aulas por professor (vide acima).
         if minima and 'reverso' in modo:
+            n_max = int(MATRIZ_UNIDADES[unidade][1]/9)
             MODELOS[modo] += 9*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
-                f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {int(MATRIZ_UNIDADES[unidade][1]/9)}"
+                f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {n_max}"
 
     # Restrições no geral
     if maxima:
@@ -526,20 +528,15 @@ def otimizar(modo, piores, melhores):
             # Assim, são colocadas duas restrições, uma usando o valor positivo e outra o negativo
             ## https://optimization.cbe.cornell.edu/index.php?title=Optimization_with_absolute_values
             ## https://lpsolve.sourceforge.net/5.5/absolute.htm
-            #MODELOS[modo] += desvios[unidade] >= medias[unidade] - media_geral, \
-            #    f"{MATRIZ_UNIDADES[unidade][0]}_up"
-            #MODELOS[modo] += desvios[unidade] >= -1*(medias[unidade] - media_geral), \
-            #    f"{MATRIZ_UNIDADES[unidade][0]}_low"
-
             m_grande = 10000
             # desvio
-            #MODELOS[modo] += desvios[unidade] == medias[unidade] - media_geral, \
-            #    f"{MATRIZ_UNIDADES[unidade][0]}_desvio"
             # X + M * B >= x'
-            MODELOS[modo] += medias[unidade] - media_geral + m_grande*consts[unidade] >= modulos[unidade], \
+            MODELOS[modo] += medias[unidade] - media_geral\
+                + m_grande*consts[unidade] >= modulos[unidade], \
                 f"X + M * B >= x' {MATRIZ_UNIDADES[unidade][0]}"
             # -X + M * (1-B) >= x'
-            MODELOS[modo] += -1*(medias[unidade] - media_geral) + m_grande*(1-consts[unidade]) >= modulos[unidade], \
+            MODELOS[modo] += -1*(medias[unidade] - media_geral) \
+                + m_grande*(1-consts[unidade]) >= modulos[unidade], \
                 f"-X + M * (1-B) >= x' {MATRIZ_UNIDADES[unidade][0]}"
             # modulo
             MODELOS[modo] += modulos[unidade] >= medias[unidade] - media_geral, \
@@ -629,7 +626,8 @@ def imprimir_resultados(qtdes):
     global RELATORIO
 
     RELATORIO += "\nResultados:"
-    borda_cabecalho = "\n---------+" + "-----"*N_PERFIS + "-+-------+---------+----------+------------+"
+    borda_cabecalho = "\n---------+" + "-----"*N_PERFIS \
+        + "-+-------+---------+----------+------------+"
     # Cabeçalho
     RELATORIO += borda_cabecalho
     RELATORIO += "\nUnidade  |  " \
