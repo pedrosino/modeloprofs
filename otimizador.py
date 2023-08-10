@@ -443,14 +443,8 @@ def otimizar(modo, piores, melhores):
             # Monta a restrição conforme o sinal escolhido
             for unidade in range(N_UNIDADES):
                 match sinal:
-                    case '<':
-                        MODELOS[modo] += lpSum(saida[unidade]*coeficientes) < 0, \
-                            nome_restricao + MATRIZ_UNIDADES[unidade][0]
                     case '<=':
                         MODELOS[modo] += lpSum(saida[unidade]*coeficientes) <= 0, \
-                            nome_restricao + MATRIZ_UNIDADES[unidade][0]
-                    case '>':
-                        MODELOS[modo] += lpSum(saida[unidade]*coeficientes) > 0, \
                             nome_restricao + MATRIZ_UNIDADES[unidade][0]
                     case '>=':
                         MODELOS[modo] += lpSum(saida[unidade]*coeficientes) >= 0, \
@@ -887,11 +881,11 @@ def janela_perfis():
     label_sinal.grid(row=0, column=0, columnspan=3)
     variavel_sinal = tk.StringVar()
     combo_sinal = ttk.Combobox(grupo_sinal, textvariable=variavel_sinal,
-                               values=['<', '<=', '>', '>='], state="readonly")
+                               values=['<=', '>='], state="readonly")
     combo_sinal.grid(row=1, column=0, sticky='w')
 
     # Valor do percentual
-    variavel_percentual = tk.IntVar()
+    variavel_percentual = tk.DoubleVar()
     texto_percentual = tk.Entry(grupo_sinal, textvariable=variavel_percentual, width=5)
     texto_percentual.grid(row=1, column=1, sticky='e')
     tk.Label(grupo_sinal, text="% do total").grid(row=1, column=2, sticky='w')
