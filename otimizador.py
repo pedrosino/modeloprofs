@@ -805,16 +805,22 @@ def clique_ok(opcoes, var_sinal, var_percentual, janela, var_erro, label_erro):
     """Verifica e captura os valores selecionados"""
     escolhidos = [i for i, opcao in enumerate(opcoes) if opcao.get() == 1]
 
-    sinal = var_sinal.get()
-    if sinal not in ['<', '<=', '>', '>=']:
-        var_erro.set('Sinal inválido!')
-        label_erro.config(bg='#f0a869', fg='#87190b')
+    # Verifica as opções
+    if len(escolhidos) < 1:
+        var_erro.set('Escolha pelo menos um perfil')
+        formata_erro(label_erro)
         return
 
-    percentual = var_percentual.get()
+    sinal = variavel_sinal.get()
+    if sinal not in ['<=', '>=']:
+        var_erro.set('Sinal inválido!')
+        formata_erro(label_erro)
+        return
+
+    percentual = variavel_percentual.get()
     if percentual <= 0 or percentual > 100:
         var_erro.set('Percentual deve ser maior que 0 e menor ou igual a 100.')
-        label_erro.config(bg='#f0a869', fg='#87190b')
+        formata_erro(label_erro)
         return
 
     texto_perfis = var_perfis.get()
