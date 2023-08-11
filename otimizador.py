@@ -442,25 +442,27 @@ def otimizar(modo, piores, melhores):
             # Nome da restrição
             nome_restricao = "Perfis (" + ",".join(str(p) for p in perfis) \
                 + f") {sinal} {percentual*100}% "
-            # Monta a restrição conforme o sinal escolhido
+
+            # Se a restrição for só nas unidades, automaticamente valerá para o total
             if escopo == 'unidades':
                 for unidade in range(N_UNIDADES):
                     match sinal:
+                        # Monta a restrição conforme o sinal escolhido
                         case '<=':
                             MODELOS[modo] += lpSum(saida[unidade]*coeficientes) <= 0, \
                                 nome_restricao + MATRIZ_UNIDADES[unidade][0]
                         case '>=':
                             MODELOS[modo] += lpSum(saida[unidade]*coeficientes) >= 0, \
                                 nome_restricao + MATRIZ_UNIDADES[unidade][0]
-
-            # Restrição no total
-            match sinal:
-                case '<=':
-                    MODELOS[modo] += lpSum(saida*coeficientes) <= 0, \
-                        f'{nome_restricao} geral'
-                case '>=':
-                    MODELOS[modo] += lpSum(saida*coeficientes) >= 0, \
-                        f'{nome_restricao} geral'
+            else:
+                # Restrição no total
+                match sinal:
+                    case '<=':
+                        MODELOS[modo] += lpSum(saida*coeficientes) <= 0, \
+                            f'{nome_restricao} geral'
+                    case '>=':
+                        MODELOS[modo] += lpSum(saida*coeficientes) >= 0, \
+                            f'{nome_restricao} geral'
 
 
     # Restrições de carga horária média:
@@ -924,7 +926,7 @@ def janela_perfis():
     global var_escopo
     var_escopo = tk.StringVar()
     var_escopo.set('unidades')
-    opcao_unidade = tk.Radiobutton(frame_radio, text="No total e em cada unidade",
+    opcao_unidade = tk.Radiobutton(frame_radio, text="Em cada unidade",
                                    variable=var_escopo, value='unidades')
     opcao_total = tk.Radiobutton(frame_radio, text="Somente no total", variable=var_escopo,
                                  value='total')
