@@ -201,8 +201,9 @@ def executar():
             percentual = restricao['percentual']
             perfis = restricao['perfis']
             sinal = restricao['sinal']
+            escopo = restricao['escopo']
             RELATORIO += '\nPerfis (' + ','.join(str(p+1) for p in perfis) \
-                + f') {sinal} {percentual*100}%'
+                + f') {sinal} {percentual*100}% ({escopo})'
 
     # Imprime unidades
     imprimir_unidades()
@@ -406,7 +407,7 @@ def otimizar(modo, piores, melhores):
         minima = True
 
     # -- Definir o modelo --
-    if modo in ('tempo', 'ch-reverso', 'todos'):
+    if modo in ['tempo', 'ch-reverso', 'todos']:
         MODELOS[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMaximize)
     else:
         MODELOS[modo] = LpProblem(name=f"Professores-{modo}", sense=LpMinimize)
@@ -435,20 +436,32 @@ def otimizar(modo, piores, melhores):
             percentual = restricao['percentual']
             perfis = restricao['perfis']
             sinal = restricao['sinal']
+            escopo = restricao['escopo']
             coeficientes = [1 - percentual if p in perfis else percentual*-1 for p in range(N_PERFIS)]
 
             # Nome da restrição
             nome_restricao = "Perfis (" + ",".join(str(p) for p in perfis) \
                 + f") {sinal} {percentual*100}% "
             # Monta a restrição conforme o sinal escolhido
-            for unidade in range(N_UNIDADES):
-                match sinal:
-                    case '<=':
-                        MODELOS[modo] += lpSum(saida[unidade]*coeficientes) <= 0, \
-                            nome_restricao + MATRIZ_UNIDADES[unidade][0]
-                    case '>=':
-                        MODELOS[modo] += lpSum(saida[unidade]*coeficientes) >= 0, \
-                            nome_restricao + MATRIZ_UNIDADES[unidade][0]
+            if escopo == 'unidades':
+                for unidade in range(N_UNIDADES):
+                    match sinal:
+                        case '<=':
+                            MODELOS[modo] += lpSum(saida[unidade]*coeficientes) <= 0, \
+                                nome_restricao + MATRIZ_UNIDADES[unidade][0]
+                        case '>=':
+                            MODELOS[modo] += lpSum(saida[unidade]*coeficientes) >= 0, \
+                                nome_restricao + MATRIZ_UNIDADES[unidade][0]
+
+            # Restrição no total
+            match sinal:
+                case '<=':
+                    MODELOS[modo] += lpSum(saida*coeficientes) <= 0, \
+                        f'{nome_restricao} geral'
+                case '>=':
+                    MODELOS[modo] += lpSum(saida*coeficientes) >= 0, \
+                        f'{nome_restricao} geral'
+
 
     # Restrições de carga horária média:
     # ------------------
@@ -485,7 +498,7 @@ def otimizar(modo, piores, melhores):
         MODELOS[modo] += lpSum(saida) >= N_MIN_TOTAL, f"TotalMin: {N_MIN_TOTAL}"
 
     # Modo de equilíbrio da carga horária
-    if modo in ('ch', 'ch-reverso', 'todos'):
+    if modo in ['ch', 'ch-reverso', 'todos']:
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
         modulos = LpVariable.matrix("modulo", MATRIZ_UNIDADES[:N_UNIDADES, 0], \
@@ -805,9 +818,9 @@ def formata_erro(label):
     label.config(bg='#f0a869', fg='#87190b')
 
 
-def clique_ok(opcoes, variavel_sinal, variavel_percentual, janela, var_erro, label_erro):
+def clique_ok(variaveis, janela, var_erro, label_erro):
     """Verifica e captura os valores selecionados"""
-    escolhidos = [i for i, opcao in enumerate(opcoes) if opcao.get() == 1]
+    escolhidos = [i for i, opcao in enumerate(variaveis['opcoes']) if opcao.get() == 1]
 
     # Verifica as opções
     if len(escolhidos) < 1:
@@ -815,30 +828,36 @@ def clique_ok(opcoes, variavel_sinal, variavel_percentual, janela, var_erro, lab
         formata_erro(label_erro)
         return
 
-    sinal = variavel_sinal.get()
+    sinal = variaveis['sinal'].get()
     if sinal not in ['<=', '>=']:
         var_erro.set('Sinal inválido!')
         formata_erro(label_erro)
         return
 
-    percentual = variavel_percentual.get()
+    percentual = variaveis['percentual'].get()
     if percentual <= 0 or percentual > 100:
         var_erro.set('Percentual deve ser maior que 0 e menor ou igual a 100.')
         formata_erro(label_erro)
         return
 
+    escopo = variaveis['escopo'].get()
+    if escopo not in ['total', 'unidades']:
+        var_erro.set('Opção inválida')
+        formata_erro(label_erro)
+        return
+
     # Texto para o label
     texto_perfis = '. Perfis (' + ','.join(str(e+1) for e in escolhidos) \
-        + f') {sinal} {percentual}%'
+        + f') {sinal} {percentual}% ({escopo})'
     nome_restricao = 'p' + ','.join(str(e+1) for e in escolhidos) + f'{sinal}{percentual}'
 
     # Cria um novo frame para a linha de labels
     frame_labels = tk.Frame(frame_perfis)
-    frame_labels.pack()
-    label_perfil = tk.Label(frame_labels, text=texto_perfis, bg="#abc")
+    frame_labels.pack(anchor='w')
+    label_perfil = tk.Label(frame_labels, text=texto_perfis)
     label_perfil.pack(side=tk.LEFT)
 
-    label_excluir = tk.Label(frame_labels, text='[X]', bg="#abc", fg="#a00")
+    label_excluir = tk.Label(frame_labels, text='[X]', fg="#a00", cursor="hand2")
     label_excluir.pack(side=tk.LEFT)
 
     label_excluir.bind("<Button-1>", lambda e:excluir_restricao(nome_restricao, frame_labels))
@@ -847,7 +866,8 @@ def clique_ok(opcoes, variavel_sinal, variavel_percentual, janela, var_erro, lab
     nova_restricao = {
         'perfis' : escolhidos,
         'sinal' : sinal,
-        'percentual' : percentual/100
+        'percentual' : percentual/100,
+        'escopo': escopo
     }
     RESTRICOES_PERCENTUAIS[nome_restricao] = nova_restricao
 
@@ -879,31 +899,54 @@ def janela_perfis():
     grupo_sinal.grid(row=1, column=1, columnspan=2, sticky='s')
     label_sinal = tk.Label(grupo_sinal, text="A soma das quantidades desses perfis deverá ser")
     label_sinal.grid(row=0, column=0, columnspan=3)
-    variavel_sinal = tk.StringVar()
-    combo_sinal = ttk.Combobox(grupo_sinal, textvariable=variavel_sinal,
+    var_sinal = tk.StringVar()
+    combo_sinal = ttk.Combobox(grupo_sinal, textvariable=var_sinal,
                                values=['<=', '>='], state="readonly")
     combo_sinal.grid(row=1, column=0, sticky='w')
 
     # Valor do percentual
-    variavel_percentual = tk.DoubleVar()
-    texto_percentual = tk.Entry(grupo_sinal, textvariable=variavel_percentual, width=5)
+    var_percentual = tk.DoubleVar()
+    texto_percentual = tk.Entry(grupo_sinal, textvariable=var_percentual, width=5)
     texto_percentual.grid(row=1, column=1, sticky='e')
-    tk.Label(grupo_sinal, text="% do total").grid(row=1, column=2, sticky='w')
+    tk.Label(grupo_sinal, text="%").grid(row=1, column=2, sticky='w')
+    ToolTip(texto_percentual, msg="Para valores não inteiros, use ponto decimal", delay=0.1)
 
+    # Radiobutton para escolher se a restrição é só geral ou também em cada unidade
+    frame_radio = tk.Frame(janela_nova)
+    frame_radio.grid(row=2, column=1, padx=10, pady=10, columnspan=2)
+    tk.Label(frame_radio, text="Essa restrição se aplica").grid(row=0, column=0, sticky='w')
+    label_duvida = tk.Label(frame_radio, text=" (?)")
+    label_duvida.grid(row=0, column=1, sticky='w')
+    ToolTip(label_duvida,
+            msg="Escolhendo a opção 'Somente no total' o percentual em cada unidade poderá extrapolar a restrição",
+            delay=0.1)
+    # Bug: https://stackoverflow.com/a/37361490/3059369
+    global var_escopo
+    var_escopo = tk.StringVar()
+    var_escopo.set('unidades')
+    opcao_unidade = tk.Radiobutton(frame_radio, text="No total e em cada unidade",
+                                   variable=var_escopo, value='unidades')
+    opcao_total = tk.Radiobutton(frame_radio, text="Somente no total", variable=var_escopo,
+                                 value='total')
+    opcao_unidade.grid(row=1, column=0, sticky='w')
+    opcao_total.grid(row=2, column=0, sticky='w')
+
+    lista_variaveis = {'sinal': var_sinal, 'percentual': var_percentual,
+                  'escopo': var_escopo, 'opcoes': lista_opcoes}
     # Botões
     # Alterar o 'background' do bottão do ttk na verdade muda só a cor da borda
     # Por isso foram usados botões normais
     botao_salvar = tk.Button(janela_nova, text="Salvar", bg="#afed80", width=10,
-        command=lambda: clique_ok(lista_opcoes, variavel_sinal, variavel_percentual, janela_nova, var_erro, texto_erro))
-    botao_salvar.grid(row=2, column=1, sticky='n', pady=10)
+        command=lambda: clique_ok(lista_variaveis, janela_nova, var_erro, texto_erro))
+    botao_salvar.grid(row=3, column=1, sticky='n', pady=10)
     botao_cancelar = tk.Button(janela_nova, text="Cancelar", bg="#f2cc63", width=10,
         command=lambda: janela_nova.destroy())
-    botao_cancelar.grid(row=2, column=2, sticky='n', pady=10)
+    botao_cancelar.grid(row=3, column=2, sticky='n', pady=10)
 
     # Label para mensagem de erro
     var_erro = tk.StringVar()
     texto_erro = tk.Label(janela_nova, name="erro", textvariable=var_erro)
-    texto_erro.grid(row=3, column=0, columnspan=3)
+    texto_erro.grid(row=4, column=0, columnspan=3)
 
 
 def atualiza_tela():
