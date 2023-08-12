@@ -68,19 +68,12 @@ MIN_TOTAL = False
 N_MIN_TOTAL = None
 # Restrição quanto aos perfis 5 e 6 - ministram grande número de aulas
 # e não participam de pesquisa ou extensão (podem ser considerados como regime de 40h)
-LIMITAR_QUARENTA = False
-P_QUARENTA = 0.1 # porcentagem máxima aceita
-# Restrição quanto aos perfis 7 e 8 - regime de 20h
-LIMITAR_VINTE = False
-P_VINTE = 0.2 # porcentagem máxima aceita
-# Tempo limite para o programa procurar a solução ótima (em segundos)
-#esse parâmetro pode ser alterado pelo usuário ao chamar o programa
 TEMPO_LIMITE = 30
 MODO_ESCOLHIDO = 'todos'
 
 def verifica_executar():
     """Habilita ou desabilita o botão Executar"""
-    if combo_var.get(): # and radio_var.get():
+    if combo_var.get():
         botao_executar['state'] = tk.NORMAL
         botao_executar.configure(bg="#ddd")
     else:
@@ -472,34 +465,37 @@ def otimizar(modo, piores, melhores):
                         MODELOS[modo] += lpSum(saida*coeficientes) >= 0, \
                             f'{nome_restricao} geral'
 
-
     # Restrições de carga horária média:
     # ------------------
-    # Exemplo para 900 aulas, considerando-se carga horária média mínima de 12 aulas e máxima de 16
+    # Exemplo para 900 aulas, considerando carga horária média mínima de 12 aulas e máxima de 16
     # soma <= 900/12 -> soma <= 75
     # soma >= 900/16 -> soma >= 56.25
     # a soma deve estar entre 57 e 75, inclusive
-    for unidade in range(N_UNIDADES):
-        if maxima:
+    if maxima:
+        # Restrição no total
+        total_aulas = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]
+        MODELOS[modo] += CH_MAX*lpSum(saida) >= total_aulas, \
+            f"chmax: {math.ceil(total_aulas/CH_MAX)}"
+        # E por unidade
+        for unidade in range(N_UNIDADES):
             n_min = math.ceil(MATRIZ_UNIDADES[unidade][1]/CH_MAX)
             MODELOS[modo] += CH_MAX*lpSum(saida[unidade]) >= MATRIZ_UNIDADES[unidade][1], \
                 f"{MATRIZ_UNIDADES[unidade][0]}_chmax: {n_min}"
+
+    if minima:
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
         # que tem 19 aulas apenas
+        total_aulas = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]
+        MODELOS[modo] += CH_MIN*lpSum(saida) <= total_aulas, \
+            f"chmin: {int(total_aulas/CH_MIN)}"
         # No modo tempo-reverso e ch-reverso é preciso estabelecer um mínimo coerente por unidade
         # Foi adotado 9 aulas por professor (vide acima).
-        if minima and 'reverso' in modo:
-            n_max = int(MATRIZ_UNIDADES[unidade][1]/9)
-            MODELOS[modo] += 9*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
-                f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {n_max}"
-
-    # Restrições no geral
-    if maxima:
-        MODELOS[modo] += CH_MAX*lpSum(saida) >= np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1], \
-            f"chmax: {math.ceil(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]/CH_MAX)}"
-    if minima:
-        MODELOS[modo] += CH_MIN*lpSum(saida) <= np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1], \
-            f"chmin: {int(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]/CH_MIN)}"
+        if 'reverso' in modo:
+            minimo_local = 9
+            for unidade in range(N_UNIDADES):
+                n_max = int(MATRIZ_UNIDADES[unidade][1]/minimo_local)
+                MODELOS[modo] += minimo_local*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
+                    f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {n_max}"
 
     # Restrição do número total de professores
     if MAX_TOTAL:
@@ -592,7 +588,7 @@ def otimizar(modo, piores, melhores):
         # pontuação multiplicada por seu peso
         MODELOS[modo] += lpSum(pontuacoes*PESOS)
 
-    # Imprime os resultados no arquivo txt
+    # Imprime os parâmetros do modo
     RELATORIO += f'\nModo: {modo}'
     RELATORIO += f'\nCH Maxima: {maxima} {CH_MAX if maxima else ""}'
     RELATORIO += f'\nCH Minima: {minima} {CH_MIN if minima else ""}'
