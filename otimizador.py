@@ -23,6 +23,7 @@ MATRIZ_TEMPO = None
 PESOS = None
 NOMES_RESTRICOES = None
 QTDES_FINAL = None
+DATA_FRAME = None
 RELATORIO = ""
 RESTRICOES_PERCENTUAIS = {}
 
@@ -149,7 +150,7 @@ def carregar_arquivo():
 def executar():
     """Executa a otimização"""
     global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL,\
-        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO
+        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO, DATA_FRAME
 
     # Mostra resultados
     grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nw')
@@ -354,11 +355,18 @@ def executar():
     atualiza_tela()
 
     # Transforma em dataframe com cabeçalho e unidades
-    data_frame = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
-    data_frame.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
+    DATA_FRAME = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
+    # Manter os tipos
+    DATA_FRAME = DATA_FRAME.convert_dtypes()
+    # Linha com totais
+    DATA_FRAME.loc['Total', :] = DATA_FRAME.sum().values
+    # Coluna com total
+    DATA_FRAME['Total'] = DATA_FRAME.sum(axis=1, numeric_only=True)
+    # Insere coluna
+    DATA_FRAME.insert(0, "Unidade", np.append(MATRIZ_UNIDADES[:, 0],['Total Perfil']))
 
     # Mostra na tabela
-    text_aba.insert(tk.END, data_frame.to_string(index=False))
+    text_aba.insert(tk.END, DATA_FRAME.to_string(index=False))
 
     # Altura máxima
     altura_maxima = 18
@@ -368,9 +376,9 @@ def executar():
 
     # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
     if num_linhas <= altura_maxima:
-        text_aba.config(height=num_linhas, width=8 + N_PERFIS*5)
+        text_aba.config(height=num_linhas, width=12 + N_PERFIS*5)
     else:
-        text_aba.config(height=altura_maxima, width=8 + N_PERFIS*5)
+        text_aba.config(height=altura_maxima, width=12 + N_PERFIS*5)
         scrollbar.grid(row=2, column=1, sticky="ns")
 
     atualiza_tela()
@@ -803,10 +811,8 @@ def exportar_planilha():
     nome_arquivo = filedialog.asksaveasfilename(defaultextension=".xlsx",
         initialfile="Distribuição.xlsx", filetypes=[("Arquivos do Excel", "*.xlsx")])
     if nome_arquivo:
-        # Transforma em dataframe com cabeçalho e unidades
-        data_frame = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
-        data_frame.insert(0, "Unidade", MATRIZ_UNIDADES[:, 0])
-        data_frame.to_excel(nome_arquivo, sheet_name='Resultados', index=False, engine="openpyxl")
+        # Salva na planilha
+        DATA_FRAME.to_excel(nome_arquivo, sheet_name='Resultados', index=False, engine="openpyxl")
 
 
 def excluir_restricao(nome, frame_excluir):
@@ -968,6 +974,7 @@ def rolar(event):
 
 ### Fim das funçõoes ###
 
+# ------ Interface gráfica ------
 root = tk.Tk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
@@ -983,12 +990,9 @@ frame = tk.Frame(canvas)
 
 # Barra de rolagem
 barra = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
-#barra.grid(row=0, column=1, sticky="ns")
 
 canvas.configure(yscrollcommand=barra.set)
-
 canvas.create_window((4,4), window=frame, anchor='nw')
-
 canvas.bind_all("<MouseWheel>", rolar)
 
 frame.bind("<Configure>", lambda event,
@@ -997,7 +1001,7 @@ frame.bind("<Configure>", lambda event,
 root.grid_rowconfigure(0, weight=1)
 root.grid_columnconfigure(0, weight=1)
 
-# Configure a primeira linha para expandir verticalmente
+# Configura a primeira linha para expandir verticalmente
 frame.grid_rowconfigure(1, weight=0)
 frame.grid_rowconfigure(2, weight=1)
 

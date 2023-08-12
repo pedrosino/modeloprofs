@@ -117,7 +117,7 @@ solver.set_time_limit(30*1000)
 solver.EnableOutput()
 
 # Variáveis de decisão
-saida = [solver.IntVar(0, solver.infinity(), f"x{p}_{m_unidades[u][0]}") for u in range(n_unidades) for p in range(1, n_perfis+1)]
+saida = [solver.IntVar(0, solver.infinity(), f"x_{p}_{m_unidades[u][0]}") for u in range(n_unidades) for p in range(1, n_perfis+1)]
 outra = np.array(saida).reshape(n_unidades, n_perfis)
 
 # auxiliares
@@ -160,12 +160,12 @@ for r in range(n_restricoes):
 # soma <= 900/12 -> soma <= 75
 # soma >= 900/16 -> soma >= 56.25
 # a soma deve estar entre 57 e 75, inclusive
-'''for u in range(n_unidades):
+for u in range(n_unidades):
     if(maxima):# or modo == 'tempo'):
         solver.Add(ch_max*sum(outra[u]) >= m_unidades[u][1], f"{m_unidades[u][0]}_chmax: {math.ceil(m_unidades[u][1]/ch_max)}")
-    if(minima):
-        solver.Add(ch_min*sum(outra[u]) <= m_unidades[u][1], f"{m_unidades[u][0]}_chmin: {int(m_unidades[u][1]/ch_min)}")
-'''
+    #if(minima):
+    #    solver.Add(ch_min*sum(outra[u]) <= m_unidades[u][1], f"{m_unidades[u][0]}_chmin: {int(m_unidades[u][1]/ch_min)}")
+
 if(maxima):
     solver.Add(ch_max*sum(saida) >= np.sum(m_unidades[:n_unidades], axis=0)[1], f"chmax: {math.ceil(np.sum(m_unidades[:n_unidades], axis=0)[1]/ch_max)}")
 if(minima):
@@ -186,7 +186,7 @@ if(vinte):
         solver.Add(outra[u][6] + outra[u][7] - p_vinte*sum(outra[u]) <= 0, f"20 horas {m_unidades[u][0]} <= 20%")
 
 # minimizar desvio em relação à média
-fator = 10000
+fator = 1000
 if(modo == 'ch'):
     # coeficientes
     # m = (a-b)/(c-d) -> a = media minima, b = media maxima, c = numero maximo, d = numero minimo
