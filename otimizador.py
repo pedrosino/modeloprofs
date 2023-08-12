@@ -37,7 +37,9 @@ LISTA_MODOS = {
     "Menor número": "num",
     "Menos P-Eq": "peq",
     "Mais tempo": "tempo",
+    "Menos tempo": "tempo-reverso",
     "Equilíbrio CH": "ch",
+    "Desequilíbrio CH": "ch-reverso",
     "Todos": "todos"
 }
 
@@ -169,7 +171,7 @@ def executar():
     MODO_ESCOLHIDO = LISTA_MODOS[combo_var.get()]
 
     # Verifica modo escolhido
-    if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'ch', 'todos']:
+    if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso', 'todos']:
         MODO_ESCOLHIDO = 'todos'
         print("O modo escolhido era inválido. Será utilizado o modo 'todos'.")
 
@@ -322,6 +324,12 @@ def executar():
     imprimir_resultados(QTDES_FINAL)
     # Imprime parâmetros
     imprimir_parametros(QTDES_FINAL)
+
+    if 'ch' in MODO_ESCOLHIDO:
+        for variable in MODELOS[MODO_ESCOLHIDO].variables():
+            nomes_busca = ['modulo', 'media']
+            if any(nome in variable.name for nome in nomes_busca):
+                RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
 
     if MODO_ESCOLHIDO == 'todos':
         # PESOS
