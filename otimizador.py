@@ -68,8 +68,9 @@ N_MAX_TOTAL = None
 # Restrição do número mínimo total
 MIN_TOTAL = False
 N_MIN_TOTAL = None
-# Restrição quanto aos perfis 5 e 6 - ministram grande número de aulas
-# e não participam de pesquisa ou extensão (podem ser considerados como regime de 40h)
+# Total de aulas a serem ministradas
+TOTAL_AULAS = None
+# Tempo limite para procurar a solução ótima
 TEMPO_LIMITE = 30
 MODO_ESCOLHIDO = 'todos'
 
@@ -144,8 +145,9 @@ def carregar_arquivo():
 
 def executar():
     """Executa a otimização"""
-    global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL,\
-        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO, DATA_FRAME
+    global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL, \
+        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO, \
+        DATA_FRAME, TOTAL_AULAS
 
     # Mostra resultados
     grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nw')
@@ -169,6 +171,8 @@ def executar():
         N_MIN_TOTAL = texto_min_total.get()
     TEMPO_LIMITE = val_limite.get()
     MODO_ESCOLHIDO = LISTA_MODOS[combo_var.get()]
+
+    TOTAL_AULAS = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]
 
     # Verifica modo escolhido
     if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso', 'todos']:
@@ -253,10 +257,9 @@ def executar():
         # e o pior caso fazendo uma otimização inversa.
         # Para o critério 4, o melhor caso é determinado pela solução inicial do modelo com
         # este critério e o pior caso também com uma otimização inversa.
-        numero_max = round(np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MIN) \
-            if not MAX_TOTAL else N_MAX_TOTAL
+        numero_max = int(TOTAL_AULAS / CH_MIN) if not MAX_TOTAL else N_MAX_TOTAL
         piores['num'] = numero_max
-        piores['peq'] = numero_max*1.65
+        piores['peq'] = round(numero_max*1.65, 2)
 
         # Percorre os critérios
         for modo_usado in modos:
@@ -481,9 +484,8 @@ def otimizar(modo, piores, melhores):
     # a soma deve estar entre 57 e 75, inclusive
     if maxima:
         # Restrição no total
-        total_aulas = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]
-        MODELOS[modo] += CH_MAX*lpSum(saida) >= total_aulas, \
-            f"chmax: {math.ceil(total_aulas/CH_MAX)}"
+        MODELOS[modo] += CH_MAX*lpSum(saida) >= TOTAL_AULAS, \
+            f"chmax: {math.ceil(TOTAL_AULAS/CH_MAX)}"
         # E por unidade
         for unidade in range(N_UNIDADES):
             n_min = math.ceil(MATRIZ_UNIDADES[unidade][1]/CH_MAX)
@@ -493,9 +495,8 @@ def otimizar(modo, piores, melhores):
     if minima:
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
         # que tem 19 aulas apenas
-        total_aulas = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]
-        MODELOS[modo] += CH_MIN*lpSum(saida) <= total_aulas, \
-            f"chmin: {int(total_aulas/CH_MIN)}"
+        MODELOS[modo] += CH_MIN*lpSum(saida) <= TOTAL_AULAS, \
+            f"chmin: {int(TOTAL_AULAS/CH_MIN)}"
         # No modo tempo-reverso e ch-reverso é preciso estabelecer um mínimo coerente por unidade
         # Foi adotado 9 aulas por professor (vide acima).
         if 'reverso' in modo:
@@ -528,8 +529,8 @@ def otimizar(modo, piores, melhores):
         # Coeficientes
         # coef = (y1-y0)/(x1-x0) -> y1 = media minima, y0 = media maxima,
         # x1 = numero maximo, x0 = numero minimo
-        x_1 = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MIN
-        x_0 = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] / CH_MAX
+        x_1 = TOTAL_AULAS / CH_MIN
+        x_0 = TOTAL_AULAS / CH_MAX
         coef = (CH_MIN - CH_MAX) / (x_1 - x_0)
 
         # O cálculo da média é inserido no modelo como uma restrição
