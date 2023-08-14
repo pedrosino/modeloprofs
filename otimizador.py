@@ -13,7 +13,8 @@ from tkinter import font
 import pandas as pd
 import numpy as np
 from tktooltip import ToolTip
-from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, LpProblem, LpMaximize, LpMinimize
+from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, GLPK_CMD, \
+    LpProblem, LpMaximize, LpMinimize, SCIP_CMD, SCIP_PY
 
 # Variáveis globais
 MATRIZ_UNIDADES = None
@@ -485,18 +486,18 @@ def otimizar(modo, piores, melhores):
     if maxima:
         # Restrição no total
         MODELOS[modo] += CH_MAX*lpSum(saida) >= TOTAL_AULAS, \
-            f"chmax: {math.ceil(TOTAL_AULAS/CH_MAX)}"
+            f"chmax {math.ceil(TOTAL_AULAS/CH_MAX)}"
         # E por unidade
         for unidade in range(N_UNIDADES):
             n_min = math.ceil(MATRIZ_UNIDADES[unidade][1]/CH_MAX)
             MODELOS[modo] += CH_MAX*lpSum(saida[unidade]) >= MATRIZ_UNIDADES[unidade][1], \
-                f"{MATRIZ_UNIDADES[unidade][0]}_chmax: {n_min}"
+                f"{MATRIZ_UNIDADES[unidade][0]}_chmax {n_min}"
 
     if minima:
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
         # que tem 19 aulas apenas
         MODELOS[modo] += CH_MIN*lpSum(saida) <= TOTAL_AULAS, \
-            f"chmin: {int(TOTAL_AULAS/CH_MIN)}"
+            f"chmin {int(TOTAL_AULAS/CH_MIN)}"
         # No modo tempo-reverso e ch-reverso é preciso estabelecer um mínimo coerente por unidade
         # Foi adotado 9 aulas por professor (vide acima).
         if 'reverso' in modo:
@@ -504,13 +505,13 @@ def otimizar(modo, piores, melhores):
             for unidade in range(N_UNIDADES):
                 n_max = int(MATRIZ_UNIDADES[unidade][1]/minimo_local)
                 MODELOS[modo] += minimo_local*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
-                    f"{MATRIZ_UNIDADES[unidade][0]}_chmin: {n_max}"
+                    f"{MATRIZ_UNIDADES[unidade][0]}_chmin {n_max}"
 
     # Restrição do número total de professores
     if MAX_TOTAL:
-        MODELOS[modo] += lpSum(saida) <= N_MAX_TOTAL, f"TotalMax: {N_MAX_TOTAL}"
+        MODELOS[modo] += lpSum(saida) <= N_MAX_TOTAL, f"TotalMax {N_MAX_TOTAL}"
     if MIN_TOTAL:
-        MODELOS[modo] += lpSum(saida) >= N_MIN_TOTAL, f"TotalMin: {N_MIN_TOTAL}"
+        MODELOS[modo] += lpSum(saida) >= N_MIN_TOTAL, f"TotalMin {N_MIN_TOTAL}"
 
     # Modo de equilíbrio da carga horária
     if modo in ['ch', 'ch-reverso', 'todos']:
@@ -554,11 +555,11 @@ def otimizar(modo, piores, melhores):
             # X + M * B >= x'
             MODELOS[modo] += medias[unidade] - media_geral\
                 + m_grande*consts[unidade] >= modulos[unidade], \
-                f"X + M * B >= x' {MATRIZ_UNIDADES[unidade][0]}"
+                f"XMB {MATRIZ_UNIDADES[unidade][0]}"
             # -X + M * (1-B) >= x'
             MODELOS[modo] += -1*(medias[unidade] - media_geral) \
                 + m_grande*(1-consts[unidade]) >= modulos[unidade], \
-                f"-X + M * (1-B) >= x' {MATRIZ_UNIDADES[unidade][0]}"
+                f"-XM1B {MATRIZ_UNIDADES[unidade][0]}"
             # modulo
             MODELOS[modo] += modulos[unidade] >= medias[unidade] - media_geral, \
                 f"{MATRIZ_UNIDADES[unidade][0]}_mod1"
@@ -610,7 +611,10 @@ def otimizar(modo, piores, melhores):
         novo_limite = TEMPO_LIMITE
 
     # Resolver o modelo
-    MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=novo_limite))
+    #MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=novo_limite))
+    # O solver GLPK é bem mais lento
+    #MODELOS[modo].solve(GLPK_CMD(msg=1, options=["--tmlim", str(novo_limite)]))
+    MODELOS[modo].solve(SCIP_CMD(msg=1, timeLimit=novo_limite, path="C:\\Program Files\\SCIPOptSuite 8.0.4\\bin\\scip.exe"))
 
     # Resultados
     RELATORIO += f"\nSituação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}"
