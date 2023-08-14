@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 from tktooltip import ToolTip
 from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, GLPK_CMD, \
-    LpProblem, LpMaximize, LpMinimize, SCIP_CMD, SCIP_PY
+    LpProblem, LpMaximize, LpMinimize, SCIP_CMD
 
 # Variáveis globais
 MATRIZ_UNIDADES = None
@@ -611,10 +611,14 @@ def otimizar(modo, piores, melhores):
         novo_limite = TEMPO_LIMITE
 
     # Resolver o modelo
-    #MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=novo_limite))
+    solver_escolhido = solver_var.get()
+    if solver_escolhido == 'CBC':
+        MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=novo_limite))
+    elif solver_escolhido == 'SCIP':
+        MODELOS[modo].solve(SCIP_CMD(msg=1, timeLimit=novo_limite,
+            path="C:\\Program Files\\SCIPOptSuite 8.0.4\\bin\\scip.exe"))
     # O solver GLPK é bem mais lento
-    #MODELOS[modo].solve(GLPK_CMD(msg=1, options=["--tmlim", str(novo_limite)]))
-    MODELOS[modo].solve(SCIP_CMD(msg=1, timeLimit=novo_limite, path="C:\\Program Files\\SCIPOptSuite 8.0.4\\bin\\scip.exe"))
+    ##MODELOS[modo].solve(GLPK_CMD(msg=1, options=["--tmlim", str(novo_limite)]))
 
     # Resultados
     RELATORIO += f"\nSituação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}"
@@ -626,7 +630,7 @@ def otimizar(modo, piores, melhores):
     elif modo == 'num':
         objetivo = int(MODELOS[modo].objective.value())
     elif 'tempo' in modo:
-        objetivo = MODELOS[modo].objective.value()
+        objetivo = round(MODELOS[modo].objective.value(), 2)
     elif modo == 'todos':
         objetivo = round(MODELOS[modo].objective.value(), 4)
 
@@ -1134,10 +1138,19 @@ combobox = ttk.Combobox(grupo_opcoes, textvariable=combo_var, values=list(LISTA_
 combobox.grid(row=6, column=1, padx=10, pady=10)
 combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
 
+# Combo solver
+label_solver = tk.Label(grupo_opcoes, text="Escolha o solver:")
+label_solver.grid(row=10, column=0, padx=10, pady=10)
+
+solver_var = tk.StringVar()
+combo_solver = ttk.Combobox(grupo_opcoes, textvariable=solver_var, value=list(['CBC', 'SCIP']),
+                            state="readonly")
+combo_solver.grid(row=10, column=1, padx=10, pady=10)
+
 # Botão para executar
 botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED,
                            command=executar, width=10)
-botao_executar.grid(row=10, column=0, padx=10, pady=10)
+botao_executar.grid(row=10, column=2, padx=10, pady=10)
 
 # Inicialmente oculta as opções
 grupo_opcoes.grid_forget()
