@@ -76,6 +76,7 @@ TOTAL_AULAS = None
 # Tempo limite para procurar a solução ótima
 TEMPO_LIMITE = 30
 MODO_ESCOLHIDO = 'todos'
+FATOR = 1000
 
 def verifica_executar():
     """Habilita ou desabilita o botão Executar"""
@@ -406,8 +407,8 @@ def otimizar(modo, piores, melhores):
 
     # -- Definir o modelo --
     MODELOS[modo] = pywraplp.Solver(f'ProfsORTools-{modo}',
-        pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
-        #pywraplp.Solver.SAT_INTEGER_PROGRAMMING)
+        #pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
+        pywraplp.Solver.SAT_INTEGER_PROGRAMMING)
     infinito = pywraplp.Solver.infinity()
 
     #nomes
@@ -522,10 +523,14 @@ def otimizar(modo, piores, melhores):
     if modo in ['ch', 'ch-reverso', 'todos']:
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
-        modulos = [MODELOS[modo].NumVar(0, infinito, f"modulo_{MATRIZ_UNIDADES[u][0]}") for u in range(N_UNIDADES)]
+        modulos = [MODELOS[modo].IntVar(0, infinito, f"modulo_{MATRIZ_UNIDADES[u][0]}") for u in range(N_UNIDADES)]
+        #consts = LpVariable.matrix("b", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Binary")
         consts = [MODELOS[modo].IntVar(0, 1, f"b_{MATRIZ_UNIDADES[u][0]}") for u in range(N_UNIDADES)]
-        medias = [MODELOS[modo].NumVar(0, infinito, f"media_{MATRIZ_UNIDADES[u][0]}") for u in range(N_UNIDADES)]
-        media_geral = MODELOS[modo].NumVar(0, infinito, "media_geral")
+        #medias = LpVariable.matrix("media", MATRIZ_UNIDADES[:N_UNIDADES, 0], \
+        #                           cat="Continuous", lowBound=0)
+        medias = [MODELOS[modo].IntVar(0, infinito, f"media_{MATRIZ_UNIDADES[u][0]}") for u in range(N_UNIDADES)]
+        #media_geral = LpVariable("media_geral", cat="Continuous", lowBound=0)
+        media_geral = MODELOS[modo].IntVar(0, infinito, "media_geral")
 
         # Como a média seria uma função não linear (aulas/professores), foi feita uma
         # aproximação com uma reta que passa pelos dois pontos extremos dados pelos
@@ -535,18 +540,18 @@ def otimizar(modo, piores, melhores):
         # x1 = numero maximo, x0 = numero minimo
         x_1 = TOTAL_AULAS / CH_MIN
         x_0 = TOTAL_AULAS / CH_MAX
-        coef = (CH_MIN - CH_MAX) / (x_1 - x_0)
+        coef = round(FATOR*(CH_MIN - CH_MAX) / (x_1 - x_0))
 
         # O cálculo da média é inserido no modelo como uma restrição
-        MODELOS[modo].Add(media_geral == coef*sum(var_x) + CH_MIN + CH_MAX, "Media geral")
+        MODELOS[modo].Add(media_geral == coef*sum(var_x) + FATOR*(CH_MIN + CH_MAX), "Media geral")
 
         # O mesmo raciocínio é feito para cada unidade
         for unidade in range(N_UNIDADES):
             x1u = MATRIZ_UNIDADES[unidade][1] / CH_MIN
             x0u = MATRIZ_UNIDADES[unidade][1] / CH_MAX
-            coef_u = (CH_MIN - CH_MAX) / (x1u - x0u)
+            coef_u = round(FATOR*(CH_MIN - CH_MAX) / (x1u - x0u))
             # Cálculo da media
-            MODELOS[modo].Add(medias[unidade] == coef_u*sum(saida[unidade]) + CH_MIN + CH_MAX, \
+            MODELOS[modo].Add(medias[unidade] == coef_u*sum(saida[unidade]) + FATOR*(CH_MIN + CH_MAX), \
                 f"{MATRIZ_UNIDADES[unidade][0]}_ch_media")
             # Cálculo do desvio
             # O desvio é dado pelo módulo da subtração, porém o PuLP não aceita a função abs()
@@ -572,18 +577,35 @@ def otimizar(modo, piores, melhores):
     # Modo com todos os critérios
     if modo == 'todos':
         # Variáveis com as pontuações
-        pontuacoes = [MODELOS[modo].NumVar(0, infinito, f"p_{i}") for i in range(4)]
+        pontuacoes = [MODELOS[modo].IntVar(0, FATOR*100, f"p_{i}") for i in range(4)]
         # Restrições/cálculos
         # Caso seja dado um número exato, é necessário alterar a pontuação do critério 'num'
         # para evitar a divisão por zero
 
+        # Calcula os coeficientes
+        # Necessariamente inteiros!
+        coeficientes = {}
+        constantes = {}
+        outro_fator = FATOR*100
+        for m in ['num', 'peq', 'tempo', 'ch']:
+            coeficientes[m] = round(outro_fator/(melhores[m] - piores[m]))
+            constantes[m] = round(outro_fator*piores[m]/(melhores[m] - piores[m]))
+
+        print(coeficientes)
+        print(constantes)
+
         if MAX_TOTAL and MIN_TOTAL and N_MAX_TOTAL == N_MIN_TOTAL:
-            MODELOS[modo].Add(pontuacoes[0] == sum(var_x)/melhores['num'], "Pontuação número")
+            coef = round(outro_fator/melhores['num'])
+            MODELOS[modo].Add(pontuacoes[0] == coef*sum(var_x), "Pontuação número")
         else:
-            MODELOS[modo].Add(pontuacoes[0] == (sum(var_x) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número")
-        MODELOS[modo].Add(pontuacoes[1] == (sum(saida.dot(MATRIZ_PEQ)) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq")
-        MODELOS[modo].Add(pontuacoes[2] == (sum(saida.dot(MATRIZ_TEMPO)) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo")
-        MODELOS[modo].Add(pontuacoes[3] == (sum(modulos[:N_UNIDADES])/N_UNIDADES - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio")
+            #MODELOS[modo].Add(pontuacoes[0] == coeficientes['num']*(sum(var_x) - piores['num']), "Pontuação número")
+            MODELOS[modo].Add(pontuacoes[0] == coeficientes['num']*sum(var_x) - constantes['num'], "Pontuação número")
+        #MODELOS[modo].Add(pontuacoes[1] == coeficientes['peq']*(sum(saida.dot(MATRIZ_PEQ)) - piores['peq']), "Pontuação P-Eq")
+        MODELOS[modo].Add(pontuacoes[1] == coeficientes['peq']*sum(saida.dot(MATRIZ_PEQ)) - constantes['peq'], "Pontuação P-Eq")
+        #MODELOS[modo].Add(pontuacoes[2] == coeficientes['tempo']*(sum(saida.dot(MATRIZ_TEMPO)) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2] - piores['tempo']), "Pontuação tempo")
+        MODELOS[modo].Add(pontuacoes[2] == coeficientes['tempo']*sum(saida.dot(MATRIZ_TEMPO)) - round(coeficientes['tempo']*np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]) - constantes['tempo'], "Pontuação tempo")
+        #MODELOS[modo].Add(pontuacoes[3] == coeficientes['ch']*(sum(modulos[:N_UNIDADES])/N_UNIDADES - piores['ch']), "Pontuação Equilíbrio")
+        MODELOS[modo].Add(pontuacoes[3] == coeficientes['ch']*(sum(modulos[:N_UNIDADES])/N_UNIDADES) - constantes['ch'], "Pontuação Equilíbrio")
 
     # -- Função objetivo --
     if modo == 'num':
@@ -629,6 +651,11 @@ def otimizar(modo, piores, melhores):
     # Para cada critério o resultado é em um formato diferente
     if 'ch' in modo:
         objetivo = round(MODELOS[modo].Objective().Value(), 4)
+        print(f"Media geral: {media_geral.solution_value()}")
+        for u in range(N_UNIDADES):
+            print(MATRIZ_UNIDADES[u][0])
+            print(f"Média: {medias[u].solution_value()}")
+            print(f"Desvio: {modulos[u].solution_value()}")
     elif modo == 'peq':
         objetivo = round(MODELOS[modo].Objective().Value(), 2)
     elif modo == 'num':
