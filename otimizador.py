@@ -77,7 +77,7 @@ MODO_ESCOLHIDO = 'todos'
 
 def verifica_executar():
     """Habilita ou desabilita o botão Executar"""
-    if combo_var.get():
+    if combo_var.get() and solver_var.get():
         botao_executar['state'] = tk.NORMAL
         botao_executar.configure(bg="#ddd")
     else:
@@ -453,8 +453,11 @@ def otimizar(modo, piores, melhores):
             coeficientes = [1 - percentual if p in perfis else percentual*-1 for p in range(N_PERFIS)]
 
             # Nome da restrição
+            #nome_restricao = "Perfis (" + ",".join(str(p) for p in perfis) \
+            #    + f") {sinal} {percentual*100}% "
+            # O solver SCIP não aceita sinais <= no nome da restrição
             nome_restricao = "Perfis (" + ",".join(str(p) for p in perfis) \
-                + f") {sinal} {percentual*100}% "
+                + f") {'menor' if sinal == '<=' else 'maior'} {percentual*100}% "
 
             # Se a restrição for só nas unidades, automaticamente valerá para o total
             if escopo == 'unidades':
@@ -1146,6 +1149,7 @@ solver_var = tk.StringVar()
 combo_solver = ttk.Combobox(grupo_opcoes, textvariable=solver_var, value=list(['CBC', 'SCIP']),
                             state="readonly")
 combo_solver.grid(row=10, column=1, padx=10, pady=10)
+combo_solver.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
 
 # Botão para executar
 botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED,
