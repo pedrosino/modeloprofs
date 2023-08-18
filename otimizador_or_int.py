@@ -192,7 +192,7 @@ def executar():
     # Inicia relatório
     RELATORIO = "Relatório da execução do otimizador" \
         + f"\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
-    RELATORIO += f'\nModo escolhido: {MODO_ESCOLHIDO}'
+    RELATORIO += f'\nModo escolhido: {[k for k, v in LISTA_MODOS.items() if v == MODO_ESCOLHIDO][0]}'
     RELATORIO += f'\nUnidades: {N_UNIDADES}'
     RELATORIO += f'\nCH Maxima: {LIMITAR_CH_MAXIMA} {CH_MAX if LIMITAR_CH_MAXIMA else ""}'
     RELATORIO += f'\nCH Minima: {LIMITAR_CH_MINIMA} {CH_MIN if LIMITAR_CH_MINIMA else ""}'
@@ -217,7 +217,7 @@ def executar():
 
     RELATORIO += '\n------------------------------------------------------------\n'
 
-    texto_resultado = f"O modo escolhido foi {MODO_ESCOLHIDO}"
+    texto_resultado = f"O modo escolhido foi {[k for k, v in LISTA_MODOS.items() if v == MODO_ESCOLHIDO][0]}"
     if MODO_ESCOLHIDO == 'todos':
         texto_resultado += "\nPrimeiramente vamos definir os parâmetros para cada critério/objetivo"
 
@@ -268,7 +268,7 @@ def executar():
         # Percorre os critérios
         for modo_usado in modos:
             texto_resultado = resultado.get()
-            texto_resultado += f"\nModo {modo_usado}: resolvendo ..."
+            texto_resultado += f"\nModo {[k for k, v in LISTA_MODOS.items() if v == modo_usado][0]}: resolvendo ..."
             resultado.set(texto_resultado)
             atualiza_tela()
 
@@ -314,7 +314,7 @@ def executar():
         ## Agora uma nova rodada do modelo usando os pesos e as listas de melhores e piores casos
         # Atualiza o texto do resultado
         texto_resultado = resultado.get()
-        texto_resultado += "\n\nModo 'todos': resolvendo ..."
+        texto_resultado += "\n\nModo Todos: resolvendo ..."
         resultado.set(texto_resultado)
         atualiza_tela()
 
@@ -342,7 +342,7 @@ def executar():
 
     if MODO_ESCOLHIDO == 'todos':
         # PESOS
-        RELATORIO += f"\nPESOS: {PESOS}"
+        RELATORIO += f"\nPESOS: {PESOS}\n"
         # Imprime médias e desvios
         for variable in MODELOS['todos'].variables():
             nomes_busca = ['p_', 'modulo', 'media']
@@ -629,7 +629,7 @@ def otimizar(modo, piores, melhores):
         MODELOS[modo].Maximize(sum(pontuacoes*PESOS))
 
     # Imprime os parâmetros do modo
-    RELATORIO += f'\nModo: {modo}'
+    RELATORIO += f'\nModo: {[k for k, v in LISTA_MODOS.items() if v == modo][0]}'
     RELATORIO += f'\nCH Maxima: {maxima} {CH_MAX if maxima else ""}'
     RELATORIO += f'\nCH Minima: {minima} {CH_MIN if minima else ""}'
 
@@ -641,8 +641,8 @@ def otimizar(modo, piores, melhores):
         novo_limite = TEMPO_LIMITE
 
     # Resolver o modelo
-    if modo == 'todos':
-        MODELOS[modo].EnableOutput()
+    #if modo == 'todos':
+    MODELOS[modo].EnableOutput()
     MODELOS[modo].set_time_limit(novo_limite*1000)
     STATUS[modo] = MODELOS[modo].Solve()
 
