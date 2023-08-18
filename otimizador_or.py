@@ -57,7 +57,7 @@ FORMATO_RESULTADO['tempo'] = 'horas'
 FORMATO_RESULTADO['tempo-reverso'] = 'horas'
 FORMATO_RESULTADO['ch'] = 'aulas/prof'
 FORMATO_RESULTADO['ch-reverso'] = 'aulas/prof'
-FORMATO_RESULTADO['todos'] = '(na escala de 0 a 1)'
+FORMATO_RESULTADO['todos'] = '(na escala de 0 a 100)'
 
 # Restrição de carga horária média máxima por unidade
 LIMITAR_CH_MINIMA = False
@@ -572,18 +572,19 @@ def otimizar(modo, piores, melhores):
     # Modo com todos os critérios
     if modo == 'todos':
         # Variáveis com as pontuações
+        fator = 100
         pontuacoes = [MODELOS[modo].NumVar(0, infinito, f"p_{i}") for i in range(4)]
         # Restrições/cálculos
         # Caso seja dado um número exato, é necessário alterar a pontuação do critério 'num'
         # para evitar a divisão por zero
 
         if MAX_TOTAL and MIN_TOTAL and N_MAX_TOTAL == N_MIN_TOTAL:
-            MODELOS[modo].Add(pontuacoes[0] == sum(var_x)/melhores['num'], "Pontuação número")
+            MODELOS[modo].Add(pontuacoes[0] == fator*sum(var_x)/melhores['num'], "Pontuação número")
         else:
-            MODELOS[modo].Add(pontuacoes[0] == (sum(var_x) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número")
-        MODELOS[modo].Add(pontuacoes[1] == (sum(saida.dot(MATRIZ_PEQ)) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq")
-        MODELOS[modo].Add(pontuacoes[2] == (sum(saida.dot(MATRIZ_TEMPO)) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo")
-        MODELOS[modo].Add(pontuacoes[3] == (sum(modulos[:N_UNIDADES])/N_UNIDADES - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio")
+            MODELOS[modo].Add(pontuacoes[0] == fator*(sum(var_x) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número")
+        MODELOS[modo].Add(pontuacoes[1] == fator*(sum(saida.dot(MATRIZ_PEQ)) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq")
+        MODELOS[modo].Add(pontuacoes[2] == fator*(sum(saida.dot(MATRIZ_TEMPO)) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo")
+        MODELOS[modo].Add(pontuacoes[3] == fator*(sum(modulos[:N_UNIDADES])/N_UNIDADES - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio")
 
     # -- Função objetivo --
     if modo == 'num':

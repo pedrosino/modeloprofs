@@ -55,7 +55,7 @@ FORMATO_RESULTADO['tempo'] = 'horas'
 FORMATO_RESULTADO['tempo-reverso'] = 'horas'
 FORMATO_RESULTADO['ch'] = 'aulas/prof'
 FORMATO_RESULTADO['ch-reverso'] = 'aulas/prof'
-FORMATO_RESULTADO['todos'] = '(na escala de 0 a 1)'
+FORMATO_RESULTADO['todos'] = '(na escala de 0 a 100)'
 
 # Restrição de carga horária média máxima por unidade
 LIMITAR_CH_MINIMA = False
@@ -572,17 +572,18 @@ def otimizar(modo, piores, melhores):
     # Modo com todos os critérios
     if modo == 'todos':
         # Variáveis com as pontuações
-        pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBound=1)
+        fator = 100
+        pontuacoes = LpVariable.matrix("p", range(4), cat="Continuous", lowBound=0, upBound=fator)
         # Restrições/cálculos
         # Caso seja dado um número exato, é necessário alterar a pontuação do critério 'num'
         # para evitar a divisão por zero
         if MAX_TOTAL and MIN_TOTAL and N_MAX_TOTAL == N_MIN_TOTAL:
-            MODELOS[modo] += pontuacoes[0] == lpSum(saida)/melhores['num'], "Pontuação número"
+            MODELOS[modo] += pontuacoes[0] == fator*lpSum(saida)/melhores['num'], "Pontuação número"
         else:
-            MODELOS[modo] += pontuacoes[0] == (lpSum(saida) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
-        MODELOS[modo] += pontuacoes[1] == (lpSum(saida*MATRIZ_PEQ) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq"
-        MODELOS[modo] += pontuacoes[2] == (lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
-        MODELOS[modo] += pontuacoes[3] == (lpSum(modulos[:N_UNIDADES])/N_UNIDADES - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
+            MODELOS[modo] += pontuacoes[0] == fator*(lpSum(saida) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
+        MODELOS[modo] += pontuacoes[1] == fator*(lpSum(saida*MATRIZ_PEQ) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq"
+        MODELOS[modo] += pontuacoes[2] == fator*(lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
+        MODELOS[modo] += pontuacoes[3] == fator*(lpSum(modulos[:N_UNIDADES])/N_UNIDADES - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
 
     # -- Função objetivo --
     if modo == 'num':
