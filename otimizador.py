@@ -2,8 +2,7 @@
 de uma universidade federal. Desenvolvido na pesquisa do Mestrado Profissional em
 Gestão Organizacional, da Faculdade de Gestão e Negócios, Universidade Federal de Uberlândia,
 por Pedro Santos Guimarães, em 2023"""
-#from datetime import datetime
-#mport sys
+
 from datetime import datetime
 import math
 import tkinter as tk
@@ -13,8 +12,9 @@ from tkinter import font
 import pandas as pd
 import numpy as np
 from tktooltip import ToolTip
-from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, GLPK_CMD, \
+from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, \
     LpProblem, LpMaximize, LpMinimize, SCIP_CMD
+from funcoes import imprimir_resultados, imprimir_parametros, imprimir_unidades, imprimir_perfis
 
 # Variáveis globais
 MATRIZ_UNIDADES = None
@@ -115,7 +115,7 @@ def carregar_arquivo():
     arquivo = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
 
     var_nome_arquivo.set(arquivo.split("/")[-1])
-    root.update()
+    atualiza_tela()
 
     df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
     MATRIZ_UNIDADES = df_todas['unidades'].to_numpy()
@@ -188,11 +188,12 @@ def executar():
 
     # Inicia relatório
     RELATORIO = "Relatório da execução do otimizador" \
-        + f"\nData: {datetime.now().strftime('%d/%m/%Y')}\n"
+        + f"\nData: {datetime.now().strftime('%d/%m/%Y')}\n" \
+        + f"Arquivo carregado: {var_nome_arquivo.get()}\n"
     RELATORIO += f'\nModo escolhido: {[k for k, v in LISTA_MODOS.items() if v == MODO_ESCOLHIDO][0]}'
     RELATORIO += f'\nUnidades: {N_UNIDADES}'
-    RELATORIO += f'\nCH Maxima: {LIMITAR_CH_MAXIMA} {CH_MAX if LIMITAR_CH_MAXIMA else ""}'
-    RELATORIO += f'\nCH Minima: {LIMITAR_CH_MINIMA} {CH_MIN if LIMITAR_CH_MINIMA else ""}'
+    RELATORIO += f'\nCarga horária máxima: {CH_MAX if LIMITAR_CH_MAXIMA else "-"}'
+    RELATORIO += f'\nCarga horária mínima: {CH_MIN if LIMITAR_CH_MINIMA else "-"}'
     RELATORIO += f'\nTotal: {N_MIN_TOTAL if MIN_TOTAL else "-"} a ' \
         f'{N_MAX_TOTAL if MAX_TOTAL else "-"}'
     # Se houver restrições em algum perfil, imprime aqui
@@ -207,10 +208,10 @@ def executar():
                 + f') {sinal} {percentual*100}% ({escopo})'
 
     # Imprime unidades
-    imprimir_unidades()
+    RELATORIO += imprimir_unidades(N_UNIDADES, N_RESTRICOES, MATRIZ_UNIDADES, NOMES_RESTRICOES)
 
     # Imprime perfis
-    imprimir_perfis()
+    RELATORIO += imprimir_perfis(N_PERFIS, N_RESTRICOES, MATRIZ_PERFIS, NOMES_RESTRICOES)
 
     RELATORIO += '\n------------------------------------------------------------\n'
 
@@ -219,7 +220,7 @@ def executar():
         texto_resultado += "\nPrimeiramente vamos definir os parâmetros para cada critério/objetivo"
 
     resultado.set(texto_resultado)
-    root.update()
+    atualiza_tela()
 
     # Conforme o modo escolhido, faz só uma otimização ou todas
     if MODO_ESCOLHIDO != 'todos':
@@ -290,9 +291,11 @@ def executar():
             atualiza_tela()
 
             # Imprime resultados
-            imprimir_resultados(qtdes_modo)
+            RELATORIO += imprimir_resultados(qtdes_modo, N_PERFIS, N_UNIDADES, MATRIZ_UNIDADES, \
+                                             MATRIZ_PEQ, MATRIZ_TEMPO)
             # Imprime parâmetros
-            imprimir_parametros(qtdes_modo)
+            RELATORIO += imprimir_parametros(qtdes_modo, N_UNIDADES, N_RESTRICOES, \
+                MATRIZ_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
 
             # Para os modos de carga horária, imprime as médias e desvios
             if 'ch' in modo_usado:
@@ -325,9 +328,11 @@ def executar():
 
     # ---- Finalização ----
     # Imprime resultados
-    imprimir_resultados(QTDES_FINAL)
+    RELATORIO += imprimir_resultados(QTDES_FINAL, N_PERFIS, N_UNIDADES, MATRIZ_UNIDADES, \
+                                     MATRIZ_PEQ, MATRIZ_TEMPO)
     # Imprime parâmetros
-    imprimir_parametros(QTDES_FINAL)
+    RELATORIO += imprimir_parametros(QTDES_FINAL, N_UNIDADES, N_RESTRICOES, \
+        MATRIZ_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
 
     if 'ch' in MODO_ESCOLHIDO:
         for variable in MODELOS[MODO_ESCOLHIDO].variables():
@@ -604,8 +609,8 @@ def otimizar(modo, piores, melhores):
 
     # Imprime os parâmetros do modo
     RELATORIO += f'\nModo: {[k for k, v in LISTA_MODOS.items() if v == modo][0]}'
-    RELATORIO += f'\nCH Maxima: {maxima} {CH_MAX if maxima else ""}'
-    RELATORIO += f'\nCH Minima: {minima} {CH_MIN if minima else ""}'
+    RELATORIO += f'\nCarga horária máxima: {CH_MAX if maxima else "-"}'
+    RELATORIO += f'\nCarga horária mínima: {CH_MIN if minima else "-"}'
 
     # Ajusta limite
     # Para os modos "intermediários" não é necessário um limite maior que 30 segundos
@@ -654,166 +659,6 @@ def otimizar(modo, piores, melhores):
     # Retorna o valor da função objetivo e as quantidades
     return objetivo, qtdes_saida
 
-
-def imprimir_resultados(qtdes):
-    """Imprime resultados da quantidade de cada perfil em cada unidade"""
-    global RELATORIO
-
-    RELATORIO += "\nResultados:"
-    borda_cabecalho = "\n---------+" + "-----"*N_PERFIS \
-        + "-+-------+---------+----------+------------+"
-    # Cabeçalho
-    RELATORIO += borda_cabecalho
-    RELATORIO += "\nUnidade  |  " \
-        + "  ".join([f"{i: >3}" for i in [f"x{p+1}" for p in range(N_PERFIS)]]) \
-        + " | Total |   P-Eq  |   Tempo  | Tempo/prof |"
-    RELATORIO += borda_cabecalho
-    # Uma linha por unidade
-    for unidade in range(N_UNIDADES):
-        total = np.sum(qtdes[unidade])
-        peq = np.sum(qtdes[unidade]*MATRIZ_PEQ)
-        tempo = np.sum(qtdes[unidade]*MATRIZ_TEMPO) - MATRIZ_UNIDADES[unidade][2]
-        RELATORIO += f"\n{MATRIZ_UNIDADES[unidade][0]:6s}   | " \
-            + " ".join([f"{qtdes[unidade][p]:4d}" for p in range(N_PERFIS)]) \
-            + f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
-
-    # Totais
-    total = np.sum(qtdes)
-    peq = np.sum(qtdes*MATRIZ_PEQ)
-    tempo = np.sum(qtdes*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
-
-    RELATORIO += borda_cabecalho
-    RELATORIO += "\nTotal    | " \
-        + " ".join([f"{np.sum(qtdes, axis=0)[p]:4d}" for p in range(N_PERFIS)])
-    RELATORIO += f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
-    RELATORIO += borda_cabecalho + "\n"
-
-
-def imprimir_parametros(qtdes):
-    """Imprime os dados de entrada e os resultados obtidos"""
-    global RELATORIO
-
-    RELATORIO += "\nParâmetros:"
-    borda_cabecalho = "\n---------+-------------+--------------------+--------------+-----------+-----------+----------+"
-    linha_cabecalho = "\nUnidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |"
-    # Se houver restrições em algum perfil, acrescenta colunas
-    if len(RESTRICOES_PERCENTUAIS) > 0:
-        for restricao in RESTRICOES_PERCENTUAIS.values():
-            # Acrescenta ao cabeçalho
-            perfis = restricao['perfis']
-            texto = 'P ' + ','.join(str(p+1) for p in perfis)
-            texto = texto.center(11) + '|'
-            borda_cabecalho += "-----------+"
-            linha_cabecalho += texto
-
-    RELATORIO += borda_cabecalho
-    RELATORIO += linha_cabecalho
-    RELATORIO += borda_cabecalho
-    # Formatos dos números - tem que ser tudo como float, pois ao importar os valores de
-    # professor-equivalente, a MATRIZ_PERFIS fica toda como float
-    formatos =          ['4.0f', '7.2f', '4.0f', '3.0f', '3.0f']
-    formatosdiferenca = ['3.0f', '7.2f', '4.0f', '2.0f', '2.0f']
-
-    # Uma linha por unidade
-    for unidade in range(N_UNIDADES):
-        total_unidade = np.sum(qtdes[unidade])
-        valores_perfis = [np.sum(qtdes[unidade]*MATRIZ_PERFIS[p]) for p in range(N_RESTRICOES)]
-        diferencas = [valores_perfis[p] - MATRIZ_UNIDADES[unidade][p+1] for p in range(N_RESTRICOES)]
-        strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} " \
-                          f"(+{diferencas[p]:{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)]
-        string_final = " ".join(strings_perfis)
-
-        RELATORIO += f"\n{MATRIZ_UNIDADES[unidade][0]:6s}   | " + string_final \
-            + f"  {MATRIZ_UNIDADES[unidade][1] / total_unidade:7.3f} |"
-        # Se houver restrições em algum perfil, acrescenta colunas
-        if len(RESTRICOES_PERCENTUAIS) > 0:
-            for restricao in RESTRICOES_PERCENTUAIS.values():
-                perfis = restricao['perfis']
-                # Calcula percentuais
-                quantidade = sum(qtdes[unidade][perfil] for perfil in perfis)
-                perc_unidade = quantidade / total_unidade * 100
-                RELATORIO += f"   {perc_unidade:6.2f}% |"
-
-    # Totais
-    total = np.sum(qtdes)
-    valores_perfis = [np.sum(qtdes*MATRIZ_PERFIS[p]) for p in range(N_RESTRICOES)]
-    diferencas = [valores_perfis[p] - int(np.sum(MATRIZ_UNIDADES, axis=0)[p+1]) for p in range(N_RESTRICOES)]
-    strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} " \
-                      f"(+{diferencas[p]:{formatosdiferenca[p]}}) |" for p in range(N_RESTRICOES)]
-    string_final = " ".join(strings_perfis)
-
-    RELATORIO += borda_cabecalho
-    RELATORIO += "\nTotal    | " + string_final \
-        + f"  {np.sum(MATRIZ_UNIDADES, axis=0)[1]/total:7.3f} |"
-    # Se houver restrições em algum perfil, acrescenta colunas
-    if len(RESTRICOES_PERCENTUAIS) > 0:
-        for restricao in RESTRICOES_PERCENTUAIS.values():
-            perfis = restricao['perfis']
-            # Quantidade total
-            quantidade_total = np.sum(qtdes[:, perfis])
-            perc_total = quantidade_total / total * 100
-            RELATORIO += f"   {perc_total:6.2f}% |"
-    RELATORIO += borda_cabecalho + "\n"
-
-
-def imprimir_unidades():
-    """Imprime os dados de entrada das unidades"""
-    global RELATORIO
-
-    RELATORIO += "\n\nUnidades:"
-    borda_cabecalho = "\n---------+-------+--------------+------------+---------+---------+"
-    linha_cabecalho = "\nUnidade  | aulas | horas_orient | num_orient | diretor | coords. |"
-
-    RELATORIO += borda_cabecalho
-    RELATORIO += linha_cabecalho
-    RELATORIO += borda_cabecalho
-    # Formatos dos números - tem que ser tudo como float, pois ao importar os valores de
-    # professor-equivalente, a MATRIZ_PERFIS fica toda como float
-    formatos =          ['5.0f', '12.2f', '10.0f', '7.0f', '7.0f']
-
-    # Uma linha por unidade
-    for unidade in range(N_UNIDADES):
-        valores_restricoes = [MATRIZ_UNIDADES[unidade][p+1] for p in range(N_RESTRICOES)]
-        strings_restricoes = [f"{valores_restricoes[p]:{formatos[p]}} |" for p in range(N_RESTRICOES)]
-        string_final = " ".join(strings_restricoes)
-
-        RELATORIO += f"\n{MATRIZ_UNIDADES[unidade][0]:6s}   | " + string_final
-
-    # Totais
-    valores_perfis = [np.sum(MATRIZ_UNIDADES, axis=0)[p+1] for p in range(N_RESTRICOES)]
-    strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} |" for p in range(N_RESTRICOES)]
-    string_final = " ".join(strings_perfis)
-
-    RELATORIO += borda_cabecalho
-    RELATORIO += "\nTotal    | " + string_final
-    RELATORIO += borda_cabecalho + "\n"
-
-
-def imprimir_perfis():
-    """Imprime os perfis utilizados"""
-    global RELATORIO
-
-    RELATORIO += '\nPerfis:'
-    borda_cabecalho = '\n---------------+' + '------+'*N_PERFIS
-    linha_cabecalho = '\nCaracterística |' \
-        + "".join([f"  {i: >3} |" for i in [f"p{p+1}" for p in range(N_PERFIS)]])
-        #+ ''.join([f'  P{p+1}  |' for p in range(N_PERFIS)])
-
-    RELATORIO += borda_cabecalho
-    RELATORIO += linha_cabecalho
-    RELATORIO += borda_cabecalho
-
-    for restricao in range(N_RESTRICOES):
-        RELATORIO += f'\n{NOMES_RESTRICOES[restricao]:14s} | ' \
-            + ' '.join([f'{MATRIZ_PERFIS[restricao][p]:4.0f} |' for p in range(N_PERFIS)])
-
-    RELATORIO += '\nOutras ativ.   | ' \
-        + ' '.join([f'{MATRIZ_PERFIS[N_RESTRICOES][p]:4.0f} |' for p in range(N_PERFIS)])
-
-    RELATORIO += '\nProf-equiv.    | ' \
-        + ' '.join([f'{MATRIZ_PERFIS[N_RESTRICOES+1][p]:4.2f} |' for p in range(N_PERFIS)])
-
-    RELATORIO += borda_cabecalho + "\n"
 
 def exportar_txt():
     """Função para exportar os resultados em formato .txt"""
@@ -882,6 +727,7 @@ def clique_ok(variaveis, janela, var_erro, label_erro):
     frame_labels.pack(anchor='w')
     label_perfil = tk.Label(frame_labels, text=texto_perfis)
     label_perfil.pack(side=tk.LEFT)
+    atualiza_tela()
 
     label_excluir = tk.Label(frame_labels, text='[X]', fg="#a00", cursor="hand2")
     label_excluir.pack(side=tk.LEFT)
