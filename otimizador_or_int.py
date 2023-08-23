@@ -672,7 +672,7 @@ def otimizar(modo, piores, melhores):
     qtdes_saida = np.full((N_UNIDADES, N_PERFIS), 0, dtype=int)
     for u in range(N_UNIDADES):
         for p in range(N_PERFIS):
-            qtdes_saida[u][p] = int(saida[u][p].solution_value())
+            qtdes_saida[u][p] = round(saida[u][p].solution_value())
 
     # Retorna o valor da função objetivo e as quantidades
     return objetivo, qtdes_saida

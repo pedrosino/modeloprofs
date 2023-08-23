@@ -350,7 +350,7 @@ def executar():
                 RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
 
     # Imprime o modelo completo
-    RELATORIO += "\n\n------------------Modelo:------------------"
+    RELATORIO += "\n\n------------------Modelo:------------------\n"
     ## https://stackoverflow.com/a/1140967/3059369
     modelo = f"\n{MODELOS[MODO_ESCOLHIDO]}"
     RELATORIO += "".join([s for s in modelo.splitlines(True) if s.strip("\r\n")])
@@ -654,7 +654,7 @@ def otimizar(modo, piores, melhores):
             _, perfil, unidade = var.name.split("_")
             perfil = int(perfil) - 1
             ind_unidade = np.where(MATRIZ_UNIDADES[:N_UNIDADES, 0] == unidade)[0][0]
-            qtdes_saida[ind_unidade][perfil] = int(var.value())
+            qtdes_saida[ind_unidade][perfil] = round(var.value())
 
     # Retorna o valor da função objetivo e as quantidades
     return objetivo, qtdes_saida
