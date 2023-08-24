@@ -18,6 +18,7 @@ from funcoes import imprimir_resultados, imprimir_parametros, imprimir_unidades,
 
 # Variáveis globais
 MATRIZ_UNIDADES = None
+NOMES_UNIDADES = None
 MATRIZ_PERFIS = None
 MATRIZ_PEQ = None
 MATRIZ_TEMPO = None
@@ -110,7 +111,7 @@ def verifica_check_boxes():
 def carregar_arquivo():
     """Carrega os dados da planilha"""
     global MATRIZ_UNIDADES, MATRIZ_PERFIS, MATRIZ_PEQ, MATRIZ_TEMPO, N_RESTRICOES, N_UNIDADES, \
-           N_PERFIS, PESOS, NOMES_RESTRICOES, CONECTORES
+           N_PERFIS, PESOS, NOMES_RESTRICOES, CONECTORES, NOMES_UNIDADES
     # Importa dados do arquivo
     arquivo = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
 
@@ -129,12 +130,17 @@ def carregar_arquivo():
     MATRIZ_PERFIS = np.delete(MATRIZ_PERFIS, 0, axis=1)
     MATRIZ_PERFIS = np.delete(MATRIZ_PERFIS, N_PERFIS, axis=1)
     N_UNIDADES = len(MATRIZ_UNIDADES)
+    NOMES_UNIDADES = MATRIZ_UNIDADES[:, 0]
+    # Remove primeira coluna
+    MATRIZ_UNIDADES = np.delete(MATRIZ_UNIDADES, 0, axis=1)
+    # Remove colunas à direita
+    MATRIZ_UNIDADES = np.delete(MATRIZ_UNIDADES, slice(N_RESTRICOES, None), axis=1)
     MATRIZ_PEQ = MATRIZ_PERFIS[N_RESTRICOES+1]
     MATRIZ_TEMPO = MATRIZ_PERFIS[N_RESTRICOES] # tempo disponível
     # Lê critérios do AHP
-    df_criterios = pd.read_excel(arquivo, sheet_name='criterios', usecols="A:B").dropna()
+    df_criterios = pd.read_excel(arquivo, sheet_name='criterios', usecols="B:B").dropna()
     pesos_lidos = df_criterios.to_numpy()
-    PESOS = np.delete(pesos_lidos, 0, axis=1).transpose().reshape(4)
+    PESOS = pesos_lidos.transpose().reshape(4)
 
     # Se a importação teve sucesso
     if(len(MATRIZ_UNIDADES) and len(MATRIZ_PERFIS)):
@@ -173,7 +179,7 @@ def executar():
     TEMPO_LIMITE = val_limite.get()
     MODO_ESCOLHIDO = LISTA_MODOS[combo_var.get()]
 
-    TOTAL_AULAS = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]
+    TOTAL_AULAS = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[0]
 
     # Verifica modo escolhido
     if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso', 'todos']:
@@ -208,7 +214,8 @@ def executar():
                 + f') {sinal} {percentual*100}% ({escopo})'
 
     # Imprime unidades
-    RELATORIO += imprimir_unidades(N_UNIDADES, N_RESTRICOES, MATRIZ_UNIDADES, NOMES_RESTRICOES)
+    RELATORIO += imprimir_unidades(N_UNIDADES, N_RESTRICOES, \
+                                   MATRIZ_UNIDADES, NOMES_UNIDADES, NOMES_RESTRICOES)
 
     # Imprime perfis
     RELATORIO += imprimir_perfis(N_PERFIS, N_RESTRICOES, MATRIZ_PERFIS, NOMES_RESTRICOES)
@@ -217,7 +224,7 @@ def executar():
 
     texto_resultado = f"O modo escolhido foi {[k for k, v in LISTA_MODOS.items() if v == MODO_ESCOLHIDO][0]}"
     if MODO_ESCOLHIDO == 'todos':
-        texto_resultado += "\nPrimeiramente vamos definir os parâmetros para cada critério/objetivo"
+        texto_resultado += "\nPrimeiro vamos definir os parâmetros para cada critério"
 
     resultado.set(texto_resultado)
     atualiza_tela()
@@ -292,10 +299,10 @@ def executar():
 
             # Imprime resultados
             RELATORIO += imprimir_resultados(qtdes_modo, N_PERFIS, N_UNIDADES, MATRIZ_UNIDADES, \
-                                             MATRIZ_PEQ, MATRIZ_TEMPO)
+                                             NOMES_UNIDADES, MATRIZ_PEQ, MATRIZ_TEMPO)
             # Imprime parâmetros
             RELATORIO += imprimir_parametros(qtdes_modo, N_UNIDADES, N_RESTRICOES, \
-                MATRIZ_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
+                MATRIZ_UNIDADES, NOMES_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
 
             # Para os modos de carga horária, imprime as médias e desvios
             if 'ch' in modo_usado:
@@ -329,10 +336,10 @@ def executar():
     # ---- Finalização ----
     # Imprime resultados
     RELATORIO += imprimir_resultados(QTDES_FINAL, N_PERFIS, N_UNIDADES, MATRIZ_UNIDADES, \
-                                     MATRIZ_PEQ, MATRIZ_TEMPO)
+                                     NOMES_UNIDADES, MATRIZ_PEQ, MATRIZ_TEMPO)
     # Imprime parâmetros
     RELATORIO += imprimir_parametros(QTDES_FINAL, N_UNIDADES, N_RESTRICOES, \
-        MATRIZ_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
+        MATRIZ_UNIDADES, NOMES_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
 
     if 'ch' in MODO_ESCOLHIDO:
         for variable in MODELOS[MODO_ESCOLHIDO].variables():
@@ -373,7 +380,7 @@ def executar():
     # Coluna com total
     DATA_FRAME['Total'] = DATA_FRAME.sum(axis=1, numeric_only=True)
     # Insere coluna
-    DATA_FRAME.insert(0, "Unidade", np.append(MATRIZ_UNIDADES[:, 0],['Total Perfil']))
+    DATA_FRAME.insert(0, "Unidade", np.append(NOMES_UNIDADES,['Total Perfil']))
 
     # Mostra na tabela
     text_aba.insert(tk.END, DATA_FRAME.to_string(index=False))
@@ -408,7 +415,7 @@ def otimizar(modo, piores, melhores):
 
     #nomes
     nomes = [str(perfil) + "_"
-        + MATRIZ_UNIDADES[und][0] for und in range(N_UNIDADES) for perfil in range(1, N_PERFIS+1)]
+        + NOMES_UNIDADES[und] for und in range(N_UNIDADES) for perfil in range(1, N_PERFIS+1)]
 
     # Variáveis de decisão
     var_x = LpVariable.matrix("x", nomes, cat="Integer", lowBound=0)
@@ -436,16 +443,16 @@ def otimizar(modo, piores, melhores):
             match CONECTORES[restricao]:
                 case ">=":
                     MODELOS[modo] += lpDot(saida[unidade], MATRIZ_PERFIS[restricao]) \
-                        >= MATRIZ_UNIDADES[unidade][restricao+1], \
-                        NOMES_RESTRICOES[restricao] + " " + MATRIZ_UNIDADES[unidade][0]
+                        >= MATRIZ_UNIDADES[unidade][restricao], \
+                        NOMES_RESTRICOES[restricao] + " " + NOMES_UNIDADES[unidade]
                 case "==":
                     MODELOS[modo] += lpDot(saida[unidade], MATRIZ_PERFIS[restricao]) \
-                        == MATRIZ_UNIDADES[unidade][restricao+1], \
-                        NOMES_RESTRICOES[restricao] + " " + MATRIZ_UNIDADES[unidade][0]
+                        == MATRIZ_UNIDADES[unidade][restricao], \
+                        NOMES_RESTRICOES[restricao] + " " + NOMES_UNIDADES[unidade]
                 case "<=":
                     MODELOS[modo] += lpDot(saida[unidade], MATRIZ_PERFIS[restricao]) \
-                        <= MATRIZ_UNIDADES[unidade][restricao+1], \
-                        NOMES_RESTRICOES[restricao] + " " + MATRIZ_UNIDADES[unidade][0]
+                        <= MATRIZ_UNIDADES[unidade][restricao], \
+                        NOMES_RESTRICOES[restricao] + " " + NOMES_UNIDADES[unidade]
 
     # Restrições de percentual por perfil
     if len(RESTRICOES_PERCENTUAIS) > 0:
@@ -471,10 +478,10 @@ def otimizar(modo, piores, melhores):
                         # Monta a restrição conforme o sinal escolhido
                         case '<=':
                             MODELOS[modo] += lpSum(saida[unidade]*coeficientes) <= 0, \
-                                nome_restricao + MATRIZ_UNIDADES[unidade][0]
+                                nome_restricao + NOMES_UNIDADES[unidade]
                         case '>=':
                             MODELOS[modo] += lpSum(saida[unidade]*coeficientes) >= 0, \
-                                nome_restricao + MATRIZ_UNIDADES[unidade][0]
+                                nome_restricao + NOMES_UNIDADES[unidade]
             else:
                 # Restrição no total
                 match sinal:
@@ -497,9 +504,9 @@ def otimizar(modo, piores, melhores):
             f"chmax {math.ceil(TOTAL_AULAS/CH_MAX)}"
         # E por unidade
         for unidade in range(N_UNIDADES):
-            n_min = math.ceil(MATRIZ_UNIDADES[unidade][1]/CH_MAX)
-            MODELOS[modo] += CH_MAX*lpSum(saida[unidade]) >= MATRIZ_UNIDADES[unidade][1], \
-                f"{MATRIZ_UNIDADES[unidade][0]}_chmax {n_min}"
+            n_min = math.ceil(MATRIZ_UNIDADES[unidade][0]/CH_MAX)
+            MODELOS[modo] += CH_MAX*lpSum(saida[unidade]) >= MATRIZ_UNIDADES[unidade][0], \
+                f"{NOMES_UNIDADES[unidade]}_chmax {n_min}"
 
     if minima:
         # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
@@ -511,9 +518,9 @@ def otimizar(modo, piores, melhores):
         if 'reverso' in modo:
             minimo_local = 9
             for unidade in range(N_UNIDADES):
-                n_max = int(MATRIZ_UNIDADES[unidade][1]/minimo_local)
-                MODELOS[modo] += minimo_local*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][1], \
-                    f"{MATRIZ_UNIDADES[unidade][0]}_chmin {n_max}"
+                n_max = int(MATRIZ_UNIDADES[unidade][0]/minimo_local)
+                MODELOS[modo] += minimo_local*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][0], \
+                    f"{NOMES_UNIDADES[unidade]}_chmin {n_max}"
 
     # Restrição do número total de professores
     if MAX_TOTAL:
@@ -525,10 +532,10 @@ def otimizar(modo, piores, melhores):
     if modo in ['ch', 'ch-reverso', 'todos']:
         # variáveis auxiliares
         # Para cada unidade há um valor da média e um desvio em relação à média geral
-        modulos = LpVariable.matrix("modulo", MATRIZ_UNIDADES[:N_UNIDADES, 0], \
+        modulos = LpVariable.matrix("modulo", NOMES_UNIDADES, \
                                     cat="Continuous", lowBound=0)
-        consts = LpVariable.matrix("b", MATRIZ_UNIDADES[:N_UNIDADES, 0], cat="Binary")
-        medias = LpVariable.matrix("media", MATRIZ_UNIDADES[:N_UNIDADES, 0], \
+        consts = LpVariable.matrix("b", NOMES_UNIDADES, cat="Binary")
+        medias = LpVariable.matrix("media", NOMES_UNIDADES, \
                                    cat="Continuous", lowBound=0)
         media_geral = LpVariable("media_geral", cat="Continuous", lowBound=0)
 
@@ -547,12 +554,12 @@ def otimizar(modo, piores, melhores):
 
         # O mesmo raciocínio é feito para cada unidade
         for unidade in range(N_UNIDADES):
-            x1u = MATRIZ_UNIDADES[unidade][1] / CH_MIN
-            x0u = MATRIZ_UNIDADES[unidade][1] / CH_MAX
+            x1u = MATRIZ_UNIDADES[unidade][0] / CH_MIN
+            x0u = MATRIZ_UNIDADES[unidade][0] / CH_MAX
             coef_u = (CH_MIN - CH_MAX) / (x1u - x0u)
             # Cálculo da media
             MODELOS[modo] += medias[unidade] == coef_u*lpSum(saida[unidade]) + CH_MIN + CH_MAX, \
-                f"{MATRIZ_UNIDADES[unidade][0]}_ch_media"
+                f"{NOMES_UNIDADES[unidade]}_ch_media"
             # Cálculo do desvio
             # O desvio é dado pelo módulo da subtração, porém o PuLP não aceita a função abs()
             # Assim, são colocadas duas restrições, uma usando o valor positivo e outra o negativo
@@ -563,16 +570,16 @@ def otimizar(modo, piores, melhores):
             # X + M * B >= x'
             MODELOS[modo] += medias[unidade] - media_geral\
                 + m_grande*consts[unidade] >= modulos[unidade], \
-                f"XMB {MATRIZ_UNIDADES[unidade][0]}"
+                f"XMB {NOMES_UNIDADES[unidade]}"
             # -X + M * (1-B) >= x'
             MODELOS[modo] += -1*(medias[unidade] - media_geral) \
                 + m_grande*(1-consts[unidade]) >= modulos[unidade], \
-                f"-XM1B {MATRIZ_UNIDADES[unidade][0]}"
+                f"-XM1B {NOMES_UNIDADES[unidade]}"
             # modulo
             MODELOS[modo] += modulos[unidade] >= medias[unidade] - media_geral, \
-                f"{MATRIZ_UNIDADES[unidade][0]}_mod1"
+                f"{NOMES_UNIDADES[unidade]}_mod1"
             MODELOS[modo] += modulos[unidade] >= -1*(medias[unidade] - media_geral), \
-                f"{MATRIZ_UNIDADES[unidade][0]}_mod2"
+                f"{NOMES_UNIDADES[unidade]}_mod2"
 
     # Modo com todos os critérios
     if modo == 'todos':
@@ -587,7 +594,7 @@ def otimizar(modo, piores, melhores):
         else:
             MODELOS[modo] += pontuacoes[0] == fator*(lpSum(saida) - piores['num'])/(melhores['num'] - piores['num']), "Pontuação número"
         MODELOS[modo] += pontuacoes[1] == fator*(lpSum(saida*MATRIZ_PEQ) - piores['peq'])/(melhores['peq'] - piores['peq']), "Pontuação P-Eq"
-        MODELOS[modo] += pontuacoes[2] == fator*(lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
+        MODELOS[modo] += pontuacoes[2] == fator*(lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1] - piores['tempo'])/(melhores['tempo'] - piores['tempo']), "Pontuação tempo"
         MODELOS[modo] += pontuacoes[3] == fator*(lpSum(modulos[:N_UNIDADES])/N_UNIDADES - piores['ch'])/(melhores['ch'] - piores['ch']), "Pontuação Equilíbrio"
 
     # -- Função objetivo --
@@ -598,7 +605,7 @@ def otimizar(modo, piores, melhores):
     # No modo tempo é necessário deduzir do tempo calculado as horas
     # que serão destinadas às orientações
     elif 'tempo' in modo:
-        MODELOS[modo] += lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[2]
+        MODELOS[modo] += lpSum(saida*MATRIZ_TEMPO) - np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[1]
     # No modo de equilíbrio a medida de desempenho é o desvio médio
     elif 'ch' in modo:
         MODELOS[modo] += lpSum(modulos[:N_UNIDADES])/N_UNIDADES
@@ -653,7 +660,7 @@ def otimizar(modo, piores, melhores):
         if var.name.find('x') == 0:
             _, perfil, unidade = var.name.split("_")
             perfil = int(perfil) - 1
-            ind_unidade = np.where(MATRIZ_UNIDADES[:N_UNIDADES, 0] == unidade)[0][0]
+            ind_unidade = np.where(NOMES_UNIDADES == unidade)[0][0]
             qtdes_saida[ind_unidade][perfil] = round(var.value())
 
     # Retorna o valor da função objetivo e as quantidades

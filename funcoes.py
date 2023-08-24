@@ -2,7 +2,8 @@
 
 import numpy as np
 
-def imprimir_resultados(qtdes, n_perfis, n_unidades, matriz_unidades, matriz_peq, matriz_tempo):
+def imprimir_resultados(qtdes, n_perfis, n_unidades, matriz_unidades, nomes_unidades, \
+                        matriz_peq, matriz_tempo):
     """Imprime resultados da quantidade de cada perfil em cada unidade"""
     relatorio = "\nResultados:"
     borda_cabecalho = "\n---------+" + "-----"*n_perfis \
@@ -17,15 +18,15 @@ def imprimir_resultados(qtdes, n_perfis, n_unidades, matriz_unidades, matriz_peq
     for unidade in range(n_unidades):
         total = np.sum(qtdes[unidade])
         peq = np.sum(qtdes[unidade]*matriz_peq)
-        tempo = np.sum(qtdes[unidade]*matriz_tempo) - matriz_unidades[unidade][2]
-        relatorio += f"\n{matriz_unidades[unidade][0]:6s}   | " \
+        tempo = np.sum(qtdes[unidade]*matriz_tempo) - matriz_unidades[unidade][1]
+        relatorio += f"\n{nomes_unidades[unidade]:6s}   | " \
             + " ".join([f"{qtdes[unidade][p]:4d}" for p in range(n_perfis)]) \
             + f" |  {total:4d} | {peq:7.2f} |  {tempo:7.2f} |    {(tempo)/total:7.3f} |"
 
     # Totais
     total = np.sum(qtdes)
     peq = np.sum(qtdes*matriz_peq)
-    tempo = np.sum(qtdes*matriz_tempo) - np.sum(matriz_unidades[:n_unidades], axis=0)[2]
+    tempo = np.sum(qtdes*matriz_tempo) - np.sum(matriz_unidades[:n_unidades], axis=0)[1]
 
     relatorio += borda_cabecalho
     relatorio += "\nTotal    | " \
@@ -36,7 +37,7 @@ def imprimir_resultados(qtdes, n_perfis, n_unidades, matriz_unidades, matriz_peq
     return relatorio
 
 
-def imprimir_parametros(qtdes, n_unidades, n_restricoes, matriz_unidades, \
+def imprimir_parametros(qtdes, n_unidades, n_restricoes, matriz_unidades, nomes_unidades, \
                         restricoes_percentuais, matriz_perfis, nomes_restricoes):
     """Imprime os dados de entrada e os resultados obtidos"""
     relatorio = "\nParâmetros:"
@@ -76,15 +77,15 @@ def imprimir_parametros(qtdes, n_unidades, n_restricoes, matriz_unidades, \
     for unidade in range(n_unidades):
         total_unidade = np.sum(qtdes[unidade])
         valores_perfis = [np.sum(qtdes[unidade]*matriz_perfis[p]) for p in range(n_restricoes)]
-        diferencas = [valores_perfis[p] - matriz_unidades[unidade][p+1]
+        diferencas = [valores_perfis[p] - matriz_unidades[unidade][p]
                       for p in range(n_restricoes)]
         strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} " \
                           f"(+{diferencas[p]:{formados_dif[p]}}) |"
                             for p in range(n_restricoes)]
         string_final = " ".join(strings_perfis)
 
-        relatorio += f"\n{matriz_unidades[unidade][0]:6s}   | " + string_final \
-            + f"  {matriz_unidades[unidade][1] / total_unidade:8.4f} |"
+        relatorio += f"\n{nomes_unidades[unidade]:6s}   | " + string_final \
+            + f"  {matriz_unidades[unidade][0] / total_unidade:8.4f} |"
         # Se houver restrições em algum perfil, acrescenta colunas
         if len(restricoes_percentuais) > 0:
             for restricao in restricoes_percentuais.values():
@@ -97,7 +98,7 @@ def imprimir_parametros(qtdes, n_unidades, n_restricoes, matriz_unidades, \
     # Totais
     total = np.sum(qtdes)
     valores_perfis = [np.sum(qtdes*matriz_perfis[p]) for p in range(n_restricoes)]
-    diferencas = [valores_perfis[p] - int(np.sum(matriz_unidades, axis=0)[p+1])
+    diferencas = [valores_perfis[p] - int(np.sum(matriz_unidades, axis=0)[p])
                   for p in range(n_restricoes)]
     strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} " \
                       f"(+{diferencas[p]:{formados_dif[p]}}) |" for p in range(n_restricoes)]
@@ -105,7 +106,7 @@ def imprimir_parametros(qtdes, n_unidades, n_restricoes, matriz_unidades, \
 
     relatorio += borda_cabecalho
     relatorio += "\nTotal    | " + string_final \
-        + f"  {np.sum(matriz_unidades, axis=0)[1]/total:8.4f} |"
+        + f"  {np.sum(matriz_unidades, axis=0)[0]/total:8.4f} |"
     # Se houver restrições em algum perfil, acrescenta colunas
     if len(restricoes_percentuais) > 0:
         for restricao in restricoes_percentuais.values():
@@ -119,7 +120,7 @@ def imprimir_parametros(qtdes, n_unidades, n_restricoes, matriz_unidades, \
     return relatorio
 
 
-def imprimir_unidades(n_unidades, n_restricoes, matriz_unidades, nomes_restricoes):
+def imprimir_unidades(n_unidades, n_restricoes, matriz_unidades, nomes_unidades, nomes_restricoes):
     """Imprime os dados de entrada das unidades"""
     relatorio = "\n\nUnidades:"
     #borda_cabecalho = "\n---------+-------+--------------+------------+---------+---------+"
@@ -141,15 +142,15 @@ def imprimir_unidades(n_unidades, n_restricoes, matriz_unidades, nomes_restricoe
 
     # Uma linha por unidade
     for unidade in range(n_unidades):
-        valores_restricoes = [matriz_unidades[unidade][p+1] for p in range(n_restricoes)]
+        valores_restricoes = [matriz_unidades[unidade][p] for p in range(n_restricoes)]
         strings_restricoes = [f"{valores_restricoes[p]:{formatos[p]}} |"
                               for p in range(n_restricoes)]
         string_final = " ".join(strings_restricoes)
 
-        relatorio += f"\n{matriz_unidades[unidade][0]:6s}   | " + string_final
+        relatorio += f"\n{nomes_unidades[unidade]:6s}   | " + string_final
 
     # Totais
-    valores_perfis = [np.sum(matriz_unidades, axis=0)[p+1] for p in range(n_restricoes)]
+    valores_perfis = [np.sum(matriz_unidades, axis=0)[p] for p in range(n_restricoes)]
     strings_perfis = [f"{valores_perfis[p]:{formatos[p]}} |" for p in range(n_restricoes)]
     string_final = " ".join(strings_perfis)
 
