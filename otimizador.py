@@ -509,18 +509,16 @@ def otimizar(modo, piores, melhores):
                 f"{NOMES_UNIDADES[unidade]}_chmax {n_min}"
 
     if minima:
-        # Restrição mínima somente no geral -> permite exceções como o IBTEC em Monte Carmelo,
-        # que tem 19 aulas apenas
+        # Restrição mínima somente no geral -> permite exceções
         MODELOS[modo] += CH_MIN*lpSum(saida) <= TOTAL_AULAS, \
             f"chmin {int(TOTAL_AULAS/CH_MIN)}"
-        # No modo tempo-reverso e ch-reverso é preciso estabelecer um mínimo coerente por unidade
-        # Foi adotado 9 aulas por professor (vide acima).
-        if 'reverso' in modo:
-            minimo_local = 9
-            for unidade in range(N_UNIDADES):
-                n_max = int(MATRIZ_UNIDADES[unidade][0]/minimo_local)
-                MODELOS[modo] += minimo_local*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][0], \
-                    f"{NOMES_UNIDADES[unidade]}_chmin {n_max}"
+        # Mínimo em cada unidade de 10 aulas/semana, equivale a 8 horas/semana,
+        # para atender ao art. 57 da Lei nº 9.394, de 1996
+        minimo_local = 10
+        for unidade in range(N_UNIDADES):
+            n_max = int(MATRIZ_UNIDADES[unidade][0]/minimo_local)
+            MODELOS[modo] += minimo_local*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][0], \
+                f"{NOMES_UNIDADES[unidade]}_chmin {n_max}"
 
     # Restrição do número total de professores
     if MAX_TOTAL:
