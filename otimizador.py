@@ -385,28 +385,35 @@ def executar():
     # Mostra na tabela
     text_aba.insert(tk.END, DATA_FRAME.to_string(index=False))
 
-    # Altura máxima
-    altura_maxima = 18
-
     # Obtém o número total de linhas do texto
     num_linhas = int(text_aba.index(tk.END).split('.', maxsplit=1)[0])
 
     # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
-    if num_linhas <= altura_maxima:
-        text_aba.config(height=num_linhas, width=12 + N_PERFIS*5)
-    else:
-        text_aba.config(height=altura_maxima, width=12 + N_PERFIS*5)
-        scrollbar.grid(row=2, column=1, sticky="ns")
+    text_aba.config(height=num_linhas, width=12 + N_PERFIS*5)
 
     atualiza_tela()
+    centralizar()
 
+
+def centralizar():
+    """Ajusta posição da janela na tela"""
     altura_janela = root.winfo_height()
     altura_tela = root.winfo_screenheight()
+    largura_janela = root.winfo_width()
+    largura_tela = root.winfo_screenwidth()
+
+    # Calcula novas coordenadas
+    novo_x = round((largura_tela - largura_janela) / 2)
+    novo_y = round((altura_tela - altura_janela - 100) / 2)
+
     # Verifica o tamanho da janela
     if altura_tela - altura_janela < 150:
         barra.grid(row=0, column=1, sticky="ns")
-        root.geometry(f"{root.winfo_width()}x{altura_tela - 150}+{root.winfo_rootx()}+10")
-        atualiza_tela()
+        novo_y = 10
+        altura_janela = altura_tela - 150
+
+    root.geometry(f"{largura_janela}x{altura_janela}+{novo_x}+{novo_y}")
+    atualiza_tela()
 
 
 def otimizar(modo, piores, melhores):
@@ -732,12 +739,12 @@ def clique_ok(variaveis, janela, var_erro, label_erro):
     frame_labels.pack(anchor='w')
     label_perfil = tk.Label(frame_labels, text=texto_perfis)
     label_perfil.pack(side=tk.LEFT)
-    atualiza_tela()
 
     label_excluir = tk.Label(frame_labels, text='[X]', fg="#a00", cursor="hand2")
     label_excluir.pack(side=tk.LEFT)
 
     label_excluir.bind("<Button-1>", lambda e:excluir_restricao(nome_restricao, frame_labels))
+    atualiza_tela()
 
     # Acrescenta à lista de restrições
     nova_restricao = {
@@ -876,7 +883,9 @@ frame.grid_rowconfigure(2, weight=1)
 
 # Tamanho da fonte para todos os objetos
 fonte = font.nametofont('TkDefaultFont')
-fonte.configure(size=10)
+fonte.configure(size=11)
+
+root.option_add("*Font", fonte)
 
 # Título
 TEXTO_TITULO = """Bem vindo.
@@ -894,22 +903,23 @@ grupo_arq.grid(row=1, column=0, rowspan=1, padx=10, pady=10, sticky='nw')
 
 # Texto botão arquivo
 texto_botao = tk.Label(grupo_arq, text="Escolha o arquivo:")
-texto_botao.grid(row=1, column=0)
+texto_botao.grid(row=0, column=0)
 
 # Botão para selecionar o arquivo
 botao_arquivo = tk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arquivo, bg="#ddd")
-botao_arquivo.grid(row=1, column=1, padx=10, pady=10)
+botao_arquivo.grid(row=0, column=1, padx=10, pady=10)
 
 # Label com nome do arquivo
 var_nome_arquivo = tk.StringVar()
 label_nome_arquivo = tk.Label(grupo_arq, textvariable=var_nome_arquivo)
-label_nome_arquivo.grid(row=1, column=2, padx=10, pady=10)
+label_nome_arquivo.grid(row=0, column=2, padx=10, pady=10)
 
 # Grupo opções
-ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 10, 'bold'))
+ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 11, 'bold'))
 grupo_opcoes = ttk.LabelFrame(frame, text="Opções", style='Bold.TLabelframe')
 grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nw')
 
+ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 11, 'bold'))
 # Checkbox para ch minima
 bool_minima = tk.BooleanVar(value=True)
 checkbox_minima = tk.Checkbutton(grupo_opcoes, text="CH mínima: ", variable=bool_minima,
@@ -1026,7 +1036,8 @@ label_aba.grid(row=1, column=0, padx=10, pady=10, sticky='w')
 # Adicionando a barra de rolagem vertical
 scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
 
-text_aba = tk.Text(grupo_resultados, height=10, width=60, yscrollcommand=scrollbar.set)
+fonte_tabela = font.Font(family='Courier New', size=11)
+text_aba = tk.Text(grupo_resultados, height=10, width=60, yscrollcommand=scrollbar.set, font=fonte_tabela)
 text_aba.grid(row=2, column=0, padx=10, pady=10)
 
 # Configurando a barra de rolagem para rolar o texto no Text widget
