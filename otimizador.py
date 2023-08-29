@@ -114,9 +114,7 @@ def carregar_arquivo():
            N_PERFIS, PESOS, NOMES_RESTRICOES, CONECTORES, NOMES_UNIDADES
     # Importa dados do arquivo
     arquivo = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
-
     var_nome_arquivo.set(arquivo.split("/")[-1])
-    atualiza_tela()
 
     df_todas = pd.read_excel(arquivo, sheet_name=['unidades','perfis'])
     MATRIZ_UNIDADES = df_todas['unidades'].to_numpy()
@@ -397,9 +395,9 @@ def executar():
 
 def centralizar():
     """Ajusta posição da janela na tela"""
-    altura_janela = root.winfo_height()
+    altura_janela = root.winfo_reqheight()
     altura_tela = root.winfo_screenheight()
-    largura_janela = root.winfo_width()
+    largura_janela = root.winfo_reqwidth()
     largura_tela = root.winfo_screenwidth()
 
     # Calcula novas coordenadas
@@ -407,10 +405,10 @@ def centralizar():
     novo_y = round((altura_tela - altura_janela - 100) / 2)
 
     # Verifica o tamanho da janela
-    if altura_tela - altura_janela < 150:
+    if altura_tela - altura_janela < 100:
         barra.grid(row=0, column=1, sticky="ns")
         novo_y = 10
-        altura_janela = altura_tela - 150
+        altura_janela = altura_tela - 100
 
     root.geometry(f"{largura_janela}x{altura_janela}+{novo_x}+{novo_y}")
     atualiza_tela()
@@ -635,9 +633,9 @@ def otimizar(modo, piores, melhores):
     # Resolver o modelo
     solver_escolhido = solver_var.get()
     if solver_escolhido == 'CBC':
-        MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=novo_limite))
+        MODELOS[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=novo_limite))
     elif solver_escolhido == 'SCIP':
-        MODELOS[modo].solve(SCIP_CMD(msg=1, timeLimit=novo_limite,
+        MODELOS[modo].solve(SCIP_CMD(msg=0, timeLimit=novo_limite,
             path="C:\\Program Files\\SCIPOptSuite 8.0.4\\bin\\scip.exe"))
     # O solver GLPK é bem mais lento
     ##MODELOS[modo].solve(GLPK_CMD(msg=1, options=["--tmlim", str(novo_limite)]))
@@ -837,8 +835,10 @@ def atualiza_tela():
     """Função para atualizar o tamanho do canvas após acrescentar elementos ao frame"""
     frame.update_idletasks()
     canvas.update_idletasks()
+    
     canvas.config(height=frame.winfo_reqheight(), width=frame.winfo_reqwidth())
     canvas.config(scrollregion=canvas.bbox("all"))
+    root.update_idletasks()
     root.update()
 
 
@@ -854,7 +854,7 @@ def rolar(event):
 root = tk.Tk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
-root.geometry("+300+100")
+root.geometry("+100+50")
 root.minsize(700,400)
 
 # Cria o canvas
