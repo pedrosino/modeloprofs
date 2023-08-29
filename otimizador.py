@@ -159,7 +159,7 @@ def executar():
     atualiza_tela()
 
     # Limpa tabela
-    text_aba.delete("1.0", tk.END)
+    text_tabela.delete("1.0", tk.END)
 
     # Captura opções e valores escolhidos
     LIMITAR_CH_MAXIMA = bool_maxima.get()
@@ -381,13 +381,13 @@ def executar():
     DATA_FRAME.insert(0, "Unidade", np.append(NOMES_UNIDADES,['Total Perfil']))
 
     # Mostra na tabela
-    text_aba.insert(tk.END, DATA_FRAME.to_string(index=False))
+    text_tabela.insert(tk.END, DATA_FRAME.to_string(index=False))
 
     # Obtém o número total de linhas do texto
-    num_linhas = int(text_aba.index(tk.END).split('.', maxsplit=1)[0])
+    num_linhas = int(text_tabela.index(tk.END).split('.', maxsplit=1)[0])
 
     # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
-    text_aba.config(height=num_linhas, width=12 + N_PERFIS*5)
+    text_tabela.config(height=num_linhas, width=12 + N_PERFIS*5)
 
     atualiza_tela()
     centralizar()
@@ -835,7 +835,7 @@ def atualiza_tela():
     """Função para atualizar o tamanho do canvas após acrescentar elementos ao frame"""
     frame.update_idletasks()
     canvas.update_idletasks()
-    
+
     canvas.config(height=frame.winfo_reqheight(), width=frame.winfo_reqwidth())
     canvas.config(scrollregion=canvas.bbox("all"))
     root.update_idletasks()
@@ -1037,11 +1037,12 @@ label_aba.grid(row=1, column=0, padx=10, pady=10, sticky='w')
 scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
 
 fonte_tabela = font.Font(family='Courier New', size=11)
-text_aba = tk.Text(grupo_resultados, height=10, width=60, yscrollcommand=scrollbar.set, font=fonte_tabela)
-text_aba.grid(row=2, column=0, padx=10, pady=10)
+text_tabela = tk.Text(grupo_resultados, height=10, width=60, yscrollcommand=scrollbar.set, \
+                      font=fonte_tabela)
+text_tabela.grid(row=2, column=0, padx=10, pady=10)
 
 # Configurando a barra de rolagem para rolar o texto no Text widget
-scrollbar.config(command=text_aba.yview)
+scrollbar.config(command=text_tabela.yview)
 
 botao_relatorio = tk.Button(grupo_resultados, text="Baixar relatório", command=exportar_txt,
                             bg="#ddd")
