@@ -633,9 +633,9 @@ def otimizar(modo, piores, melhores):
     # Resolver o modelo
     solver_escolhido = solver_var.get()
     if solver_escolhido == 'CBC':
-        MODELOS[modo].solve(PULP_CBC_CMD(msg=0, timeLimit=novo_limite))
+        MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=novo_limite))
     elif solver_escolhido == 'SCIP':
-        MODELOS[modo].solve(SCIP_CMD(msg=0, timeLimit=novo_limite,
+        MODELOS[modo].solve(SCIP_CMD(msg=1, timeLimit=novo_limite,
             path="C:\\Program Files\\SCIPOptSuite 8.0.4\\bin\\scip.exe"))
     # O solver GLPK é bem mais lento
     ##MODELOS[modo].solve(GLPK_CMD(msg=1, options=["--tmlim", str(novo_limite)]))
