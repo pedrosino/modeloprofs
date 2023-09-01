@@ -177,6 +177,7 @@ def executar():
     TEMPO_LIMITE = val_limite.get()
     MODO_ESCOLHIDO = LISTA_MODOS[combo_var.get()]
 
+    # Total de aulas a serem ministradas semanalmente
     TOTAL_AULAS = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[0]
 
     # Verifica modo escolhido
@@ -184,11 +185,75 @@ def executar():
         MODO_ESCOLHIDO = 'todos'
         print("O modo escolhido era inválido. Será utilizado o modo 'todos'.")
 
+    tudo_certo = True
+
     # Verifica números totais
-    if (MIN_TOTAL and N_MIN_TOTAL < 1) or (MAX_TOTAL and N_MAX_TOTAL < 1):
-        print("Os números totais especificados são inválidos. Essas opções foram desativadas.")
-        MIN_TOTAL = False
-        MAX_TOTAL = False
+    if MIN_TOTAL:
+        # Não pode ser zero
+        if N_MIN_TOTAL < 1:
+            var_erro_total_min.set("Deve ser maior que 0")
+            formata_erro(label_erro_total_min)
+            tudo_certo = False
+        # Não pode ser maior que aulas/ch_min
+        elif N_MIN_TOTAL > int(TOTAL_AULAS / CH_MIN):
+            var_erro_total_min.set("Quantidade excessiva considerando\na carga horária mínima")
+            formata_erro(label_erro_total_min)
+            tudo_certo = False
+        # Se for um valor muito baixo, não terá efeito - mostrar aviso
+        elif N_MIN_TOTAL < round(TOTAL_AULAS / CH_MAX):
+            var_erro_total_min.set("Aviso: restrição não terá efeito")
+            formata_aviso(label_erro_total_min)
+        else:
+            var_erro_total_min.set("")
+            limpa_erro(label_erro_total_min)
+    else:
+        var_erro_total_min.set("")
+        limpa_erro(label_erro_total_min)
+
+    if MAX_TOTAL:
+        # Não pode ser zero
+        if N_MAX_TOTAL < 1:
+            var_erro_total_max.set("Deve ser maior que 0")
+            formata_erro(label_erro_total_max)
+            tudo_certo = False
+        # Não pode ser menor que aulas/ch_max
+        elif N_MAX_TOTAL < round(TOTAL_AULAS / CH_MAX):
+            var_erro_total_max.set("Quantidade insuficiente considerando\na carga horária máxima")
+            formata_erro(label_erro_total_max)
+            tudo_certo = False
+        # Se for um valor muito alto, não terá efeito - mostrar aviso
+        elif N_MAX_TOTAL > int(TOTAL_AULAS / CH_MIN):
+            var_erro_total_max.set("Aviso: restrição não terá efeito")
+            formata_aviso(label_erro_total_max)
+        else:
+            var_erro_total_max.set("")
+            limpa_erro(label_erro_total_max)
+    else:
+        var_erro_total_max.set("")
+        limpa_erro(label_erro_total_max)
+
+    # Verifica carga horária
+    # 10 aulas de 50 min = 8h20 min por semana (mínimo legal é 8h - Lei 9.394, art. 57)
+    if LIMITAR_CH_MINIMA and CH_MIN < 10:
+        var_erro_minima.set("Deve ser no mínimo 10")
+        formata_erro(label_erro_minima)
+        tudo_certo = False
+    else:
+        var_erro_minima.set("")
+        limpa_erro(label_erro_minima)
+
+    # Limite máximo é 24 aulas de 50 min = 20h - Decreto 9.235, art. 93, parág. único
+    if LIMITAR_CH_MAXIMA and CH_MAX > 24:
+        var_erro_maxima.set("Deve ser no máximo 24")
+        formata_erro(label_erro_maxima)
+        tudo_certo = False
+    else:
+        var_erro_maxima.set("")
+        limpa_erro(label_erro_maxima)
+
+    # Se houve algum problema, não faz o processo
+    if not tudo_certo:
+        return
 
     # Inicia relatório
     RELATORIO = "Relatório da execução do otimizador" \
@@ -699,6 +764,16 @@ def formata_erro(label):
     label.config(bg='#f0a869', fg='#87190b')
 
 
+def limpa_erro(label):
+    """Limpa o formato do label"""
+    label.config(bg=root.cget('bg'))
+
+
+def formata_aviso(label):
+    """Formata o label do aviso"""
+    label.config(bg='#f0eb69', fg='#876e0b')
+
+
 def clique_ok(variaveis, janela, var_erro, label_erro):
     """Verifica e captura os valores selecionados"""
     escolhidos = [i for i, opcao in enumerate(variaveis['opcoes']) if opcao.get() == 1]
@@ -935,6 +1010,11 @@ ToolTip(checkbox_minima, msg="Ativar carga horária média máxima por unidade",
 ToolTip(entrada_CH_MIN,
     msg="Valor da carga horária máxima. Para valores não inteiros, use ponto decimal.", delay=0.1)
 
+# Label para o erro
+var_erro_minima = tk.StringVar()
+label_erro_minima = tk.Label(grupo_opcoes, textvariable=var_erro_minima)
+label_erro_minima.grid(row=3, column=2, padx=0, sticky='w')
+
 # Checkbox para ch maxima
 bool_maxima = tk.BooleanVar(value=True)
 checkbox_maxima = tk.Checkbutton(grupo_opcoes, text="CH máxima: ", variable=bool_maxima,
@@ -951,6 +1031,11 @@ ToolTip(checkbox_maxima, msg="Ativar carga horária média mínima geral (para t
 ToolTip(entrada_CH_MAX,
     msg="Valor da carga horária mínima. Para valores não inteiros, use ponto decimal.", delay=0.1)
 
+# Label para o erro
+var_erro_maxima = tk.StringVar()
+label_erro_maxima = tk.Label(grupo_opcoes, textvariable=var_erro_maxima)
+label_erro_maxima.grid(row=4, column=2, padx=0, sticky='w')
+
 # Checkbox para total minimo
 bool_min_total = tk.BooleanVar(value=False)
 checkbox_min_total = tk.Checkbutton(grupo_opcoes, text="Total mínimo: ",
@@ -965,6 +1050,11 @@ entrada_N_MIN_total.grid(row=3, column=4, padx=10, pady=10)
 ToolTip(checkbox_min_total, msg="Ativar número mínimo total de professores", delay=0.1)
 ToolTip(entrada_N_MIN_total, msg="Valor do mínimo total", delay=0.1)
 
+# Label para o erro
+var_erro_total_min = tk.StringVar()
+label_erro_total_min = tk.Label(grupo_opcoes, textvariable=var_erro_total_min)
+label_erro_total_min.grid(row=3, column=5, padx=0, sticky='w')
+
 # Checkbox para total maxima
 bool_max_total = tk.BooleanVar(value=False)
 checkbox_max_total = tk.Checkbutton(grupo_opcoes, text="Total máximo: ",
@@ -978,6 +1068,11 @@ entrada_N_MAX_total.grid(row=4, column=4, padx=10, pady=10)
 
 ToolTip(checkbox_max_total, msg="Ativar número máximo total de professores", delay=0.1)
 ToolTip(entrada_N_MAX_total, msg="Valor do máximo total", delay=0.1)
+
+# Label para o erro
+var_erro_total_max = tk.StringVar()
+label_erro_total_max = tk.Label(grupo_opcoes, textvariable=var_erro_total_max)
+label_erro_total_max.grid(row=4, column=5, padx=0, sticky='w')
 
 # Tempo limite
 val_limite = tk.IntVar(value=30)
@@ -1003,7 +1098,7 @@ label_criterio.grid(row=6, column=0, padx=10, pady=10)
 combo_var = tk.StringVar()
 combobox = ttk.Combobox(grupo_opcoes, textvariable=combo_var, values=list(LISTA_MODOS.keys()),
                         state="readonly")
-combobox.grid(row=6, column=1, padx=10, pady=10)
+combobox.grid(row=6, column=1, padx=10, pady=10, columnspan=2)
 combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
 
 # Combo solver
@@ -1013,13 +1108,13 @@ label_solver.grid(row=10, column=0, padx=10, pady=10)
 solver_var = tk.StringVar()
 combo_solver = ttk.Combobox(grupo_opcoes, textvariable=solver_var, value=list(['CBC', 'SCIP']),
                             state="readonly")
-combo_solver.grid(row=10, column=1, padx=10, pady=10)
+combo_solver.grid(row=10, column=1, padx=10, pady=10, columnspan=2)
 combo_solver.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
 
 # Botão para executar
 botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED,
                            command=executar, width=10)
-botao_executar.grid(row=10, column=2, padx=10, pady=10)
+botao_executar.grid(row=10, column=3, padx=10, pady=10)
 
 # Inicialmente oculta as opções
 grupo_opcoes.grid_forget()
