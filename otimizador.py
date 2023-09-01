@@ -927,12 +927,13 @@ checkbox_minima = tk.Checkbutton(grupo_opcoes, text="CH mínima: ", variable=boo
 checkbox_minima.grid(row=3, column=0, padx=10, pady=10)
 
 # campo texto
-texto_ch_min = tk.IntVar(value=12)
+texto_ch_min = tk.DoubleVar(value=12.0)
 entrada_CH_MIN = tk.Entry(grupo_opcoes, textvariable=texto_ch_min, width=5)
 entrada_CH_MIN.grid(row=3, column=1, padx=10, pady=10)
 
 ToolTip(checkbox_minima, msg="Ativar carga horária média máxima por unidade", delay=0.1)
-ToolTip(entrada_CH_MIN, msg="Valor da carga horária máxima", delay=0.1)
+ToolTip(entrada_CH_MIN,
+    msg="Valor da carga horária máxima. Para valores não inteiros, use ponto decimal.", delay=0.1)
 
 # Checkbox para ch maxima
 bool_maxima = tk.BooleanVar(value=True)
@@ -941,13 +942,14 @@ checkbox_maxima = tk.Checkbutton(grupo_opcoes, text="CH máxima: ", variable=boo
 checkbox_maxima.grid(row=4, column=0, padx=10, pady=10)
 
 # campo texto
-texto_ch_max = tk.IntVar(value=16)
+texto_ch_max = tk.DoubleVar(value=16.0)
 entrada_CH_MAX = tk.Entry(grupo_opcoes, textvariable=texto_ch_max, width=5)
 entrada_CH_MAX.grid(row=4, column=1, padx=10, pady=10)
 
 ToolTip(checkbox_maxima, msg="Ativar carga horária média mínima geral (para toda a Universidade)",
         delay=0.1)
-ToolTip(entrada_CH_MAX, msg="Valor da carga horária mínima", delay=0.1)
+ToolTip(entrada_CH_MAX,
+    msg="Valor da carga horária mínima. Para valores não inteiros, use ponto decimal.", delay=0.1)
 
 # Checkbox para total minimo
 bool_min_total = tk.BooleanVar(value=False)
