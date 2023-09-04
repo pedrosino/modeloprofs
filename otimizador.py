@@ -115,6 +115,23 @@ def verifica_check_boxes():
 
     atualiza_tela()
 
+
+def verifica_escopo():
+    """Caso o usuário tenha selecionado 'unidades', mostra um aviso"""
+    if escopo_ch_min.get() == 'unidades':
+        var_erro_minima.set("Verifique se essa configuração não torna o modelo sem solução")
+        formata_aviso(label_erro_minima)
+    else:
+        var_erro_minima.set("")
+        limpa_erro(label_erro_minima)
+
+    if escopo_ch_max.get() == 'unidades':
+        var_erro_maxima.set("Verifique se essa configuração não torna o modelo sem solução")
+        formata_aviso(label_erro_maxima)
+    else:
+        var_erro_maxima.set("")
+        limpa_erro(label_erro_maxima)
+
 def carregar_arquivo():
     """Carrega os dados da planilha"""
     global MATRIZ_UNIDADES, MATRIZ_PERFIS, MATRIZ_PEQ, MATRIZ_TEMPO, N_RESTRICOES, N_UNIDADES, \
@@ -1031,15 +1048,16 @@ label_texto.grid(row=0, column=0, sticky='w')
 label_duvida = tk.Label(frame_radio_min, text=" (?)")
 label_duvida.grid(row=0, column=1, sticky='w')
 ToolTip(label_duvida,
-    msg="Escolhendo a opção 'Somente no total' o percentual em cada unidade poderá extrapolar a restrição",
+    msg="Escolhendo a opção 'Somente no total' o valor em cada unidade poderá extrapolar a restrição. " +
+    "Caso contrário, o mínimo por unidade será de 10 aulas (8 horas) por semana.",
     delay=0.1)
 
 escopo_ch_min = tk.StringVar()
 escopo_ch_min.set('total')
 opcao_unidade = tk.Radiobutton(frame_radio_min, text="Em cada unidade",
-                                variable=escopo_ch_min, value='unidades')
+                                variable=escopo_ch_min, value='unidades', command=verifica_escopo)
 opcao_total = tk.Radiobutton(frame_radio_min, text="Somente no total", variable=escopo_ch_min,
-                             value='total')
+                             value='total', command=verifica_escopo)
 opcao_unidade.grid(row=1, column=0, sticky='w')
 opcao_total.grid(row=1, column=1, sticky='w')
 
@@ -1052,7 +1070,7 @@ ToolTip(entrada_CH_MIN,
 # Label para o erro
 var_erro_minima = tk.StringVar()
 label_erro_minima = tk.Label(grupo_opcoes, textvariable=var_erro_minima)
-label_erro_minima.grid(row=1, column=0, padx=0, sticky='w', columnspan=2)
+label_erro_minima.grid(row=1, column=0, padx=0, sticky='w', columnspan=4)
 
 # Checkbox para ch maxima
 bool_maxima = tk.BooleanVar(value=True)
@@ -1073,15 +1091,15 @@ label_texto.grid(row=0, column=0, sticky='w')
 label_duvida = tk.Label(frame_radio_max, text=" (?)")
 label_duvida.grid(row=0, column=1, sticky='w')
 ToolTip(label_duvida,
-    msg="Escolhendo a opção 'Somente no total' o percentual em cada unidade poderá extrapolar a restrição",
+    msg="Escolhendo a opção 'Somente no total' o valor em cada unidade poderá extrapolar a restrição",
     delay=0.1)
 
 escopo_ch_max = tk.StringVar()
 escopo_ch_max.set('total')
 opcao_unidade = tk.Radiobutton(frame_radio_max, text="Em cada unidade",
-                                variable=escopo_ch_max, value='unidades')
+                                variable=escopo_ch_max, value='unidades', command=verifica_escopo)
 opcao_total = tk.Radiobutton(frame_radio_max, text="Somente no total", variable=escopo_ch_max,
-                             value='total')
+                             value='total', command=verifica_escopo)
 opcao_unidade.grid(row=1, column=0, sticky='w')
 opcao_total.grid(row=1, column=1, sticky='w')
 
@@ -1095,7 +1113,7 @@ ToolTip(entrada_CH_MAX,
 # Label para o erro
 var_erro_maxima = tk.StringVar()
 label_erro_maxima = tk.Label(grupo_opcoes, textvariable=var_erro_maxima)
-label_erro_maxima.grid(row=3, column=0, padx=0, sticky='w')
+label_erro_maxima.grid(row=3, column=0, padx=0, sticky='w', columnspan=4)
 
 # Checkbox para total minimo
 bool_min_total = tk.BooleanVar(value=False)
