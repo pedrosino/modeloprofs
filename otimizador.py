@@ -319,171 +319,178 @@ def executar():
     resultado.set(texto_resultado)
     atualiza_tela()
 
-    # Conforme o modo escolhido, faz só uma otimização ou todas
-    if MODO_ESCOLHIDO != 'todos':
-        texto_resultado = resultado.get()
-        texto_resultado += "\nResolvendo ..."
-        resultado.set(texto_resultado)
-        atualiza_tela()
-        resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, None, None)
-    else:
-        # Critérios/modos
-        modos = np.array(['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso'])
-
-        # Lista dos melhores e piores casos
-        melhores = {}
-        piores = {}
-
-        # Valores conhecidos a priori
-        # número máximo é dado pelo total de aulas dividido pela carga horária mínima
-        # ou é definido pelo usuário
-        # Para avaliar cada cenário em relação a esses critérios, é necessário estabelecer
-        # uma forma de pontuação
-        # Essa pontuação varia entre 0 (pior caso) e 1 (melhor caso), e será multiplicada
-        # pelo peso de cada critério para obter a pontuação total daquele cenário. Para cada
-        # critério é necessário então determinar o pior e o melhor caso. Nos dois primeiros
-        # o pior caso é quando o total de professores é número máximo possível, com base na
-        # carga horária média mínima. Por exemplo, se são 900 aulas e a carga horária mínima
-        # foi definida em 12 aulas por professor, o número máximo possível é 75. Para o
-        # critério 1 esse é o valor a ser considerado. Para o critério 2, o pior valor seria
-        # 75*1,65, que é o fator do professor 40h-DE. Já o melhor caso não pode ser determinado
-        # a priori, pois o número de professores deve atender às restrições de aulas
-        # e orientações, por exemplo. Assim, é necessário resolver o modelo com cada critério
-        # e registrar o valor ótimo obtido para ser a base da escala. Para esses dois critérios
-        # a escala é invertida, ou seja, quanto mais professores, menor a pontuação.
-        # No caso do critério 3 a lógica é inversa, quanto mais tempo disponível, melhor o
-        # cenário. O melhor caso deve ser determinado resolvendo o modelo usando esse critério,
-        # e o pior caso fazendo uma otimização inversa.
-        # Para o critério 4, o melhor caso é determinado pela solução inicial do modelo com
-        # este critério e o pior caso também com uma otimização inversa.
-        numero_max = int(TOTAL_AULAS / CH_MIN) if not MAX_TOTAL else N_MAX_TOTAL
-        piores['num'] = numero_max
-        piores['peq'] = round(numero_max*1.65, 2)
-
-        # Percorre os critérios
-        for modo_usado in modos:
+    try:
+        # Conforme o modo escolhido, faz só uma otimização ou todas
+        if MODO_ESCOLHIDO != 'todos':
             texto_resultado = resultado.get()
-            texto_resultado += f"\nModo {[k for k, v in LISTA_MODOS.items() if v == modo_usado][0]}: resolvendo ..."
+            texto_resultado += "\nResolvendo ..."
+            resultado.set(texto_resultado)
+            atualiza_tela()
+            resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, None, None)
+            if resultado_final == -999999:
+                    raise Exception('Erro no modelo')
+        else:
+            # Critérios/modos
+            modos = np.array(['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso'])
+
+            # Lista dos melhores e piores casos
+            melhores = {}
+            piores = {}
+
+            # Valores conhecidos a priori
+            # número máximo é dado pelo total de aulas dividido pela carga horária mínima
+            # ou é definido pelo usuário
+            # Para avaliar cada cenário em relação a esses critérios, é necessário estabelecer
+            # uma forma de pontuação
+            # Essa pontuação varia entre 0 (pior caso) e 1 (melhor caso), e será multiplicada
+            # pelo peso de cada critério para obter a pontuação total daquele cenário. Para cada
+            # critério é necessário então determinar o pior e o melhor caso. Nos dois primeiros
+            # o pior caso é quando o total de professores é número máximo possível, com base na
+            # carga horária média mínima. Por exemplo, se são 900 aulas e a carga horária mínima
+            # foi definida em 12 aulas por professor, o número máximo possível é 75. Para o
+            # critério 1 esse é o valor a ser considerado. Para o critério 2, o pior valor seria
+            # 75*1,65, que é o fator do professor 40h-DE. Já o melhor caso não pode ser determinado
+            # a priori, pois o número de professores deve atender às restrições de aulas
+            # e orientações, por exemplo. Assim, é necessário resolver o modelo com cada critério
+            # e registrar o valor ótimo obtido para ser a base da escala. Para esses dois critérios
+            # a escala é invertida, ou seja, quanto mais professores, menor a pontuação.
+            # No caso do critério 3 a lógica é inversa, quanto mais tempo disponível, melhor o
+            # cenário. O melhor caso deve ser determinado resolvendo o modelo usando esse critério,
+            # e o pior caso fazendo uma otimização inversa.
+            # Para o critério 4, o melhor caso é determinado pela solução inicial do modelo com
+            # este critério e o pior caso também com uma otimização inversa.
+            numero_max = int(TOTAL_AULAS / CH_MIN) if not MAX_TOTAL else N_MAX_TOTAL
+            piores['num'] = numero_max
+            piores['peq'] = round(numero_max*1.65, 2)
+
+            # Percorre os critérios
+            for modo_usado in modos:
+                texto_resultado = resultado.get()
+                texto_resultado += f"\nModo {[k for k, v in LISTA_MODOS.items() if v == modo_usado][0]}: resolvendo ..."
+                resultado.set(texto_resultado)
+                atualiza_tela()
+
+                # Obtém resultado e quantidades
+                resultado_modo, qtdes_modo = otimizar(modo_usado, piores, melhores)
+
+                if resultado_modo == -999999:
+                    raise Exception('Erro no modelo')
+
+                # Registra o resultado na lista de melhores casos
+                if 'reverso' not in modo_usado:
+                    melhores[modo_usado] = resultado_modo
+                # ou na de piores casos
+                else:
+                    piores[modo_usado.split('-')[0]] = resultado_modo
+
+                texto_resultado = resultado.get()
+                if 'reverso' not in modo_usado:
+                    texto_resultado += f"\nTerminado. Resultado: {melhores[modo_usado]}, "\
+                        f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
+                else:
+                    texto_resultado += f"\nTerminado. Resultado: {piores[modo_usado.split('-')[0]]}, "\
+                        f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
+                resultado.set(texto_resultado)
+                atualiza_tela()
+
+                # Imprime resultados
+                RELATORIO += imprimir_resultados(qtdes_modo, N_PERFIS, N_UNIDADES, MATRIZ_UNIDADES, \
+                                                NOMES_UNIDADES, MATRIZ_PEQ, MATRIZ_TEMPO)
+                # Imprime parâmetros
+                RELATORIO += imprimir_parametros(qtdes_modo, N_UNIDADES, N_RESTRICOES, \
+                    MATRIZ_UNIDADES, NOMES_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
+
+                # Para os modos de carga horária, imprime as médias e desvios
+                if 'ch' in modo_usado:
+                    for variable in MODELOS[modo_usado].variables():
+                        nomes_busca = ['modulo', 'media']
+                        if any(nome in variable.name for nome in nomes_busca):
+                            RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
+
+                RELATORIO += "\n------------------------------------------------------------\n"
+
+            ##### -----------------Fim da primeira 'rodada'-----------------
+            RELATORIO += f"\nMelhores: {melhores}\nPiores: {piores}\n"
+            RELATORIO += "------------------------------------------------------------"
+
+            ## Uma nova rodada do modelo usando os pesos e as listas de melhores e piores casos
+            # Atualiza o texto do resultado
+            texto_resultado = resultado.get()
+            texto_resultado += "\n\nModo Todos: resolvendo ..."
             resultado.set(texto_resultado)
             atualiza_tela()
 
-            # Obtém resultado e quantidades
-            resultado_modo, qtdes_modo = otimizar(modo_usado, piores, melhores)
-
-            # Registra o resultado na lista de melhores casos
-            if 'reverso' not in modo_usado:
-                melhores[modo_usado] = resultado_modo
-            # ou na de piores casos
-            else:
-                piores[modo_usado.split('-')[0]] = resultado_modo
+            # Otimização com o modo 'todos'
+            resultado_final, QTDES_FINAL = otimizar('todos', piores, melhores)
 
             texto_resultado = resultado.get()
-            if 'reverso' not in modo_usado:
-                texto_resultado += f"\nTerminado. Resultado: {melhores[modo_usado]}, "\
-                    f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
-            else:
-                texto_resultado += f"\nTerminado. Resultado: {piores[modo_usado.split('-')[0]]}, "\
-                    f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
+            texto_resultado += f"\nTerminado. Resultado: {resultado_final}, "\
+                f"resolvido em {MODELOS['todos'].solutionTime:.3f} segundos"
             resultado.set(texto_resultado)
             atualiza_tela()
 
-            # Imprime resultados
-            RELATORIO += imprimir_resultados(qtdes_modo, N_PERFIS, N_UNIDADES, MATRIZ_UNIDADES, \
-                                             NOMES_UNIDADES, MATRIZ_PEQ, MATRIZ_TEMPO)
-            # Imprime parâmetros
-            RELATORIO += imprimir_parametros(qtdes_modo, N_UNIDADES, N_RESTRICOES, \
-                MATRIZ_UNIDADES, NOMES_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
+        # ---- Finalização ----
+        # Imprime resultados
+        RELATORIO += imprimir_resultados(QTDES_FINAL, N_PERFIS, N_UNIDADES, MATRIZ_UNIDADES, \
+                                        NOMES_UNIDADES, MATRIZ_PEQ, MATRIZ_TEMPO)
+        # Imprime parâmetros
+        RELATORIO += imprimir_parametros(QTDES_FINAL, N_UNIDADES, N_RESTRICOES, \
+            MATRIZ_UNIDADES, NOMES_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
 
-            # Para os modos de carga horária, imprime as médias e desvios
-            if 'ch' in modo_usado:
-                for variable in MODELOS[modo_usado].variables():
-                    nomes_busca = ['modulo', 'media']
-                    if any(nome in variable.name for nome in nomes_busca):
-                        RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
+        if 'ch' in MODO_ESCOLHIDO:
+            for variable in MODELOS[MODO_ESCOLHIDO].variables():
+                nomes_busca = ['modulo', 'media']
+                if any(nome in variable.name for nome in nomes_busca):
+                    RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
 
-            RELATORIO += "\n------------------------------------------------------------\n"
+        if MODO_ESCOLHIDO == 'todos':
+            # PESOS
+            RELATORIO += f"\nPESOS: {PESOS}\n"
+            # Imprime médias e desvios
+            for variable in MODELOS['todos'].variables():
+                nomes_busca = ['p_', 'modulo', 'media']
+                if any(nome in variable.name for nome in nomes_busca):
+                    RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
 
-        ##### -----------------Fim da primeira 'rodada'-----------------
-        RELATORIO += f"\nMelhores: {melhores}\nPiores: {piores}\n"
-        RELATORIO += "------------------------------------------------------------"
+        # Imprime o modelo completo
+        RELATORIO += "\n\n------------------Modelo:------------------\n"
+        ## https://stackoverflow.com/a/1140967/3059369
+        modelo = f"\n{MODELOS[MODO_ESCOLHIDO]}"
+        RELATORIO += "".join([s for s in modelo.splitlines(True) if s.strip("\r\n")])
 
-        ## Agora uma nova rodada do modelo usando os pesos e as listas de melhores e piores casos
-        # Atualiza o texto do resultado
         texto_resultado = resultado.get()
-        texto_resultado += "\n\nModo Todos: resolvendo ..."
+        texto_resultado += f"\nSituação: {MODELOS[MODO_ESCOLHIDO].status}, " \
+            f"{LpStatus[MODELOS[MODO_ESCOLHIDO].status]}"
+        texto_resultado += f"\nObjetivo: {resultado_final} {FORMATO_RESULTADO[MODO_ESCOLHIDO]}"
+        texto_resultado += f"\nResolvido em {MODELOS[MODO_ESCOLHIDO].solutionTime:.3f} segundos"
+
         resultado.set(texto_resultado)
         atualiza_tela()
 
-        # Otimização com o modo 'todos'
-        resultado_final, QTDES_FINAL = otimizar('todos', piores, melhores)
+        # Transforma em dataframe com cabeçalho e unidades
+        DATA_FRAME = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
+        # Manter os tipos
+        DATA_FRAME = DATA_FRAME.convert_dtypes()
+        # Linha com totais
+        DATA_FRAME.loc['Total', :] = DATA_FRAME.sum().values
+        # Coluna com total
+        DATA_FRAME['Total'] = DATA_FRAME.sum(axis=1, numeric_only=True)
+        # Insere coluna
+        DATA_FRAME.insert(0, "Unidade", np.append(NOMES_UNIDADES,['Total Perfil']))
 
-        texto_resultado = resultado.get()
-        texto_resultado += f"\nTerminado. Resultado: {resultado_final}, "\
-            f"resolvido em {MODELOS['todos'].solutionTime:.3f} segundos"
-        resultado.set(texto_resultado)
+        # Mostra na tabela
+        text_tabela.insert(tk.END, DATA_FRAME.to_string(index=False))
+
+        # Obtém o número total de linhas do texto
+        num_linhas = int(text_tabela.index(tk.END).split('.', maxsplit=1)[0])
+
+        # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
+        text_tabela.config(height=num_linhas, width=12 + N_PERFIS*5)
+
         atualiza_tela()
-
-    # ---- Finalização ----
-    # Imprime resultados
-    RELATORIO += imprimir_resultados(QTDES_FINAL, N_PERFIS, N_UNIDADES, MATRIZ_UNIDADES, \
-                                     NOMES_UNIDADES, MATRIZ_PEQ, MATRIZ_TEMPO)
-    # Imprime parâmetros
-    RELATORIO += imprimir_parametros(QTDES_FINAL, N_UNIDADES, N_RESTRICOES, \
-        MATRIZ_UNIDADES, NOMES_UNIDADES, RESTRICOES_PERCENTUAIS, MATRIZ_PERFIS, NOMES_RESTRICOES)
-
-    if 'ch' in MODO_ESCOLHIDO:
-        for variable in MODELOS[MODO_ESCOLHIDO].variables():
-            nomes_busca = ['modulo', 'media']
-            if any(nome in variable.name for nome in nomes_busca):
-                RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
-
-    if MODO_ESCOLHIDO == 'todos':
-        # PESOS
-        RELATORIO += f"\nPESOS: {PESOS}\n"
-        # Imprime médias e desvios
-        for variable in MODELOS['todos'].variables():
-            nomes_busca = ['p_', 'modulo', 'media']
-            if any(nome in variable.name for nome in nomes_busca):
-                RELATORIO += f"\n{variable.name}: {variable.value():.4f}"
-
-    # Imprime o modelo completo
-    RELATORIO += "\n\n------------------Modelo:------------------\n"
-    ## https://stackoverflow.com/a/1140967/3059369
-    modelo = f"\n{MODELOS[MODO_ESCOLHIDO]}"
-    RELATORIO += "".join([s for s in modelo.splitlines(True) if s.strip("\r\n")])
-
-    texto_resultado = resultado.get()
-    texto_resultado += f"\nSituação: {MODELOS[MODO_ESCOLHIDO].status}, " \
-        f"{LpStatus[MODELOS[MODO_ESCOLHIDO].status]}"
-    texto_resultado += f"\nObjetivo: {resultado_final} {FORMATO_RESULTADO[MODO_ESCOLHIDO]}"
-    texto_resultado += f"\nResolvido em {MODELOS[MODO_ESCOLHIDO].solutionTime:.3f} segundos"
-
-    resultado.set(texto_resultado)
-    atualiza_tela()
-
-    # Transforma em dataframe com cabeçalho e unidades
-    DATA_FRAME = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
-    # Manter os tipos
-    DATA_FRAME = DATA_FRAME.convert_dtypes()
-    # Linha com totais
-    DATA_FRAME.loc['Total', :] = DATA_FRAME.sum().values
-    # Coluna com total
-    DATA_FRAME['Total'] = DATA_FRAME.sum(axis=1, numeric_only=True)
-    # Insere coluna
-    DATA_FRAME.insert(0, "Unidade", np.append(NOMES_UNIDADES,['Total Perfil']))
-
-    # Mostra na tabela
-    text_tabela.insert(tk.END, DATA_FRAME.to_string(index=False))
-
-    # Obtém o número total de linhas do texto
-    num_linhas = int(text_tabela.index(tk.END).split('.', maxsplit=1)[0])
-
-    # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
-    text_tabela.config(height=num_linhas, width=12 + N_PERFIS*5)
-
-    atualiza_tela()
-    centralizar()
-
+        centralizar()
+    except Exception as e:
+        print(repr(e))
 
 
 def otimizar(modo, piores, melhores):
@@ -718,6 +725,15 @@ def otimizar(modo, piores, melhores):
             path="C:\\Program Files\\SCIPOptSuite 8.0.4\\bin\\scip.exe"))
     # O solver GLPK é bem mais lento
     ##MODELOS[modo].solve(GLPK_CMD(msg=1, options=["--tmlim", str(novo_limite)]))
+
+    # Se não foi encontrada uma solução
+    if MODELOS[modo].status != 1:
+        # Avisa usuário e interrompe o processo
+        texto_resultado = resultado.get()
+        texto_resultado += "\nNão foi possível encontrar uma solução. Verifique as opções escolhidas."
+        resultado.set(texto_resultado)
+        atualiza_tela()
+        return -999999, []
 
     # Resultados
     RELATORIO += f"\nSituação: {MODELOS[modo].status}, {LpStatus[MODELOS[modo].status]}"
