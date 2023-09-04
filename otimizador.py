@@ -60,9 +60,11 @@ FORMATO_RESULTADO['todos'] = '(na escala de 0 a 100)'
 
 # Restrição de carga horária média máxima por unidade
 LIMITAR_CH_MINIMA = False
+ESCOPO_CH_MINIMA = None
 CH_MIN = 16
 # Restrição de carga horária média mínima por unidade
 LIMITAR_CH_MAXIMA = False
+ESCOPO_CH_MAXIMA = None
 CH_MAX = 16
 # Restrição do número máximo total
 MAX_TOTAL = False
@@ -89,13 +91,17 @@ def verifica_check_boxes():
     """Habilita ou desabilita os campos de texto conforme o checkbox"""
     if bool_minima.get():
         entrada_CH_MIN['state'] = tk.NORMAL
+        frame_radio_min.grid(row=0, column=2, padx=10, pady=10, columnspan=2)
     else:
         entrada_CH_MIN['state'] = tk.DISABLED
+        frame_radio_min.grid_forget()
 
     if bool_maxima.get():
         entrada_CH_MAX['state'] = tk.NORMAL
+        frame_radio_max.grid(row=2, column=2, padx=10, pady=10, columnspan=2)
     else:
         entrada_CH_MAX['state'] = tk.DISABLED
+        frame_radio_max.grid_forget()
 
     if bool_min_total.get():
         entrada_N_MIN_total['state'] = tk.NORMAL
@@ -107,6 +113,7 @@ def verifica_check_boxes():
     else:
         entrada_N_MAX_total['state'] = tk.DISABLED
 
+    atualiza_tela()
 
 def carregar_arquivo():
     """Carrega os dados da planilha"""
@@ -152,11 +159,7 @@ def executar():
     """Executa a otimização"""
     global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL, \
         TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO, \
-        DATA_FRAME, TOTAL_AULAS
-
-    # Mostra resultados
-    grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nw')
-    atualiza_tela()
+        DATA_FRAME, TOTAL_AULAS, ESCOPO_CH_MINIMA, ESCOPO_CH_MAXIMA
 
     # Limpa tabela
     text_tabela.delete("1.0", tk.END)
@@ -164,6 +167,9 @@ def executar():
     # Captura opções e valores escolhidos
     LIMITAR_CH_MAXIMA = bool_maxima.get()
     LIMITAR_CH_MINIMA = bool_minima.get()
+    ESCOPO_CH_MINIMA = escopo_ch_min.get()
+    ESCOPO_CH_MAXIMA = escopo_ch_max.get()
+
     if LIMITAR_CH_MAXIMA:
         CH_MAX = texto_ch_max.get()
     if LIMITAR_CH_MINIMA:
@@ -254,6 +260,10 @@ def executar():
     # Se houve algum problema, não faz o processo
     if not tudo_certo:
         return
+
+    # Mostra resultados
+    grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nw')
+    atualiza_tela()
 
     # Inicia relatório
     RELATORIO = "Relatório da execução do otimizador" \
@@ -458,26 +468,6 @@ def executar():
     centralizar()
 
 
-def centralizar():
-    """Ajusta posição da janela na tela"""
-    altura_janela = root.winfo_reqheight()
-    altura_tela = root.winfo_screenheight()
-    largura_janela = root.winfo_reqwidth()
-    largura_tela = root.winfo_screenwidth()
-
-    # Calcula novas coordenadas
-    novo_x = round((largura_tela - largura_janela) / 2)
-    novo_y = round((altura_tela - altura_janela - 100) / 2)
-
-    # Verifica o tamanho da janela
-    if altura_tela - altura_janela < 100:
-        barra.grid(row=0, column=1, sticky="ns")
-        novo_y = 10
-        altura_janela = altura_tela - 100
-
-    root.geometry(f"{largura_janela}x{altura_janela}+{novo_x}+{novo_y}")
-    atualiza_tela()
-
 
 def otimizar(modo, piores, melhores):
     """Função que faz a otimização conforme o modo escolhido"""
@@ -582,9 +572,16 @@ def otimizar(modo, piores, melhores):
         # Restrição mínima somente no geral -> permite exceções
         MODELOS[modo] += CH_MIN*lpSum(saida) <= TOTAL_AULAS, \
             f"chmin {int(TOTAL_AULAS/CH_MIN)}"
-        # Mínimo em cada unidade de 10 aulas/semana, equivale a 8 horas/semana,
+        # Caso a restrição se aplique também às unidades, usa o mesmo valor
+
+        if ESCOPO_CH_MINIMA == 'unidades':
+            minimo_local = CH_MIN
+
+        # caso contrário, mínimo em cada unidade de 10 aulas/semana, equivale a 8 horas/semana,
         # para atender ao art. 57 da Lei nº 9.394, de 1996
-        minimo_local = 10
+        else:
+            minimo_local = 10
+        # Aplica restrição a cada unidade
         for unidade in range(N_UNIDADES):
             n_max = int(MATRIZ_UNIDADES[unidade][0]/minimo_local)
             MODELOS[modo] += minimo_local*lpSum(saida[unidade]) <= MATRIZ_UNIDADES[unidade][0], \
@@ -875,8 +872,8 @@ def janela_perfis():
     label_duvida = tk.Label(frame_radio, text=" (?)")
     label_duvida.grid(row=0, column=1, sticky='w')
     ToolTip(label_duvida,
-            msg="Escolhendo a opção 'Somente no total' o percentual em cada unidade poderá extrapolar a restrição",
-            delay=0.1)
+        msg="Escolhendo a opção 'Somente no total' o percentual em cada unidade poderá extrapolar a restrição",
+        delay=0.1)
     # Bug: https://stackoverflow.com/a/37361490/3059369
     global var_escopo
     var_escopo = tk.StringVar()
@@ -915,6 +912,27 @@ def atualiza_tela():
     canvas.config(scrollregion=canvas.bbox("all"))
     root.update_idletasks()
     root.update()
+
+
+def centralizar():
+    """Ajusta posição da janela na tela"""
+    altura_janela = root.winfo_reqheight()
+    altura_tela = root.winfo_screenheight()
+    largura_janela = root.winfo_reqwidth()
+    largura_tela = root.winfo_screenwidth()
+
+    # Calcula novas coordenadas
+    novo_x = round((largura_tela - largura_janela) / 2)
+    novo_y = round((altura_tela - altura_janela - 100) / 2)
+
+    # Verifica o tamanho da janela
+    if altura_tela - altura_janela < 100:
+        barra.grid(row=0, column=1, sticky="ns")
+        novo_y = 10
+        altura_janela = altura_tela - 100
+
+    root.geometry(f"{largura_janela}x{altura_janela}+{novo_x}+{novo_y}")
+    atualiza_tela()
 
 
 def rolar(event):
@@ -994,17 +1012,38 @@ ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 11, 'bold'
 grupo_opcoes = ttk.LabelFrame(frame, text="Opções", style='Bold.TLabelframe')
 grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nw')
 
-ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 11, 'bold'))
 # Checkbox para ch minima
 bool_minima = tk.BooleanVar(value=True)
 checkbox_minima = tk.Checkbutton(grupo_opcoes, text="CH mínima: ", variable=bool_minima,
                                  command=verifica_check_boxes)
-checkbox_minima.grid(row=3, column=0, padx=10, pady=10)
+checkbox_minima.grid(row=0, column=0, padx=10, pady=10)
 
 # campo texto
 texto_ch_min = tk.DoubleVar(value=12.0)
 entrada_CH_MIN = tk.Entry(grupo_opcoes, textvariable=texto_ch_min, width=5)
-entrada_CH_MIN.grid(row=3, column=1, padx=10, pady=10)
+entrada_CH_MIN.grid(row=0, column=1, padx=10, pady=10)
+
+# Radiobutton para escolher se a restrição é só geral ou também em cada unidade
+frame_radio_min = tk.Frame(grupo_opcoes)
+frame_radio_min.grid(row=0, column=2, padx=10, pady=10)
+label_texto = tk.Label(frame_radio_min, text="Essa restrição se aplica")
+label_texto.grid(row=0, column=0, sticky='w')
+label_duvida = tk.Label(frame_radio_min, text=" (?)")
+label_duvida.grid(row=0, column=1, sticky='w')
+ToolTip(label_duvida,
+    msg="Escolhendo a opção 'Somente no total' o percentual em cada unidade poderá extrapolar a restrição",
+    delay=0.1)
+
+escopo_ch_min = tk.StringVar()
+escopo_ch_min.set('total')
+opcao_unidade = tk.Radiobutton(frame_radio_min, text="Em cada unidade",
+                                variable=escopo_ch_min, value='unidades')
+opcao_total = tk.Radiobutton(frame_radio_min, text="Somente no total", variable=escopo_ch_min,
+                             value='total')
+opcao_unidade.grid(row=1, column=0, sticky='w')
+opcao_total.grid(row=1, column=1, sticky='w')
+
+frame_radio_min.grid_forget()
 
 ToolTip(checkbox_minima, msg="Ativar carga horária média máxima por unidade", delay=0.1)
 ToolTip(entrada_CH_MIN,
@@ -1013,18 +1052,40 @@ ToolTip(entrada_CH_MIN,
 # Label para o erro
 var_erro_minima = tk.StringVar()
 label_erro_minima = tk.Label(grupo_opcoes, textvariable=var_erro_minima)
-label_erro_minima.grid(row=3, column=2, padx=0, sticky='w')
+label_erro_minima.grid(row=1, column=0, padx=0, sticky='w', columnspan=2)
 
 # Checkbox para ch maxima
 bool_maxima = tk.BooleanVar(value=True)
 checkbox_maxima = tk.Checkbutton(grupo_opcoes, text="CH máxima: ", variable=bool_maxima,
                                  command=verifica_check_boxes)
-checkbox_maxima.grid(row=4, column=0, padx=10, pady=10)
+checkbox_maxima.grid(row=2, column=0, padx=10, pady=10)
 
 # campo texto
 texto_ch_max = tk.DoubleVar(value=16.0)
 entrada_CH_MAX = tk.Entry(grupo_opcoes, textvariable=texto_ch_max, width=5)
-entrada_CH_MAX.grid(row=4, column=1, padx=10, pady=10)
+entrada_CH_MAX.grid(row=2, column=1, padx=10, pady=10)
+
+# Radiobutton para escolher se a restrição é só geral ou também em cada unidade
+frame_radio_max = tk.Frame(grupo_opcoes)
+frame_radio_max.grid(row=2, column=2, padx=10, pady=10)
+label_texto = tk.Label(frame_radio_max, text="Essa restrição se aplica")
+label_texto.grid(row=0, column=0, sticky='w')
+label_duvida = tk.Label(frame_radio_max, text=" (?)")
+label_duvida.grid(row=0, column=1, sticky='w')
+ToolTip(label_duvida,
+    msg="Escolhendo a opção 'Somente no total' o percentual em cada unidade poderá extrapolar a restrição",
+    delay=0.1)
+
+escopo_ch_max = tk.StringVar()
+escopo_ch_max.set('total')
+opcao_unidade = tk.Radiobutton(frame_radio_max, text="Em cada unidade",
+                                variable=escopo_ch_max, value='unidades')
+opcao_total = tk.Radiobutton(frame_radio_max, text="Somente no total", variable=escopo_ch_max,
+                             value='total')
+opcao_unidade.grid(row=1, column=0, sticky='w')
+opcao_total.grid(row=1, column=1, sticky='w')
+
+frame_radio_max.grid_forget()
 
 ToolTip(checkbox_maxima, msg="Ativar carga horária média mínima geral (para toda a Universidade)",
         delay=0.1)
@@ -1034,18 +1095,18 @@ ToolTip(entrada_CH_MAX,
 # Label para o erro
 var_erro_maxima = tk.StringVar()
 label_erro_maxima = tk.Label(grupo_opcoes, textvariable=var_erro_maxima)
-label_erro_maxima.grid(row=4, column=2, padx=0, sticky='w')
+label_erro_maxima.grid(row=3, column=0, padx=0, sticky='w')
 
 # Checkbox para total minimo
 bool_min_total = tk.BooleanVar(value=False)
 checkbox_min_total = tk.Checkbutton(grupo_opcoes, text="Total mínimo: ",
     variable=bool_min_total, command=verifica_check_boxes)
-checkbox_min_total.grid(row=3, column=3, padx=10, pady=10)
+checkbox_min_total.grid(row=4, column=0, padx=10, pady=10)
 
 # campo texto
 texto_min_total = tk.IntVar()
 entrada_N_MIN_total = tk.Entry(grupo_opcoes, textvariable=texto_min_total, width=5)
-entrada_N_MIN_total.grid(row=3, column=4, padx=10, pady=10)
+entrada_N_MIN_total.grid(row=4, column=1, padx=10, pady=10)
 
 ToolTip(checkbox_min_total, msg="Ativar número mínimo total de professores", delay=0.1)
 ToolTip(entrada_N_MIN_total, msg="Valor do mínimo total", delay=0.1)
@@ -1053,18 +1114,18 @@ ToolTip(entrada_N_MIN_total, msg="Valor do mínimo total", delay=0.1)
 # Label para o erro
 var_erro_total_min = tk.StringVar()
 label_erro_total_min = tk.Label(grupo_opcoes, textvariable=var_erro_total_min)
-label_erro_total_min.grid(row=3, column=5, padx=0, sticky='w')
+label_erro_total_min.grid(row=4, column=2, padx=0, sticky='w')
 
 # Checkbox para total maxima
 bool_max_total = tk.BooleanVar(value=False)
 checkbox_max_total = tk.Checkbutton(grupo_opcoes, text="Total máximo: ",
     variable=bool_max_total, command=verifica_check_boxes)
-checkbox_max_total.grid(row=4, column=3, padx=10, pady=10)
+checkbox_max_total.grid(row=5, column=0, padx=10, pady=10)
 
 # campo texto
 texto_max_total = tk.IntVar()
 entrada_N_MAX_total = tk.Entry(grupo_opcoes, textvariable=texto_max_total, width=5)
-entrada_N_MAX_total.grid(row=4, column=4, padx=10, pady=10)
+entrada_N_MAX_total.grid(row=5, column=1, padx=10, pady=10)
 
 ToolTip(checkbox_max_total, msg="Ativar número máximo total de professores", delay=0.1)
 ToolTip(entrada_N_MAX_total, msg="Valor do máximo total", delay=0.1)
@@ -1072,49 +1133,49 @@ ToolTip(entrada_N_MAX_total, msg="Valor do máximo total", delay=0.1)
 # Label para o erro
 var_erro_total_max = tk.StringVar()
 label_erro_total_max = tk.Label(grupo_opcoes, textvariable=var_erro_total_max)
-label_erro_total_max.grid(row=4, column=5, padx=0, sticky='w')
+label_erro_total_max.grid(row=5, column=2, padx=0, sticky='w')
 
-# Tempo limite
-val_limite = tk.IntVar(value=30)
-label_limite = tk.Label(grupo_opcoes, text="Tempo limite:")
-label_limite.grid(row=5, column=0, padx=10, pady=10)
-entrada_tempo_limite = tk.Entry(grupo_opcoes, textvariable=val_limite, width=5)
-entrada_tempo_limite.grid(row=5, column=1, padx=10, pady=10)
-
-ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1)
-
-# Limitações nos perfis
+# ---Limitações nos perfis---
 botao_perfil = tk.Button(grupo_opcoes, text="Limitar perfis", command=janela_perfis, bg="#ddd")
-botao_perfil.grid(row=5, column=3, padx=10, pady=10)
+botao_perfil.grid(row=6, column=0, padx=10, pady=10)
 
 # Frame para a lista de limitações
 frame_perfis = tk.Frame(grupo_opcoes)
-frame_perfis.grid(row=5, column=4, padx=10, pady=10)
+frame_perfis.grid(row=6, column=1, padx=10, pady=10)
 
 # Combobox critério
 label_criterio = ttk.Label(grupo_opcoes, text="Critério:")
-label_criterio.grid(row=6, column=0, padx=10, pady=10)
+label_criterio.grid(row=7, column=0, padx=10, pady=10)
 
 combo_var = tk.StringVar()
 combobox = ttk.Combobox(grupo_opcoes, textvariable=combo_var, values=list(LISTA_MODOS.keys()),
                         state="readonly")
-combobox.grid(row=6, column=1, padx=10, pady=10, columnspan=2)
+combobox.grid(row=7, column=1, padx=10, pady=10, columnspan=2)
 combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
 
 # Combo solver
 label_solver = tk.Label(grupo_opcoes, text="Escolha o solver:")
-label_solver.grid(row=10, column=0, padx=10, pady=10)
+label_solver.grid(row=8, column=0, padx=10, pady=10)
 
 solver_var = tk.StringVar()
 combo_solver = ttk.Combobox(grupo_opcoes, textvariable=solver_var, value=list(['CBC', 'SCIP']),
                             state="readonly")
-combo_solver.grid(row=10, column=1, padx=10, pady=10, columnspan=2)
+combo_solver.grid(row=8, column=1, padx=10, pady=10, columnspan=2)
 combo_solver.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
+
+# Tempo limite
+val_limite = tk.IntVar(value=30)
+label_limite = tk.Label(grupo_opcoes, text="Tempo limite:")
+label_limite.grid(row=9, column=0, padx=10, pady=10)
+entrada_tempo_limite = tk.Entry(grupo_opcoes, textvariable=val_limite, width=5)
+entrada_tempo_limite.grid(row=9, column=1, padx=10, pady=10)
+
+ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1)
 
 # Botão para executar
 botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED,
                            command=executar, width=10)
-botao_executar.grid(row=10, column=3, padx=10, pady=10)
+botao_executar.grid(row=10, column=0, padx=10, pady=10)
 
 # Inicialmente oculta as opções
 grupo_opcoes.grid_forget()
