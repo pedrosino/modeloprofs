@@ -78,6 +78,9 @@ TOTAL_AULAS = None
 TEMPO_LIMITE = 30
 MODO_ESCOLHIDO = 'todos'
 
+
+#------------- Funções -------------
+
 def verifica_executar():
     """Habilita ou desabilita o botão Executar"""
     if combo_var.get() and solver_var.get():
@@ -91,17 +94,17 @@ def verifica_check_boxes():
     """Habilita ou desabilita os campos de texto conforme o checkbox"""
     if bool_minima.get():
         entrada_CH_MIN['state'] = tk.NORMAL
-        frame_radio_min.grid(row=0, column=2, padx=10, pady=10, columnspan=2)
+        frame_radio_min.grid()
     else:
         entrada_CH_MIN['state'] = tk.DISABLED
-        frame_radio_min.grid_forget()
+        frame_radio_min.grid_remove()
 
     if bool_maxima.get():
         entrada_CH_MAX['state'] = tk.NORMAL
-        frame_radio_max.grid(row=2, column=2, padx=10, pady=10, columnspan=2)
+        frame_radio_max.grid()
     else:
         entrada_CH_MAX['state'] = tk.DISABLED
-        frame_radio_max.grid_forget()
+        frame_radio_max.grid_remove()
 
     if bool_min_total.get():
         entrada_N_MIN_total['state'] = tk.NORMAL
@@ -167,9 +170,10 @@ def carregar_arquivo():
     # Se a importação teve sucesso
     if(len(MATRIZ_UNIDADES) and len(MATRIZ_PERFIS)):
         # Mostra as opções
-        grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nw')
+        grupo_opcoes.grid()
         verifica_check_boxes()
-        atualiza_tela()
+        #atualiza_tela()
+        centralizar()
 
 
 def executar():
@@ -279,7 +283,7 @@ def executar():
         return
 
     # Mostra resultados
-    grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nw')
+    grupo_resultados.grid()
     atualiza_tela()
 
     # Inicia relatório
@@ -489,8 +493,8 @@ def executar():
 
         atualiza_tela()
         centralizar()
-    except Exception as e:
-        print(repr(e))
+    except Exception as excp:
+        print(repr(excp))
 
 
 def otimizar(modo, piores, melhores):
@@ -792,16 +796,22 @@ def excluir_restricao(nome, frame_excluir):
 def formata_erro(label):
     """Formata o label do erro"""
     label.config(bg='#f0a869', fg='#87190b')
+    label.grid()
+    atualiza_tela()
 
 
 def limpa_erro(label):
     """Limpa o formato do label"""
     label.config(bg=root.cget('bg'))
+    label.grid_remove()
+    atualiza_tela()
 
 
 def formata_aviso(label):
     """Formata o label do aviso"""
     label.config(bg='#f0eb69', fg='#876e0b')
+    label.grid()
+    atualiza_tela()
 
 
 def clique_ok(variaveis, janela, var_erro, label_erro):
@@ -1077,7 +1087,7 @@ opcao_total = tk.Radiobutton(frame_radio_min, text="Somente no total", variable=
 opcao_unidade.grid(row=1, column=0, sticky='w')
 opcao_total.grid(row=1, column=1, sticky='w')
 
-frame_radio_min.grid_forget()
+frame_radio_min.grid_remove()
 
 ToolTip(checkbox_minima, msg="Ativar carga horária média máxima por unidade", delay=0.1)
 ToolTip(entrada_CH_MIN,
@@ -1087,6 +1097,7 @@ ToolTip(entrada_CH_MIN,
 var_erro_minima = tk.StringVar()
 label_erro_minima = tk.Label(grupo_opcoes, textvariable=var_erro_minima)
 label_erro_minima.grid(row=1, column=0, padx=0, sticky='w', columnspan=4)
+label_erro_minima.grid_remove()
 
 # Checkbox para ch maxima
 bool_maxima = tk.BooleanVar(value=True)
@@ -1119,7 +1130,7 @@ opcao_total = tk.Radiobutton(frame_radio_max, text="Somente no total", variable=
 opcao_unidade.grid(row=1, column=0, sticky='w')
 opcao_total.grid(row=1, column=1, sticky='w')
 
-frame_radio_max.grid_forget()
+frame_radio_max.grid_remove()
 
 ToolTip(checkbox_maxima, msg="Ativar carga horária média mínima geral (para toda a Universidade)",
         delay=0.1)
@@ -1130,6 +1141,7 @@ ToolTip(entrada_CH_MAX,
 var_erro_maxima = tk.StringVar()
 label_erro_maxima = tk.Label(grupo_opcoes, textvariable=var_erro_maxima)
 label_erro_maxima.grid(row=3, column=0, padx=0, sticky='w', columnspan=4)
+label_erro_maxima.grid_remove()
 
 # Checkbox para total minimo
 bool_min_total = tk.BooleanVar(value=False)
@@ -1212,7 +1224,7 @@ botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED,
 botao_executar.grid(row=10, column=0, padx=10, pady=10)
 
 # Inicialmente oculta as opções
-grupo_opcoes.grid_forget()
+grupo_opcoes.grid_remove()
 
 # Grupo dos resultados
 grupo_resultados = ttk.LabelFrame(frame, text="Resultados", style='Bold.TLabelframe')
@@ -1245,6 +1257,6 @@ botao_planilha = tk.Button(grupo_resultados, text="Baixar planilha", command=exp
 botao_planilha.grid(row=3, column=0, padx=10, pady=10, sticky='e')
 
 # Inicialmente oculta os resultados
-grupo_resultados.grid_forget()
+grupo_resultados.grid_remove()
 
 root.mainloop()
