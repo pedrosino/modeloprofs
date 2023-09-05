@@ -1075,7 +1075,7 @@ label_duvida = tk.Label(frame_radio_min, text=" (?)")
 label_duvida.grid(row=0, column=1, sticky='w')
 ToolTip(label_duvida,
     msg="Escolhendo a opção 'Somente no total' o valor em cada unidade poderá extrapolar a restrição. " +
-    "Caso contrário, o mínimo por unidade será de 10 aulas (8 horas) por semana.",
+    "Nesse caso o mínimo por unidade será de 10 aulas (8 horas) por semana.",
     delay=0.1)
 
 escopo_ch_min = tk.StringVar()
