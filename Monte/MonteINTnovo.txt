@@ -1,0 +1,792 @@
+Relatório da execução do otimizador
+Data: 25/08/2023
+
+Modo escolhido: Todos
+Unidades: 10
+CH Maxima: True 16
+CH Minima: True 12
+Total: - a -
+
+Unidades:
+---------+-------+--------------+------------+---------+---------+
+Unidade  | aulas | horas_orient | num_orient | diretor | coords. |
+---------+-------+--------------+------------+---------+---------+
+FACOM    |   144 |        17.00 |         34 |       0 |       1 |
+FAGEN    |    24 |         0.00 |          0 |       0 |       0 |
+FAMAT    |    84 |         0.00 |          0 |       0 |       0 |
+FECIV    |    91 |         0.00 |          0 |       0 |       0 |
+IBTEC    |    22 |         0.00 |          0 |       0 |       0 |
+ICIAG    |   378 |        74.50 |        125 |       0 |       3 |
+IERI     |    12 |         0.00 |          0 |       0 |       0 |
+IGUFU    |   299 |        30.00 |         60 |       0 |       2 |
+INFIS    |    31 |         0.00 |          0 |       0 |       0 |
+IQUFU    |    32 |         0.00 |          0 |       0 |       0 |
+---------+-------+--------------+------------+---------+---------+
+Total    |  1117 |       121.50 |        219 |       0 |       6 |
+---------+-------+--------------+------------+---------+---------+
+
+Perfis:
+---------------+------+------+------+------+------+------+------+------+
+Característica |   p1 |   p2 |   p3 |   p4 |   p5 |   p6 |   p7 |   p8 |
+---------------+------+------+------+------+------+------+------+------+
+aulas          |    0 |   10 |   12 |   16 |   20 |   24 |   10 |   12 |
+h_orient       |    0 |    0 |   10 |   10 |    5 |    0 |    3 |    0 |
+n_orient       |    0 |    0 |    8 |    8 |    8 |    0 |    6 |    0 |
+diretor        |    1 |    0 |    0 |    0 |    0 |    0 |    0 |    0 |
+coord          |    0 |    1 |    0 |    0 |    0 |    0 |    0 |    0 |
+Outras ativ.   |    0 |    0 |   18 |   12 |    5 |    0 |    3 |    0 |
+Prof-equiv.    | 1.65 | 1.65 | 1.65 | 1.65 | 1.65 | 1.65 | 0.60 | 0.60 |
+---------------+------+------+------+------+------+------+------+------+
+
+------------------------------------------------------------
+
+Modo: Menor número
+CH Maxima: True 16
+CH Minima: True 12
+Situação: 0
+Objetivo: 73 professores
+Resolvido em 0.033 segundos
+
+Resultados:
+---------+-----------------------------------------+-------+---------+----------+------------+
+Unidade  |   x1   x2   x3   x4   x5   x6   x7   x8 | Total |   P-Eq  |   Tempo  | Tempo/prof |
+---------+-----------------------------------------+-------+---------+----------+------------+
+FACOM    |    0    1    0    0    5    3    0    0 |     9 |   14.85 |     8.00 |      0.889 |
+FAGEN    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+FAMAT    |    0    0    0    0    0    6    0    0 |     6 |    9.90 |     0.00 |      0.000 |
+FECIV    |    0    0    0    0    0    6    0    0 |     6 |    9.90 |     0.00 |      0.000 |
+IBTEC    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+ICIAG    |    0    3    0    5   16    0    0    0 |    24 |   39.60 |    65.50 |      2.729 |
+IERI     |    0    0    1    0    0    0    0    0 |     1 |    1.65 |    18.00 |     18.000 |
+IGUFU    |    0    2    0    0    8    9    0    0 |    19 |   31.35 |    10.00 |      0.526 |
+INFIS    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+IQUFU    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+Total    |    0    6    1    5   29   32    0    0 |    73 |  120.45 |   101.50 |      1.390 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+
+Parâmetros:
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+FACOM    |  182 (+ 38) |   25.00 (+   8.00) |   40 (+   6) |   0 (+ 0) |   1 (+ 0) |   16.000 |
+FAGEN    |   48 (+ 24) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FAMAT    |  144 (+ 60) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   14.000 |
+FECIV    |  144 (+ 53) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   15.167 |
+IBTEC    |   48 (+ 26) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   11.000 |
+ICIAG    |  430 (+ 52) |  130.00 (+  55.50) |  168 (+  43) |   0 (+ 0) |   3 (+ 0) |   15.750 |
+IERI     |   12 (+  0) |   10.00 (+  10.00) |    8 (+   8) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+IGUFU    |  396 (+ 97) |   40.00 (+  10.00) |   64 (+   4) |   0 (+ 0) |   2 (+ 0) |   15.737 |
+INFIS    |   48 (+ 17) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   15.500 |
+IQUFU    |   48 (+ 16) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   16.000 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Total    | 1500 (+383) |  205.00 (+  84.00) |  280 (+  61) |   0 (+ 0) |   6 (+ 0) |   15.301 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+
+------------------------------------------------------------
+
+Modo: Menos P-Eq
+CH Maxima: True 16
+CH Minima: True 12
+Situação: 0
+Objetivo: 73.65 prof-equivalente
+Resolvido em 0.091 segundos
+
+Resultados:
+---------+-----------------------------------------+-------+---------+----------+------------+
+Unidade  |   x1   x2   x3   x4   x5   x6   x7   x8 | Total |   P-Eq  |   Tempo  | Tempo/prof |
+---------+-----------------------------------------+-------+---------+----------+------------+
+FACOM    |    0    1    0    0    0    0    6    7 |    14 |    9.45 |     1.00 |      0.071 |
+FAGEN    |    0    0    0    0    0    0    0    2 |     2 |    1.20 |     0.00 |      0.000 |
+FAMAT    |    0    0    0    0    0    0    0    7 |     7 |    4.20 |     0.00 |      0.000 |
+FECIV    |    0    0    0    0    0    0    0    8 |     8 |    4.80 |     0.00 |      0.000 |
+IBTEC    |    0    0    0    0    0    0    1    1 |     2 |    1.20 |     3.00 |      1.500 |
+ICIAG    |    0    3    0    0    0    3   25    3 |    34 |   26.70 |     0.50 |      0.015 |
+IERI     |    0    0    0    0    0    0    0    1 |     1 |    0.60 |     0.00 |      0.000 |
+IGUFU    |    0    2    0    0    0    7   10    1 |    20 |   21.45 |     0.00 |      0.000 |
+INFIS    |    0    0    0    0    0    1    0    1 |     2 |    2.25 |     0.00 |      0.000 |
+IQUFU    |    0    0    0    0    0    0    0    3 |     3 |    1.80 |     0.00 |      0.000 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+Total    |    0    6    0    0    0   11   42   34 |    93 |   73.65 |     4.50 |      0.048 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+
+Parâmetros:
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+FACOM    |  154 (+ 10) |   18.00 (+   1.00) |   36 (+   2) |   0 (+ 0) |   1 (+ 0) |   10.286 |
+FAGEN    |   24 (+  0) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FAMAT    |   84 (+  0) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FECIV    |   96 (+  5) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   11.375 |
+IBTEC    |   22 (+  0) |    3.00 (+   3.00) |    6 (+   6) |   0 (+ 0) |   0 (+ 0) |   11.000 |
+ICIAG    |  388 (+ 10) |   75.00 (+   0.50) |  150 (+  25) |   0 (+ 0) |   3 (+ 0) |   11.118 |
+IERI     |   12 (+  0) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+IGUFU    |  300 (+  1) |   30.00 (+   0.00) |   60 (+   0) |   0 (+ 0) |   2 (+ 0) |   14.950 |
+INFIS    |   36 (+  5) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   15.500 |
+IQUFU    |   36 (+  4) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   10.667 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Total    | 1152 (+ 35) |  126.00 (+   5.00) |  252 (+  33) |   0 (+ 0) |   6 (+ 0) |   12.011 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+
+------------------------------------------------------------
+
+Modo: Mais tempo
+CH Maxima: True 16
+CH Minima: True 12
+Situação: 0
+Objetivo: 1408.5 horas
+Resolvido em 0.072 segundos
+
+Resultados:
+---------+-----------------------------------------+-------+---------+----------+------------+
+Unidade  |   x1   x2   x3   x4   x5   x6   x7   x8 | Total |   P-Eq  |   Tempo  | Tempo/prof |
+---------+-----------------------------------------+-------+---------+----------+------------+
+FACOM    |    0    1   10    1    0    0    0    0 |    12 |   19.80 |   175.00 |     14.583 |
+FAGEN    |    0    0    2    0    0    0    0    0 |     2 |    3.30 |    36.00 |     18.000 |
+FAMAT    |    0    0    7    0    0    0    0    0 |     7 |   11.55 |   126.00 |     18.000 |
+FECIV    |    0    0    8    0    0    0    0    0 |     8 |   13.20 |   144.00 |     18.000 |
+IBTEC    |    0    0    2    0    0    0    0    0 |     2 |    3.30 |    36.00 |     18.000 |
+ICIAG    |    0    3   29    0    0    0    0    0 |    32 |   52.80 |   447.50 |     13.984 |
+IERI     |    0    0    1    0    0    0    0    0 |     1 |    1.65 |    18.00 |     18.000 |
+IGUFU    |    0    2   22    1    0    0    0    0 |    25 |   41.25 |   378.00 |     15.120 |
+INFIS    |    0    0    0    2    0    0    0    0 |     2 |    3.30 |    24.00 |     12.000 |
+IQUFU    |    0    0    0    2    0    0    0    0 |     2 |    3.30 |    24.00 |     12.000 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+Total    |    0    6   81    6    0    0    0    0 |    93 |  153.45 |  1408.50 |     15.145 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+
+Parâmetros:
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+FACOM    |  146 (+  2) |  110.00 (+  93.00) |   88 (+  54) |   0 (+ 0) |   1 (+ 0) |   12.000 |
+FAGEN    |   24 (+  0) |   20.00 (+  20.00) |   16 (+  16) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FAMAT    |   84 (+  0) |   70.00 (+  70.00) |   56 (+  56) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FECIV    |   96 (+  5) |   80.00 (+  80.00) |   64 (+  64) |   0 (+ 0) |   0 (+ 0) |   11.375 |
+IBTEC    |   24 (+  2) |   20.00 (+  20.00) |   16 (+  16) |   0 (+ 0) |   0 (+ 0) |   11.000 |
+ICIAG    |  378 (+  0) |  290.00 (+ 215.50) |  232 (+ 107) |   0 (+ 0) |   3 (+ 0) |   11.812 |
+IERI     |   12 (+  0) |   10.00 (+  10.00) |    8 (+   8) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+IGUFU    |  300 (+  1) |  230.00 (+ 200.00) |  184 (+ 124) |   0 (+ 0) |   2 (+ 0) |   11.960 |
+INFIS    |   32 (+  1) |   20.00 (+  20.00) |   16 (+  16) |   0 (+ 0) |   0 (+ 0) |   15.500 |
+IQUFU    |   32 (+  0) |   20.00 (+  20.00) |   16 (+  16) |   0 (+ 0) |   0 (+ 0) |   16.000 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Total    | 1128 (+ 11) |  870.00 (+ 749.00) |  696 (+ 477) |   0 (+ 0) |   6 (+ 0) |   12.011 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+
+------------------------------------------------------------
+
+Modo: Menos tempo
+CH Maxima: True 16
+CH Minima: True 12
+Situação: 0
+Objetivo: 1.5 horas
+Resolvido em 0.056 segundos
+
+Resultados:
+---------+-----------------------------------------+-------+---------+----------+------------+
+Unidade  |   x1   x2   x3   x4   x5   x6   x7   x8 | Total |   P-Eq  |   Tempo  | Tempo/prof |
+---------+-----------------------------------------+-------+---------+----------+------------+
+FACOM    |    0    1    0    0    0    4    6    0 |    11 |   11.85 |     1.00 |      0.091 |
+FAGEN    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+FAMAT    |    0    0    0    0    0    6    0    0 |     6 |    9.90 |     0.00 |      0.000 |
+FECIV    |    0    0    0    0    0    6    0    0 |     6 |    9.90 |     0.00 |      0.000 |
+IBTEC    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+ICIAG    |    0    3    0    0    0    5   25    0 |    33 |   28.20 |     0.50 |      0.015 |
+IERI     |    0    0    0    0    0    0    0    1 |     1 |    0.60 |     0.00 |      0.000 |
+IGUFU    |    0    2    0    0    0    8   10    0 |    20 |   22.50 |     0.00 |      0.000 |
+INFIS    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+IQUFU    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+Total    |    0    6    0    0    0   37   41    1 |    85 |   96.15 |     1.50 |      0.018 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+
+Parâmetros:
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+FACOM    |  166 (+ 22) |   18.00 (+   1.00) |   36 (+   2) |   0 (+ 0) |   1 (+ 0) |   13.091 |
+FAGEN    |   48 (+ 24) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FAMAT    |  144 (+ 60) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   14.000 |
+FECIV    |  144 (+ 53) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   15.167 |
+IBTEC    |   48 (+ 26) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   11.000 |
+ICIAG    |  400 (+ 22) |   75.00 (+   0.50) |  150 (+  25) |   0 (+ 0) |   3 (+ 0) |   11.455 |
+IERI     |   12 (+  0) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+IGUFU    |  312 (+ 13) |   30.00 (+   0.00) |   60 (+   0) |   0 (+ 0) |   2 (+ 0) |   14.950 |
+INFIS    |   48 (+ 17) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   15.500 |
+IQUFU    |   48 (+ 16) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   16.000 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Total    | 1370 (+253) |  123.00 (+   2.00) |  246 (+  27) |   0 (+ 0) |   6 (+ 0) |   13.141 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+
+------------------------------------------------------------
+
+Modo: Equilíbrio CH
+CH Maxima: True 16
+CH Minima: True 12
+Situação: 0
+Objetivo: 759.0 aulas/prof
+Resolvido em 0.061 segundos
+
+Resultados:
+---------+-----------------------------------------+-------+---------+----------+------------+
+Unidade  |   x1   x2   x3   x4   x5   x6   x7   x8 | Total |   P-Eq  |   Tempo  | Tempo/prof |
+---------+-----------------------------------------+-------+---------+----------+------------+
+FACOM    |    0    1    0    0    7    4    0    0 |    12 |   19.80 |    18.00 |      1.500 |
+FAGEN    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+FAMAT    |    0    0    0    0    0    7    0    0 |     7 |   11.55 |     0.00 |      0.000 |
+FECIV    |    0    0    0    0    0    7    0    0 |     7 |   11.55 |     0.00 |      0.000 |
+IBTEC    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+ICIAG    |    0    3    0    0   18   10    0    0 |    31 |   51.15 |    15.50 |      0.500 |
+IERI     |    0    0    0    0    0    0    0    1 |     1 |    0.60 |     0.00 |      0.000 |
+IGUFU    |    0    2    0    0    8   15    0    0 |    25 |   41.25 |    10.00 |      0.400 |
+INFIS    |    0    0    0    0    0    3    0    0 |     3 |    4.95 |     0.00 |      0.000 |
+IQUFU    |    0    0    0    0    0    3    0    0 |     3 |    4.95 |     0.00 |      0.000 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+Total    |    0    6    0    0   33   53    0    1 |    93 |  152.40 |    43.50 |      0.468 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+
+Parâmetros:
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+FACOM    |  246 (+102) |   35.00 (+  18.00) |   56 (+  22) |   0 (+ 0) |   1 (+ 0) |   12.000 |
+FAGEN    |   48 (+ 24) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FAMAT    |  168 (+ 84) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FECIV    |  168 (+ 77) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   13.000 |
+IBTEC    |   48 (+ 26) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   11.000 |
+ICIAG    |  630 (+252) |   90.00 (+  15.50) |  144 (+  19) |   0 (+ 0) |   3 (+ 0) |   12.194 |
+IERI     |   12 (+  0) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+IGUFU    |  540 (+241) |   40.00 (+  10.00) |   64 (+   4) |   0 (+ 0) |   2 (+ 0) |   11.960 |
+INFIS    |   72 (+ 41) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   10.333 |
+IQUFU    |   72 (+ 40) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   10.667 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Total    | 2004 (+887) |  165.00 (+  44.00) |  264 (+  45) |   0 (+ 0) |   6 (+ 0) |   12.011 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+
+modulo_FACOM: 0.0000
+modulo_FAGEN: 4.0000
+modulo_FAMAT: 6.0000
+modulo_FECIV: 1226.0000
+modulo_IBTEC: 1458.0000
+modulo_ICIAG: 248.0000
+modulo_IERI: 4.0000
+modulo_IGUFU: 54.0000
+modulo_INFIS: 2586.0000
+modulo_IQUFU: 2004.0000
+media_FACOM: 12004.0000
+media_FAGEN: 12000.0000
+media_FAMAT: 11998.0000
+media_FECIV: 13230.0000
+media_IBTEC: 10546.0000
+media_ICIAG: 12252.0000
+media_IERI: 12000.0000
+media_IGUFU: 11950.0000
+media_INFIS: 9418.0000
+media_IQUFU: 10000.0000
+media_geral: 12004.0000
+------------------------------------------------------------
+
+Modo: Desequilíbrio CH
+CH Maxima: True 16
+CH Minima: True 12
+Situação: 0
+Objetivo: 3490.7 aulas/prof
+Resolvido em 0.053 segundos
+
+Resultados:
+---------+-----------------------------------------+-------+---------+----------+------------+
+Unidade  |   x1   x2   x3   x4   x5   x6   x7   x8 | Total |   P-Eq  |   Tempo  | Tempo/prof |
+---------+-----------------------------------------+-------+---------+----------+------------+
+FACOM    |    0    1    0    0    7    1    0    0 |     9 |   14.85 |    18.00 |      2.000 |
+FAGEN    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+FAMAT    |    0    0    0    0    0    9    0    0 |     9 |   14.85 |     0.00 |      0.000 |
+FECIV    |    0    0    0    0    0   10    0    0 |    10 |   16.50 |     0.00 |      0.000 |
+IBTEC    |    0    0    0    0    0    2    0    0 |     2 |    3.30 |     0.00 |      0.000 |
+ICIAG    |    0    3    0    0   18    3    0    0 |    24 |   39.60 |    15.50 |      0.646 |
+IERI     |    0    0    0    0    0    0    0    1 |     1 |    0.60 |     0.00 |      0.000 |
+IGUFU    |    0    2    0    0    8    9    0    0 |    19 |   31.35 |    10.00 |      0.526 |
+INFIS    |    0    0    0    0    0    3    0    0 |     3 |    4.95 |     0.00 |      0.000 |
+IQUFU    |    0    0    0    0    0    3    0    0 |     3 |    4.95 |     0.00 |      0.000 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+Total    |    0    6    0    0   33   42    0    1 |    82 |  134.25 |    43.50 |      0.530 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+
+Parâmetros:
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+FACOM    |  174 (+ 30) |   35.00 (+  18.00) |   56 (+  22) |   0 (+ 0) |   1 (+ 0) |   16.000 |
+FAGEN    |   48 (+ 24) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FAMAT    |  216 (+132) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |    9.333 |
+FECIV    |  240 (+149) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |    9.100 |
+IBTEC    |   48 (+ 26) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   11.000 |
+ICIAG    |  462 (+ 84) |   90.00 (+  15.50) |  144 (+  19) |   0 (+ 0) |   3 (+ 0) |   15.750 |
+IERI     |   12 (+  0) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+IGUFU    |  396 (+ 97) |   40.00 (+  10.00) |   64 (+   4) |   0 (+ 0) |   2 (+ 0) |   15.737 |
+INFIS    |   72 (+ 41) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   10.333 |
+IQUFU    |   72 (+ 40) |    0.00 (+   0.00) |    0 (+   0) |   0 (+ 0) |   0 (+ 0) |   10.667 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Total    | 1740 (+623) |  165.00 (+  44.00) |  264 (+  45) |   0 (+ 0) |   6 (+ 0) |   13.622 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+
+modulo_FACOM: 2107.0000
+modulo_FAGEN: 1896.0000
+modulo_FAMAT: 6470.0000
+modulo_FECIV: 6996.0000
+modulo_IBTEC: 3350.0000
+modulo_ICIAG: 1912.0000
+modulo_IERI: 1896.0000
+modulo_IGUFU: 1906.0000
+modulo_INFIS: 4478.0000
+modulo_IQUFU: 3896.0000
+media_FACOM: 16003.0000
+media_FAGEN: 12000.0000
+media_FAMAT: 7426.0000
+media_FECIV: 6900.0000
+media_IBTEC: 10546.0000
+media_ICIAG: 15808.0000
+media_IERI: 12000.0000
+media_IGUFU: 15802.0000
+media_INFIS: 9418.0000
+media_IQUFU: 10000.0000
+media_geral: 13896.0000
+------------------------------------------------------------
+
+Melhores: {'num': 73, 'peq': 73.65, 'tempo': 1408.5, 'ch': 759.0}
+Piores: {'num': 93, 'peq': 153.45, 'tempo': 1.5, 'ch': 3490.7}
+------------------------------------------------------------
+Modo: Todos
+CH Maxima: True 16
+CH Minima: True 12
+Situação: 0
+Objetivo: 77394.6254 (na escala de 0 a 1)
+Resolvido em 0.592 segundos
+
+Resultados:
+---------+-----------------------------------------+-------+---------+----------+------------+
+Unidade  |   x1   x2   x3   x4   x5   x6   x7   x8 | Total |   P-Eq  |   Tempo  | Tempo/prof |
+---------+-----------------------------------------+-------+---------+----------+------------+
+FACOM    |    0    1    9    1    0    0    1    0 |    12 |   18.75 |   160.00 |     13.333 |
+FAGEN    |    0    0    1    0    0    0    0    1 |     2 |    2.25 |    18.00 |      9.000 |
+FAMAT    |    0    0    4    1    0    0    2    0 |     7 |    9.45 |    90.00 |     12.857 |
+FECIV    |    0    0    5    2    0    0    0    0 |     7 |   11.55 |   114.00 |     16.286 |
+IBTEC    |    0    0    1    0    0    0    1    0 |     2 |    2.25 |    21.00 |     10.500 |
+ICIAG    |    0    3   25    3    0    0    0    0 |    31 |   51.15 |   411.50 |     13.274 |
+IERI     |    0    0    1    0    0    0    0    0 |     1 |    1.65 |    18.00 |     18.000 |
+IGUFU    |    0    2   22    1    0    0    0    0 |    25 |   41.25 |   378.00 |     15.120 |
+INFIS    |    0    0    1    0    0    0    2    0 |     3 |    2.85 |    24.00 |      8.000 |
+IQUFU    |    0    0    1    0    0    0    2    0 |     3 |    2.85 |    24.00 |      8.000 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+Total    |    0    6   70    8    0    0    8    1 |    93 |  144.00 |  1258.50 |     13.532 |
+---------+-----------------------------------------+-------+---------+----------+------------+
+
+Parâmetros:
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Unidade  |      aulas  |     horas_orient   |  num_orient  |   diretor |   coords. | ch media |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+FACOM    |  144 (+  0) |  103.00 (+  86.00) |   86 (+  52) |   0 (+ 0) |   1 (+ 0) |   12.000 |
+FAGEN    |   24 (+  0) |   10.00 (+  10.00) |    8 (+   8) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FAMAT    |   84 (+  0) |   56.00 (+  56.00) |   52 (+  52) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+FECIV    |   92 (+  1) |   70.00 (+  70.00) |   56 (+  56) |   0 (+ 0) |   0 (+ 0) |   13.000 |
+IBTEC    |   22 (+  0) |   13.00 (+  13.00) |   14 (+  14) |   0 (+ 0) |   0 (+ 0) |   11.000 |
+ICIAG    |  378 (+  0) |  280.00 (+ 205.50) |  224 (+  99) |   0 (+ 0) |   3 (+ 0) |   12.194 |
+IERI     |   12 (+  0) |   10.00 (+  10.00) |    8 (+   8) |   0 (+ 0) |   0 (+ 0) |   12.000 |
+IGUFU    |  300 (+  1) |  230.00 (+ 200.00) |  184 (+ 124) |   0 (+ 0) |   2 (+ 0) |   11.960 |
+INFIS    |   32 (+  1) |   16.00 (+  16.00) |   20 (+  20) |   0 (+ 0) |   0 (+ 0) |   10.333 |
+IQUFU    |   32 (+  0) |   16.00 (+  16.00) |   20 (+  20) |   0 (+ 0) |   0 (+ 0) |   10.667 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+Total    | 1120 (+  3) |  804.00 (+ 683.00) |  672 (+ 453) |   0 (+ 0) |   6 (+ 0) |   12.011 |
+---------+-------------+--------------------+--------------+-----------+-----------+----------+
+
+PESOS: [0.13619152859074776 0.06255631096929606 0.3093063557025276
+ 0.49194580473742855]
+
+modulo_FACOM: 0.0000
+modulo_FAGEN: 4.0000
+modulo_FAMAT: 6.0000
+modulo_FECIV: 1226.0000
+modulo_IBTEC: 1458.0000
+modulo_ICIAG: 248.0000
+modulo_IERI: 4.0000
+modulo_IGUFU: 54.0000
+modulo_INFIS: 2586.0000
+modulo_IQUFU: 2004.0000
+media_FACOM: 12004.0000
+media_FAGEN: 12000.0000
+media_FAMAT: 11998.0000
+media_FECIV: 13230.0000
+media_IBTEC: 10546.0000
+media_ICIAG: 12252.0000
+media_IERI: 12000.0000
+media_IGUFU: 11950.0000
+media_INFIS: 9418.0000
+media_IQUFU: 10000.0000
+media_geral: 12004.0000
+p_0: 0.0000
+p_1: 11861.0000
+p_2: 89247.0000
+p_3: 99702.0000
+
+------------------Modelo:------------------
+ Generated by MPModelProtoExporter
+   Name             : ProfsORTools-todos
+   Format           : Free
+   Constraints      : 117
+   Variables        : 115
+     Binary         : 10
+     Integer        : 105
+     Continuous     : 0
+Maximize
+ Obj: +0.136192 p_0 +0.0625563 p_1 +0.309306 p_2 +0.491946 p_3 
+Subject to
+ aulas_FACOM: +10 x_2_FACOM +12 x_3_FACOM +16 x_4_FACOM +20 x_5_FACOM +24 x_6_FACOM +10 x_7_FACOM +12 x_8_FACOM  >= 144
+ aulas_FAGEN: +10 x_2_FAGEN +12 x_3_FAGEN +16 x_4_FAGEN +20 x_5_FAGEN +24 x_6_FAGEN +10 x_7_FAGEN +12 x_8_FAGEN  >= 24
+ aulas_FAMAT: +10 x_2_FAMAT +12 x_3_FAMAT +16 x_4_FAMAT +20 x_5_FAMAT +24 x_6_FAMAT +10 x_7_FAMAT +12 x_8_FAMAT  >= 84
+ aulas_FECIV: +10 x_2_FECIV +12 x_3_FECIV +16 x_4_FECIV +20 x_5_FECIV +24 x_6_FECIV +10 x_7_FECIV +12 x_8_FECIV  >= 91
+ aulas_IBTEC: +10 x_2_IBTEC +12 x_3_IBTEC +16 x_4_IBTEC +20 x_5_IBTEC +24 x_6_IBTEC +10 x_7_IBTEC +12 x_8_IBTEC  >= 22
+ aulas_ICIAG: +10 x_2_ICIAG +12 x_3_ICIAG +16 x_4_ICIAG +20 x_5_ICIAG +24 x_6_ICIAG +10 x_7_ICIAG +12 x_8_ICIAG  >= 378
+ aulas_IERI: +10 x_2_IERI +12 x_3_IERI +16 x_4_IERI +20 x_5_IERI +24 x_6_IERI +10 x_7_IERI +12 x_8_IERI  >= 12
+ aulas_IGUFU: +10 x_2_IGUFU +12 x_3_IGUFU +16 x_4_IGUFU +20 x_5_IGUFU +24 x_6_IGUFU +10 x_7_IGUFU +12 x_8_IGUFU  >= 299
+ aulas_INFIS: +10 x_2_INFIS +12 x_3_INFIS +16 x_4_INFIS +20 x_5_INFIS +24 x_6_INFIS +10 x_7_INFIS +12 x_8_INFIS  >= 31
+ aulas_IQUFU: +10 x_2_IQUFU +12 x_3_IQUFU +16 x_4_IQUFU +20 x_5_IQUFU +24 x_6_IQUFU +10 x_7_IQUFU +12 x_8_IQUFU  >= 32
+ h_orient_FACOM: +10 x_3_FACOM +10 x_4_FACOM +5 x_5_FACOM +3 x_7_FACOM  >= 17
+ h_orient_FAGEN: +10 x_3_FAGEN +10 x_4_FAGEN +5 x_5_FAGEN +3 x_7_FAGEN  >= 0
+ h_orient_FAMAT: +10 x_3_FAMAT +10 x_4_FAMAT +5 x_5_FAMAT +3 x_7_FAMAT  >= 0
+ h_orient_FECIV: +10 x_3_FECIV +10 x_4_FECIV +5 x_5_FECIV +3 x_7_FECIV  >= 0
+ h_orient_IBTEC: +10 x_3_IBTEC +10 x_4_IBTEC +5 x_5_IBTEC +3 x_7_IBTEC  >= 0
+ h_orient_ICIAG: +10 x_3_ICIAG +10 x_4_ICIAG +5 x_5_ICIAG +3 x_7_ICIAG  >= 74.5
+ h_orient_IERI: +10 x_3_IERI +10 x_4_IERI +5 x_5_IERI +3 x_7_IERI  >= 0
+ h_orient_IGUFU: +10 x_3_IGUFU +10 x_4_IGUFU +5 x_5_IGUFU +3 x_7_IGUFU  >= 30
+ h_orient_INFIS: +10 x_3_INFIS +10 x_4_INFIS +5 x_5_INFIS +3 x_7_INFIS  >= 0
+ h_orient_IQUFU: +10 x_3_IQUFU +10 x_4_IQUFU +5 x_5_IQUFU +3 x_7_IQUFU  >= 0
+ n_orient_FACOM: +8 x_3_FACOM +8 x_4_FACOM +8 x_5_FACOM +6 x_7_FACOM  >= 34
+ n_orient_FAGEN: +8 x_3_FAGEN +8 x_4_FAGEN +8 x_5_FAGEN +6 x_7_FAGEN  >= 0
+ n_orient_FAMAT: +8 x_3_FAMAT +8 x_4_FAMAT +8 x_5_FAMAT +6 x_7_FAMAT  >= 0
+ n_orient_FECIV: +8 x_3_FECIV +8 x_4_FECIV +8 x_5_FECIV +6 x_7_FECIV  >= 0
+ n_orient_IBTEC: +8 x_3_IBTEC +8 x_4_IBTEC +8 x_5_IBTEC +6 x_7_IBTEC  >= 0
+ n_orient_ICIAG: +8 x_3_ICIAG +8 x_4_ICIAG +8 x_5_ICIAG +6 x_7_ICIAG  >= 125
+ n_orient_IERI: +8 x_3_IERI +8 x_4_IERI +8 x_5_IERI +6 x_7_IERI  >= 0
+ n_orient_IGUFU: +8 x_3_IGUFU +8 x_4_IGUFU +8 x_5_IGUFU +6 x_7_IGUFU  >= 60
+ n_orient_INFIS: +8 x_3_INFIS +8 x_4_INFIS +8 x_5_INFIS +6 x_7_INFIS  >= 0
+ n_orient_IQUFU: +8 x_3_IQUFU +8 x_4_IQUFU +8 x_5_IQUFU +6 x_7_IQUFU  >= 0
+ diretor_FACOM: +1 x_1_FACOM  = 0
+ diretor_FAGEN: +1 x_1_FAGEN  = 0
+ diretor_FAMAT: +1 x_1_FAMAT  = 0
+ diretor_FECIV: +1 x_1_FECIV  = 0
+ diretor_IBTEC: +1 x_1_IBTEC  = 0
+ diretor_ICIAG: +1 x_1_ICIAG  = 0
+ diretor_IERI: +1 x_1_IERI  = 0
+ diretor_IGUFU: +1 x_1_IGUFU  = 0
+ diretor_INFIS: +1 x_1_INFIS  = 0
+ diretor_IQUFU: +1 x_1_IQUFU  = 0
+ coord_FACOM: +1 x_2_FACOM  = 1
+ coord_FAGEN: +1 x_2_FAGEN  = 0
+ coord_FAMAT: +1 x_2_FAMAT  = 0
+ coord_FECIV: +1 x_2_FECIV  = 0
+ coord_IBTEC: +1 x_2_IBTEC  = 0
+ coord_ICIAG: +1 x_2_ICIAG  = 3
+ coord_IERI: +1 x_2_IERI  = 0
+ coord_IGUFU: +1 x_2_IGUFU  = 2
+ coord_INFIS: +1 x_2_INFIS  = 0
+ coord_IQUFU: +1 x_2_IQUFU  = 0
+ chmax__70: +16 x_1_FACOM +16 x_2_FACOM +16 x_3_FACOM +16 x_4_FACOM +16 x_5_FACOM +16 x_6_FACOM +16 x_7_FACOM +16 x_8_FACOM +16 x_1_FAGEN +16 x_2_FAGEN +16 x_3_FAGEN +16 x_4_FAGEN +16 x_5_FAGEN +16 x_6_FAGEN +16 x_7_FAGEN +16 x_8_FAGEN +16 x_1_FAMAT +16 x_2_FAMAT +16 x_3_FAMAT +16 x_4_FAMAT +16 x_5_FAMAT +16 x_6_FAMAT +16 x_7_FAMAT +16 x_8_FAMAT +16 x_1_FECIV +16 x_2_FECIV +16 x_3_FECIV +16 x_4_FECIV +16 x_5_FECIV +16 x_6_FECIV +16 x_7_FECIV +16 x_8_FECIV +16 x_1_IBTEC +16 x_2_IBTEC +16 x_3_IBTEC +16 x_4_IBTEC +16 x_5_IBTEC +16 x_6_IBTEC +16 x_7_IBTEC +16 x_8_IBTEC +16 x_1_ICIAG +16 x_2_ICIAG +16 x_3_ICIAG +16 x_4_ICIAG +16 x_5_ICIAG +16 x_6_ICIAG +16 x_7_ICIAG +16 x_8_ICIAG +16 x_1_IERI +16 x_2_IERI +16 x_3_IERI +16 x_4_IERI +16 x_5_IERI +16 x_6_IERI +16 x_7_IERI +16 x_8_IERI +16 x_1_IGUFU +16 x_2_IGUFU +16 x_3_IGUFU +16 x_4_IGUFU +16 x_5_IGUFU +16 x_6_IGUFU +16 x_7_IGUFU +16 x_8_IGUFU +16 x_1_INFIS +16 x_2_INFIS +16 x_3_INFIS +16 x_4_INFIS +16 x_5_INFIS +16 x_6_INFIS +16 x_7_INFIS +16 x_8_INFIS +16 x_1_IQUFU +16 x_2_IQUFU +16 x_3_IQUFU +16 x_4_IQUFU +16 x_5_IQUFU +16 x_6_IQUFU +16 x_7_IQUFU +16 x_8_IQUFU  >= 1117
+ FACOM_chmax__9: +16 x_1_FACOM +16 x_2_FACOM +16 x_3_FACOM +16 x_4_FACOM +16 x_5_FACOM +16 x_6_FACOM +16 x_7_FACOM +16 x_8_FACOM  >= 144
+ FAGEN_chmax__2: +16 x_1_FAGEN +16 x_2_FAGEN +16 x_3_FAGEN +16 x_4_FAGEN +16 x_5_FAGEN +16 x_6_FAGEN +16 x_7_FAGEN +16 x_8_FAGEN  >= 24
+ FAMAT_chmax__6: +16 x_1_FAMAT +16 x_2_FAMAT +16 x_3_FAMAT +16 x_4_FAMAT +16 x_5_FAMAT +16 x_6_FAMAT +16 x_7_FAMAT +16 x_8_FAMAT  >= 84
+ FECIV_chmax__6: +16 x_1_FECIV +16 x_2_FECIV +16 x_3_FECIV +16 x_4_FECIV +16 x_5_FECIV +16 x_6_FECIV +16 x_7_FECIV +16 x_8_FECIV  >= 91
+ IBTEC_chmax__2: +16 x_1_IBTEC +16 x_2_IBTEC +16 x_3_IBTEC +16 x_4_IBTEC +16 x_5_IBTEC +16 x_6_IBTEC +16 x_7_IBTEC +16 x_8_IBTEC  >= 22
+ ICIAG_chmax__24: +16 x_1_ICIAG +16 x_2_ICIAG +16 x_3_ICIAG +16 x_4_ICIAG +16 x_5_ICIAG +16 x_6_ICIAG +16 x_7_ICIAG +16 x_8_ICIAG  >= 378
+ IERI_chmax__1: +16 x_1_IERI +16 x_2_IERI +16 x_3_IERI +16 x_4_IERI +16 x_5_IERI +16 x_6_IERI +16 x_7_IERI +16 x_8_IERI  >= 12
+ IGUFU_chmax__19: +16 x_1_IGUFU +16 x_2_IGUFU +16 x_3_IGUFU +16 x_4_IGUFU +16 x_5_IGUFU +16 x_6_IGUFU +16 x_7_IGUFU +16 x_8_IGUFU  >= 299
+ INFIS_chmax__2: +16 x_1_INFIS +16 x_2_INFIS +16 x_3_INFIS +16 x_4_INFIS +16 x_5_INFIS +16 x_6_INFIS +16 x_7_INFIS +16 x_8_INFIS  >= 31
+ IQUFU_chmax__2: +16 x_1_IQUFU +16 x_2_IQUFU +16 x_3_IQUFU +16 x_4_IQUFU +16 x_5_IQUFU +16 x_6_IQUFU +16 x_7_IQUFU +16 x_8_IQUFU  >= 32
+ chmin__93: +12 x_1_FACOM +12 x_2_FACOM +12 x_3_FACOM +12 x_4_FACOM +12 x_5_FACOM +12 x_6_FACOM +12 x_7_FACOM +12 x_8_FACOM +12 x_1_FAGEN +12 x_2_FAGEN +12 x_3_FAGEN +12 x_4_FAGEN +12 x_5_FAGEN +12 x_6_FAGEN +12 x_7_FAGEN +12 x_8_FAGEN +12 x_1_FAMAT +12 x_2_FAMAT +12 x_3_FAMAT +12 x_4_FAMAT +12 x_5_FAMAT +12 x_6_FAMAT +12 x_7_FAMAT +12 x_8_FAMAT +12 x_1_FECIV +12 x_2_FECIV +12 x_3_FECIV +12 x_4_FECIV +12 x_5_FECIV +12 x_6_FECIV +12 x_7_FECIV +12 x_8_FECIV +12 x_1_IBTEC +12 x_2_IBTEC +12 x_3_IBTEC +12 x_4_IBTEC +12 x_5_IBTEC +12 x_6_IBTEC +12 x_7_IBTEC +12 x_8_IBTEC +12 x_1_ICIAG +12 x_2_ICIAG +12 x_3_ICIAG +12 x_4_ICIAG +12 x_5_ICIAG +12 x_6_ICIAG +12 x_7_ICIAG +12 x_8_ICIAG +12 x_1_IERI +12 x_2_IERI +12 x_3_IERI +12 x_4_IERI +12 x_5_IERI +12 x_6_IERI +12 x_7_IERI +12 x_8_IERI +12 x_1_IGUFU +12 x_2_IGUFU +12 x_3_IGUFU +12 x_4_IGUFU +12 x_5_IGUFU +12 x_6_IGUFU +12 x_7_IGUFU +12 x_8_IGUFU +12 x_1_INFIS +12 x_2_INFIS +12 x_3_INFIS +12 x_4_INFIS +12 x_5_INFIS +12 x_6_INFIS +12 x_7_INFIS +12 x_8_INFIS +12 x_1_IQUFU +12 x_2_IQUFU +12 x_3_IQUFU +12 x_4_IQUFU +12 x_5_IQUFU +12 x_6_IQUFU +12 x_7_IQUFU +12 x_8_IQUFU  <= 1117
+ Media_geral: +172 x_1_FACOM +172 x_2_FACOM +172 x_3_FACOM +172 x_4_FACOM +172 x_5_FACOM +172 x_6_FACOM +172 x_7_FACOM +172 x_8_FACOM +172 x_1_FAGEN +172 x_2_FAGEN +172 x_3_FAGEN +172 x_4_FAGEN +172 x_5_FAGEN +172 x_6_FAGEN +172 x_7_FAGEN +172 x_8_FAGEN +172 x_1_FAMAT +172 x_2_FAMAT +172 x_3_FAMAT +172 x_4_FAMAT +172 x_5_FAMAT +172 x_6_FAMAT +172 x_7_FAMAT +172 x_8_FAMAT +172 x_1_FECIV +172 x_2_FECIV +172 x_3_FECIV +172 x_4_FECIV +172 x_5_FECIV +172 x_6_FECIV +172 x_7_FECIV +172 x_8_FECIV +172 x_1_IBTEC +172 x_2_IBTEC +172 x_3_IBTEC +172 x_4_IBTEC +172 x_5_IBTEC +172 x_6_IBTEC +172 x_7_IBTEC +172 x_8_IBTEC +172 x_1_ICIAG +172 x_2_ICIAG +172 x_3_ICIAG +172 x_4_ICIAG +172 x_5_ICIAG +172 x_6_ICIAG +172 x_7_ICIAG +172 x_8_ICIAG +172 x_1_IERI +172 x_2_IERI +172 x_3_IERI +172 x_4_IERI +172 x_5_IERI +172 x_6_IERI +172 x_7_IERI +172 x_8_IERI +172 x_1_IGUFU +172 x_2_IGUFU +172 x_3_IGUFU +172 x_4_IGUFU +172 x_5_IGUFU +172 x_6_IGUFU +172 x_7_IGUFU +172 x_8_IGUFU +172 x_1_INFIS +172 x_2_INFIS +172 x_3_INFIS +172 x_4_INFIS +172 x_5_INFIS +172 x_6_INFIS +172 x_7_INFIS +172 x_8_INFIS +172 x_1_IQUFU +172 x_2_IQUFU +172 x_3_IQUFU +172 x_4_IQUFU +172 x_5_IQUFU +172 x_6_IQUFU +172 x_7_IQUFU +172 x_8_IQUFU +1 media_geral  = 28000
+ FACOM_ch_media: +1333 x_1_FACOM +1333 x_2_FACOM +1333 x_3_FACOM +1333 x_4_FACOM +1333 x_5_FACOM +1333 x_6_FACOM +1333 x_7_FACOM +1333 x_8_FACOM +1 media_FACOM  = 28000
+ X___M___B____x'_FACOM: -1 modulo_FACOM +1e+06 b_FACOM +1 media_FACOM -1 media_geral  >= 0
+ _X___M___(1_B)____x'_FACOM: -1 modulo_FACOM -1e+06 b_FACOM -1 media_FACOM +1 media_geral  >= -1e+06
+ FACOM_mod1: +1 modulo_FACOM -1 media_FACOM +1 media_geral  >= 0
+ FACOM_mod2: +1 modulo_FACOM +1 media_FACOM -1 media_geral  >= 0
+ FAGEN_ch_media: +8000 x_1_FAGEN +8000 x_2_FAGEN +8000 x_3_FAGEN +8000 x_4_FAGEN +8000 x_5_FAGEN +8000 x_6_FAGEN +8000 x_7_FAGEN +8000 x_8_FAGEN +1 media_FAGEN  = 28000
+ X___M___B____x'_FAGEN: -1 modulo_FAGEN +1e+06 b_FAGEN +1 media_FAGEN -1 media_geral  >= 0
+ _X___M___(1_B)____x'_FAGEN: -1 modulo_FAGEN -1e+06 b_FAGEN -1 media_FAGEN +1 media_geral  >= -1e+06
+ FAGEN_mod1: +1 modulo_FAGEN -1 media_FAGEN +1 media_geral  >= 0
+ FAGEN_mod2: +1 modulo_FAGEN +1 media_FAGEN -1 media_geral  >= 0
+ FAMAT_ch_media: +2286 x_1_FAMAT +2286 x_2_FAMAT +2286 x_3_FAMAT +2286 x_4_FAMAT +2286 x_5_FAMAT +2286 x_6_FAMAT +2286 x_7_FAMAT +2286 x_8_FAMAT +1 media_FAMAT  = 28000
+ X___M___B____x'_FAMAT: -1 modulo_FAMAT +1e+06 b_FAMAT +1 media_FAMAT -1 media_geral  >= 0
+ _X___M___(1_B)____x'_FAMAT: -1 modulo_FAMAT -1e+06 b_FAMAT -1 media_FAMAT +1 media_geral  >= -1e+06
+ FAMAT_mod1: +1 modulo_FAMAT -1 media_FAMAT +1 media_geral  >= 0
+ FAMAT_mod2: +1 modulo_FAMAT +1 media_FAMAT -1 media_geral  >= 0
+ FECIV_ch_media: +2110 x_1_FECIV +2110 x_2_FECIV +2110 x_3_FECIV +2110 x_4_FECIV +2110 x_5_FECIV +2110 x_6_FECIV +2110 x_7_FECIV +2110 x_8_FECIV +1 media_FECIV  = 28000
+ X___M___B____x'_FECIV: -1 modulo_FECIV +1e+06 b_FECIV +1 media_FECIV -1 media_geral  >= 0
+ _X___M___(1_B)____x'_FECIV: -1 modulo_FECIV -1e+06 b_FECIV -1 media_FECIV +1 media_geral  >= -1e+06
+ FECIV_mod1: +1 modulo_FECIV -1 media_FECIV +1 media_geral  >= 0
+ FECIV_mod2: +1 modulo_FECIV +1 media_FECIV -1 media_geral  >= 0
+ IBTEC_ch_media: +8727 x_1_IBTEC +8727 x_2_IBTEC +8727 x_3_IBTEC +8727 x_4_IBTEC +8727 x_5_IBTEC +8727 x_6_IBTEC +8727 x_7_IBTEC +8727 x_8_IBTEC +1 media_IBTEC  = 28000
+ X___M___B____x'_IBTEC: -1 modulo_IBTEC +1e+06 b_IBTEC +1 media_IBTEC -1 media_geral  >= 0
+ _X___M___(1_B)____x'_IBTEC: -1 modulo_IBTEC -1e+06 b_IBTEC -1 media_IBTEC +1 media_geral  >= -1e+06
+ IBTEC_mod1: +1 modulo_IBTEC -1 media_IBTEC +1 media_geral  >= 0
+ IBTEC_mod2: +1 modulo_IBTEC +1 media_IBTEC -1 media_geral  >= 0
+ ICIAG_ch_media: +508 x_1_ICIAG +508 x_2_ICIAG +508 x_3_ICIAG +508 x_4_ICIAG +508 x_5_ICIAG +508 x_6_ICIAG +508 x_7_ICIAG +508 x_8_ICIAG +1 media_ICIAG  = 28000
+ X___M___B____x'_ICIAG: -1 modulo_ICIAG +1e+06 b_ICIAG +1 media_ICIAG -1 media_geral  >= 0
+ _X___M___(1_B)____x'_ICIAG: -1 modulo_ICIAG -1e+06 b_ICIAG -1 media_ICIAG +1 media_geral  >= -1e+06
+ ICIAG_mod1: +1 modulo_ICIAG -1 media_ICIAG +1 media_geral  >= 0
+ ICIAG_mod2: +1 modulo_ICIAG +1 media_ICIAG -1 media_geral  >= 0
+ IERI_ch_media: +16000 x_1_IERI +16000 x_2_IERI +16000 x_3_IERI +16000 x_4_IERI +16000 x_5_IERI +16000 x_6_IERI +16000 x_7_IERI +16000 x_8_IERI +1 media_IERI  = 28000
+ X___M___B____x'_IERI: -1 modulo_IERI +1e+06 b_IERI +1 media_IERI -1 media_geral  >= 0
+ _X___M___(1_B)____x'_IERI: -1 modulo_IERI -1e+06 b_IERI -1 media_IERI +1 media_geral  >= -1e+06
+ IERI_mod1: +1 modulo_IERI -1 media_IERI +1 media_geral  >= 0
+ IERI_mod2: +1 modulo_IERI +1 media_IERI -1 media_geral  >= 0
+ IGUFU_ch_media: +642 x_1_IGUFU +642 x_2_IGUFU +642 x_3_IGUFU +642 x_4_IGUFU +642 x_5_IGUFU +642 x_6_IGUFU +642 x_7_IGUFU +642 x_8_IGUFU +1 media_IGUFU  = 28000
+ X___M___B____x'_IGUFU: -1 modulo_IGUFU +1e+06 b_IGUFU +1 media_IGUFU -1 media_geral  >= 0
+ _X___M___(1_B)____x'_IGUFU: -1 modulo_IGUFU -1e+06 b_IGUFU -1 media_IGUFU +1 media_geral  >= -1e+06
+ IGUFU_mod1: +1 modulo_IGUFU -1 media_IGUFU +1 media_geral  >= 0
+ IGUFU_mod2: +1 modulo_IGUFU +1 media_IGUFU -1 media_geral  >= 0
+ INFIS_ch_media: +6194 x_1_INFIS +6194 x_2_INFIS +6194 x_3_INFIS +6194 x_4_INFIS +6194 x_5_INFIS +6194 x_6_INFIS +6194 x_7_INFIS +6194 x_8_INFIS +1 media_INFIS  = 28000
+ X___M___B____x'_INFIS: -1 modulo_INFIS +1e+06 b_INFIS +1 media_INFIS -1 media_geral  >= 0
+ _X___M___(1_B)____x'_INFIS: -1 modulo_INFIS -1e+06 b_INFIS -1 media_INFIS +1 media_geral  >= -1e+06
+ INFIS_mod1: +1 modulo_INFIS -1 media_INFIS +1 media_geral  >= 0
+ INFIS_mod2: +1 modulo_INFIS +1 media_INFIS -1 media_geral  >= 0
+ IQUFU_ch_media: +6000 x_1_IQUFU +6000 x_2_IQUFU +6000 x_3_IQUFU +6000 x_4_IQUFU +6000 x_5_IQUFU +6000 x_6_IQUFU +6000 x_7_IQUFU +6000 x_8_IQUFU +1 media_IQUFU  = 28000
+ X___M___B____x'_IQUFU: -1 modulo_IQUFU +1e+06 b_IQUFU +1 media_IQUFU -1 media_geral  >= 0
+ _X___M___(1_B)____x'_IQUFU: -1 modulo_IQUFU -1e+06 b_IQUFU -1 media_IQUFU +1 media_geral  >= -1e+06
+ IQUFU_mod1: +1 modulo_IQUFU -1 media_IQUFU +1 media_geral  >= 0
+ IQUFU_mod2: +1 modulo_IQUFU +1 media_IQUFU -1 media_geral  >= 0
+ Pontuação_número: +5000 x_1_FACOM +5000 x_2_FACOM +5000 x_3_FACOM +5000 x_4_FACOM +5000 x_5_FACOM +5000 x_6_FACOM +5000 x_7_FACOM +5000 x_8_FACOM +5000 x_1_FAGEN +5000 x_2_FAGEN +5000 x_3_FAGEN +5000 x_4_FAGEN +5000 x_5_FAGEN +5000 x_6_FAGEN +5000 x_7_FAGEN +5000 x_8_FAGEN +5000 x_1_FAMAT +5000 x_2_FAMAT +5000 x_3_FAMAT +5000 x_4_FAMAT +5000 x_5_FAMAT +5000 x_6_FAMAT +5000 x_7_FAMAT +5000 x_8_FAMAT +5000 x_1_FECIV +5000 x_2_FECIV +5000 x_3_FECIV +5000 x_4_FECIV +5000 x_5_FECIV +5000 x_6_FECIV +5000 x_7_FECIV +5000 x_8_FECIV +5000 x_1_IBTEC +5000 x_2_IBTEC +5000 x_3_IBTEC +5000 x_4_IBTEC +5000 x_5_IBTEC +5000 x_6_IBTEC +5000 x_7_IBTEC +5000 x_8_IBTEC +5000 x_1_ICIAG +5000 x_2_ICIAG +5000 x_3_ICIAG +5000 x_4_ICIAG +5000 x_5_ICIAG +5000 x_6_ICIAG +5000 x_7_ICIAG +5000 x_8_ICIAG +5000 x_1_IERI +5000 x_2_IERI +5000 x_3_IERI +5000 x_4_IERI +5000 x_5_IERI +5000 x_6_IERI +5000 x_7_IERI +5000 x_8_IERI +5000 x_1_IGUFU +5000 x_2_IGUFU +5000 x_3_IGUFU +5000 x_4_IGUFU +5000 x_5_IGUFU +5000 x_6_IGUFU +5000 x_7_IGUFU +5000 x_8_IGUFU +5000 x_1_INFIS +5000 x_2_INFIS +5000 x_3_INFIS +5000 x_4_INFIS +5000 x_5_INFIS +5000 x_6_INFIS +5000 x_7_INFIS +5000 x_8_INFIS +5000 x_1_IQUFU +5000 x_2_IQUFU +5000 x_3_IQUFU +5000 x_4_IQUFU +5000 x_5_IQUFU +5000 x_6_IQUFU +5000 x_7_IQUFU +5000 x_8_IQUFU +1 p_0  = 465000
+ Pontuação_P_Eq: +2067.45 x_1_FACOM +2067.45 x_2_FACOM +2067.45 x_3_FACOM +2067.45 x_4_FACOM +2067.45 x_5_FACOM +2067.45 x_6_FACOM +751.8 x_7_FACOM +751.8 x_8_FACOM +2067.45 x_1_FAGEN +2067.45 x_2_FAGEN +2067.45 x_3_FAGEN +2067.45 x_4_FAGEN +2067.45 x_5_FAGEN +2067.45 x_6_FAGEN +751.8 x_7_FAGEN +751.8 x_8_FAGEN +2067.45 x_1_FAMAT +2067.45 x_2_FAMAT +2067.45 x_3_FAMAT +2067.45 x_4_FAMAT +2067.45 x_5_FAMAT +2067.45 x_6_FAMAT +751.8 x_7_FAMAT +751.8 x_8_FAMAT +2067.45 x_1_FECIV +2067.45 x_2_FECIV +2067.45 x_3_FECIV +2067.45 x_4_FECIV +2067.45 x_5_FECIV +2067.45 x_6_FECIV +751.8 x_7_FECIV +751.8 x_8_FECIV +2067.45 x_1_IBTEC +2067.45 x_2_IBTEC +2067.45 x_3_IBTEC +2067.45 x_4_IBTEC +2067.45 x_5_IBTEC +2067.45 x_6_IBTEC +751.8 x_7_IBTEC +751.8 x_8_IBTEC +2067.45 x_1_ICIAG +2067.45 x_2_ICIAG +2067.45 x_3_ICIAG +2067.45 x_4_ICIAG +2067.45 x_5_ICIAG +2067.45 x_6_ICIAG +751.8 x_7_ICIAG +751.8 x_8_ICIAG +2067.45 x_1_IERI +2067.45 x_2_IERI +2067.45 x_3_IERI +2067.45 x_4_IERI +2067.45 x_5_IERI +2067.45 x_6_IERI +751.8 x_7_IERI +751.8 x_8_IERI +2067.45 x_1_IGUFU +2067.45 x_2_IGUFU +2067.45 x_3_IGUFU +2067.45 x_4_IGUFU +2067.45 x_5_IGUFU +2067.45 x_6_IGUFU +751.8 x_7_IGUFU +751.8 x_8_IGUFU +2067.45 x_1_INFIS +2067.45 x_2_INFIS +2067.45 x_3_INFIS +2067.45 x_4_INFIS +2067.45 x_5_INFIS +2067.45 x_6_INFIS +751.8 x_7_INFIS +751.8 x_8_INFIS +2067.45 x_1_IQUFU +2067.45 x_2_IQUFU +2067.45 x_3_IQUFU +2067.45 x_4_IQUFU +2067.45 x_5_IQUFU +2067.45 x_6_IQUFU +751.8 x_7_IQUFU +751.8 x_8_IQUFU +1 p_1  = 192293
+ Pontuação_tempo: -1278 x_3_FACOM -852 x_4_FACOM -355 x_5_FACOM -213 x_7_FACOM -1278 x_3_FAGEN -852 x_4_FAGEN -355 x_5_FAGEN -213 x_7_FAGEN -1278 x_3_FAMAT -852 x_4_FAMAT -355 x_5_FAMAT -213 x_7_FAMAT -1278 x_3_FECIV -852 x_4_FECIV -355 x_5_FECIV -213 x_7_FECIV -1278 x_3_IBTEC -852 x_4_IBTEC -355 x_5_IBTEC -213 x_7_IBTEC -1278 x_3_ICIAG -852 x_4_ICIAG -355 x_5_ICIAG -213 x_7_ICIAG -1278 x_3_IERI -852 x_4_IERI -355 x_5_IERI -213 x_7_IERI -1278 x_3_IGUFU -852 x_4_IGUFU -355 x_5_IGUFU -213 x_7_IGUFU -1278 x_3_INFIS -852 x_4_INFIS -355 x_5_INFIS -213 x_7_INFIS -1278 x_3_IQUFU -852 x_4_IQUFU -355 x_5_IQUFU -213 x_7_IQUFU +1 p_2  = -8733
+ Pontuação_Equilíbrio: +3.7 modulo_FACOM +3.7 modulo_FAGEN +3.7 modulo_FAMAT +3.7 modulo_FECIV +3.7 modulo_IBTEC +3.7 modulo_ICIAG +3.7 modulo_IERI +3.7 modulo_IGUFU +3.7 modulo_INFIS +3.7 modulo_IQUFU +1 p_3  = 127785
+Bounds
+ 0 <= x_1_FACOM <= inf
+ 0 <= x_2_FACOM <= inf
+ 0 <= x_3_FACOM <= inf
+ 0 <= x_4_FACOM <= inf
+ 0 <= x_5_FACOM <= inf
+ 0 <= x_6_FACOM <= inf
+ 0 <= x_7_FACOM <= inf
+ 0 <= x_8_FACOM <= inf
+ 0 <= x_1_FAGEN <= inf
+ 0 <= x_2_FAGEN <= inf
+ 0 <= x_3_FAGEN <= inf
+ 0 <= x_4_FAGEN <= inf
+ 0 <= x_5_FAGEN <= inf
+ 0 <= x_6_FAGEN <= inf
+ 0 <= x_7_FAGEN <= inf
+ 0 <= x_8_FAGEN <= inf
+ 0 <= x_1_FAMAT <= inf
+ 0 <= x_2_FAMAT <= inf
+ 0 <= x_3_FAMAT <= inf
+ 0 <= x_4_FAMAT <= inf
+ 0 <= x_5_FAMAT <= inf
+ 0 <= x_6_FAMAT <= inf
+ 0 <= x_7_FAMAT <= inf
+ 0 <= x_8_FAMAT <= inf
+ 0 <= x_1_FECIV <= inf
+ 0 <= x_2_FECIV <= inf
+ 0 <= x_3_FECIV <= inf
+ 0 <= x_4_FECIV <= inf
+ 0 <= x_5_FECIV <= inf
+ 0 <= x_6_FECIV <= inf
+ 0 <= x_7_FECIV <= inf
+ 0 <= x_8_FECIV <= inf
+ 0 <= x_1_IBTEC <= inf
+ 0 <= x_2_IBTEC <= inf
+ 0 <= x_3_IBTEC <= inf
+ 0 <= x_4_IBTEC <= inf
+ 0 <= x_5_IBTEC <= inf
+ 0 <= x_6_IBTEC <= inf
+ 0 <= x_7_IBTEC <= inf
+ 0 <= x_8_IBTEC <= inf
+ 0 <= x_1_ICIAG <= inf
+ 0 <= x_2_ICIAG <= inf
+ 0 <= x_3_ICIAG <= inf
+ 0 <= x_4_ICIAG <= inf
+ 0 <= x_5_ICIAG <= inf
+ 0 <= x_6_ICIAG <= inf
+ 0 <= x_7_ICIAG <= inf
+ 0 <= x_8_ICIAG <= inf
+ 0 <= x_1_IERI <= inf
+ 0 <= x_2_IERI <= inf
+ 0 <= x_3_IERI <= inf
+ 0 <= x_4_IERI <= inf
+ 0 <= x_5_IERI <= inf
+ 0 <= x_6_IERI <= inf
+ 0 <= x_7_IERI <= inf
+ 0 <= x_8_IERI <= inf
+ 0 <= x_1_IGUFU <= inf
+ 0 <= x_2_IGUFU <= inf
+ 0 <= x_3_IGUFU <= inf
+ 0 <= x_4_IGUFU <= inf
+ 0 <= x_5_IGUFU <= inf
+ 0 <= x_6_IGUFU <= inf
+ 0 <= x_7_IGUFU <= inf
+ 0 <= x_8_IGUFU <= inf
+ 0 <= x_1_INFIS <= inf
+ 0 <= x_2_INFIS <= inf
+ 0 <= x_3_INFIS <= inf
+ 0 <= x_4_INFIS <= inf
+ 0 <= x_5_INFIS <= inf
+ 0 <= x_6_INFIS <= inf
+ 0 <= x_7_INFIS <= inf
+ 0 <= x_8_INFIS <= inf
+ 0 <= x_1_IQUFU <= inf
+ 0 <= x_2_IQUFU <= inf
+ 0 <= x_3_IQUFU <= inf
+ 0 <= x_4_IQUFU <= inf
+ 0 <= x_5_IQUFU <= inf
+ 0 <= x_6_IQUFU <= inf
+ 0 <= x_7_IQUFU <= inf
+ 0 <= x_8_IQUFU <= inf
+ 0 <= modulo_FACOM <= inf
+ 0 <= modulo_FAGEN <= inf
+ 0 <= modulo_FAMAT <= inf
+ 0 <= modulo_FECIV <= inf
+ 0 <= modulo_IBTEC <= inf
+ 0 <= modulo_ICIAG <= inf
+ 0 <= modulo_IERI <= inf
+ 0 <= modulo_IGUFU <= inf
+ 0 <= modulo_INFIS <= inf
+ 0 <= modulo_IQUFU <= inf
+ 0 <= b_FACOM <= 1
+ 0 <= b_FAGEN <= 1
+ 0 <= b_FAMAT <= 1
+ 0 <= b_FECIV <= 1
+ 0 <= b_IBTEC <= 1
+ 0 <= b_ICIAG <= 1
+ 0 <= b_IERI <= 1
+ 0 <= b_IGUFU <= 1
+ 0 <= b_INFIS <= 1
+ 0 <= b_IQUFU <= 1
+ 0 <= media_FACOM <= inf
+ 0 <= media_FAGEN <= inf
+ 0 <= media_FAMAT <= inf
+ 0 <= media_FECIV <= inf
+ 0 <= media_IBTEC <= inf
+ 0 <= media_ICIAG <= inf
+ 0 <= media_IERI <= inf
+ 0 <= media_IGUFU <= inf
+ 0 <= media_INFIS <= inf
+ 0 <= media_IQUFU <= inf
+ 0 <= media_geral <= inf
+ 0 <= p_0 <= 100000
+ 0 <= p_1 <= 100000
+ 0 <= p_2 <= 100000
+ 0 <= p_3 <= 100000
+Binaries
+ b_FACOM
+ b_FAGEN
+ b_FAMAT
+ b_FECIV
+ b_IBTEC
+ b_ICIAG
+ b_IERI
+ b_IGUFU
+ b_INFIS
+ b_IQUFU
+Generals
+ x_1_FACOM
+ x_2_FACOM
+ x_3_FACOM
+ x_4_FACOM
+ x_5_FACOM
+ x_6_FACOM
+ x_7_FACOM
+ x_8_FACOM
+ x_1_FAGEN
+ x_2_FAGEN
+ x_3_FAGEN
+ x_4_FAGEN
+ x_5_FAGEN
+ x_6_FAGEN
+ x_7_FAGEN
+ x_8_FAGEN
+ x_1_FAMAT
+ x_2_FAMAT
+ x_3_FAMAT
+ x_4_FAMAT
+ x_5_FAMAT
+ x_6_FAMAT
+ x_7_FAMAT
+ x_8_FAMAT
+ x_1_FECIV
+ x_2_FECIV
+ x_3_FECIV
+ x_4_FECIV
+ x_5_FECIV
+ x_6_FECIV
+ x_7_FECIV
+ x_8_FECIV
+ x_1_IBTEC
+ x_2_IBTEC
+ x_3_IBTEC
+ x_4_IBTEC
+ x_5_IBTEC
+ x_6_IBTEC
+ x_7_IBTEC
+ x_8_IBTEC
+ x_1_ICIAG
+ x_2_ICIAG
+ x_3_ICIAG
+ x_4_ICIAG
+ x_5_ICIAG
+ x_6_ICIAG
+ x_7_ICIAG
+ x_8_ICIAG
+ x_1_IERI
+ x_2_IERI
+ x_3_IERI
+ x_4_IERI
+ x_5_IERI
+ x_6_IERI
+ x_7_IERI
+ x_8_IERI
+ x_1_IGUFU
+ x_2_IGUFU
+ x_3_IGUFU
+ x_4_IGUFU
+ x_5_IGUFU
+ x_6_IGUFU
+ x_7_IGUFU
+ x_8_IGUFU
+ x_1_INFIS
+ x_2_INFIS
+ x_3_INFIS
+ x_4_INFIS
+ x_5_INFIS
+ x_6_INFIS
+ x_7_INFIS
+ x_8_INFIS
+ x_1_IQUFU
+ x_2_IQUFU
+ x_3_IQUFU
+ x_4_IQUFU
+ x_5_IQUFU
+ x_6_IQUFU
+ x_7_IQUFU
+ x_8_IQUFU
+ modulo_FACOM
+ modulo_FAGEN
+ modulo_FAMAT
+ modulo_FECIV
+ modulo_IBTEC
+ modulo_ICIAG
+ modulo_IERI
+ modulo_IGUFU
+ modulo_INFIS
+ modulo_IQUFU
+ media_FACOM
+ media_FAGEN
+ media_FAMAT
+ media_FECIV
+ media_IBTEC
+ media_ICIAG
+ media_IERI
+ media_IGUFU
+ media_INFIS
+ media_IQUFU
+ media_geral
+ p_0
+ p_1
+ p_2
+ p_3
+End
