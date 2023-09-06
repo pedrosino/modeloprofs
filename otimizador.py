@@ -172,8 +172,8 @@ def carregar_arquivo():
         # Mostra as opções
         grupo_opcoes.grid()
         verifica_check_boxes()
-        #atualiza_tela()
-        centralizar()
+        atualiza_tela()
+        #centralizar()
 
 
 def executar():
@@ -332,7 +332,7 @@ def executar():
             atualiza_tela()
             resultado_final, QTDES_FINAL = otimizar(MODO_ESCOLHIDO, None, None)
             if resultado_final == -999999:
-                    raise Exception('Erro no modelo')
+                raise ValueError('Erro no modelo')
         else:
             # Critérios/modos
             modos = np.array(['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso'])
@@ -378,7 +378,7 @@ def executar():
                 resultado_modo, qtdes_modo = otimizar(modo_usado, piores, melhores)
 
                 if resultado_modo == -999999:
-                    raise Exception('Erro no modelo')
+                    raise ValueError('Erro no modelo')
 
                 # Registra o resultado na lista de melhores casos
                 if 'reverso' not in modo_usado:
@@ -472,7 +472,7 @@ def executar():
         atualiza_tela()
 
         # Transforma em dataframe com cabeçalho e unidades
-        DATA_FRAME = pd.DataFrame(QTDES_FINAL, columns=[f'x{i}' for i in range(1, N_PERFIS+1)])
+        DATA_FRAME = pd.DataFrame(QTDES_FINAL, columns=[f'p{i}' for i in range(1, N_PERFIS+1)])
         # Manter os tipos
         DATA_FRAME = DATA_FRAME.convert_dtypes()
         # Linha com totais
@@ -493,7 +493,7 @@ def executar():
 
         atualiza_tela()
         centralizar()
-    except Exception as excp:
+    except ValueError as excp:
         print(repr(excp))
 
 
