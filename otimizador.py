@@ -14,7 +14,12 @@ import numpy as np
 from tktooltip import ToolTip
 from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, \
     LpProblem, LpMaximize, LpMinimize, SCIP_CMD
+import customtkinter
 from funcoes import imprimir_resultados, imprimir_parametros, imprimir_unidades, imprimir_perfis
+
+# Customtkinter
+customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
+customtkinter.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
 
 # Variáveis globais
 MATRIZ_UNIDADES = None
@@ -84,37 +89,36 @@ MODO_ESCOLHIDO = 'todos'
 def verifica_executar():
     """Habilita ou desabilita o botão Executar"""
     if combo_var.get() and solver_var.get():
-        botao_executar['state'] = tk.NORMAL
-        botao_executar.configure(bg="#ddd")
+        botao_executar.configure(state="normal")
     else:
-        botao_executar['state'] = tk.DISABLED
+        botao_executar.configure(state="disabled")
 
 
 def verifica_check_boxes():
     """Habilita ou desabilita os campos de texto conforme o checkbox"""
     if bool_minima.get():
-        entrada_CH_MIN['state'] = tk.NORMAL
-        frame_radio_min.grid()
+        for item in grupo_min:
+            item.grid()
     else:
-        entrada_CH_MIN['state'] = tk.DISABLED
-        frame_radio_min.grid_remove()
+        for item in grupo_min:
+            item.grid_remove()
 
     if bool_maxima.get():
-        entrada_CH_MAX['state'] = tk.NORMAL
-        frame_radio_max.grid()
+        for item in grupo_max:
+            item.grid()
     else:
-        entrada_CH_MAX['state'] = tk.DISABLED
-        frame_radio_max.grid_remove()
+        for item in grupo_max:
+            item.grid_remove()
 
     if bool_min_total.get():
-        entrada_N_MIN_total['state'] = tk.NORMAL
+        entrada_N_MIN_total.grid()
     else:
-        entrada_N_MIN_total['state'] = tk.DISABLED
+        entrada_N_MIN_total.grid_remove()
 
     if bool_max_total.get():
-        entrada_N_MAX_total['state'] = tk.NORMAL
+        entrada_N_MAX_total.grid()
     else:
-        entrada_N_MAX_total['state'] = tk.DISABLED
+        entrada_N_MAX_total.grid_remove()
 
     atualiza_tela()
 
@@ -489,7 +493,7 @@ def executar():
         num_linhas = int(text_tabela.index(tk.END).split('.', maxsplit=1)[0])
 
         # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
-        text_tabela.config(height=num_linhas, width=12 + N_PERFIS*5)
+        text_tabela.configure(height=num_linhas*18, width=120 + N_PERFIS*45)
 
         atualiza_tela()
         centralizar()
@@ -795,21 +799,21 @@ def excluir_restricao(nome, frame_excluir):
 
 def formata_erro(label):
     """Formata o label do erro"""
-    label.config(bg='#f0a869', fg='#87190b')
+    label.configure(fg_color='#f0a869', text_color='#87190b')
     label.grid()
     atualiza_tela()
 
 
 def limpa_erro(label):
     """Limpa o formato do label"""
-    label.config(bg=root.cget('bg'))
+    label.configure(fg_color=root.cget('fg_color'))
     label.grid_remove()
     atualiza_tela()
 
 
 def formata_aviso(label):
     """Formata o label do aviso"""
-    label.config(bg='#f0eb69', fg='#876e0b')
+    label.configure(fg_color='#f0eb69', text_color='#876e0b')
     label.grid()
     atualiza_tela()
 
@@ -850,10 +854,11 @@ def clique_ok(variaveis, janela, var_erro, label_erro):
     # Cria um novo frame para a linha de labels
     frame_labels = tk.Frame(frame_perfis)
     frame_labels.pack(anchor='w')
-    label_perfil = tk.Label(frame_labels, text=texto_perfis)
+    label_perfil = customtkinter.CTkLabel(frame_labels, text=texto_perfis)
     label_perfil.pack(side=tk.LEFT)
 
-    label_excluir = tk.Label(frame_labels, text='[X]', fg="#a00", cursor="hand2")
+    label_excluir = customtkinter.CTkLabel(
+        frame_labels, text='[X]', text_color="#a00", cursor="hand2")
     label_excluir.pack(side=tk.LEFT)
 
     label_excluir.bind("<Button-1>", lambda e:excluir_restricao(nome_restricao, frame_labels))
@@ -875,76 +880,101 @@ def clique_ok(variaveis, janela, var_erro, label_erro):
 def janela_perfis():
     """Abre uma janela para o usuário selecionar os perfis que deseja limitar"""
     #global janela_nova#, opcoes, var_sinal, var_percentual
-    janela_nova = tk.Toplevel(root)
+    janela_nova = customtkinter.CTkToplevel(root)
+    #janela_nova = tk.Toplevel(root)
     janela_nova.geometry("+320+220")
 
-    tk.Label(janela_nova, text="Selecione os perfis:").grid(row=0, column=0)
+    titulo_janela = customtkinter.CTkLabel(janela_nova, text="Selecione os perfis:")
+    titulo_janela.grid(row=0, column=0, padx=10, pady=10)
 
     # Lista de perfis
-    grupo_perfis = ttk.LabelFrame(janela_nova)
-    grupo_perfis.grid(row=1, column=0, rowspan=2)
+    grupo_perfis = customtkinter.CTkFrame(janela_nova)
+    grupo_perfis.grid(row=1, column=0, padx=10, pady=10, rowspan=3)
+
     lista_opcoes = []
-    for perfil in range(8):
+    for perfil in range(N_PERFIS):
         texto = f"Perfil {perfil+1}"
         var = tk.IntVar()
-        check_button = tk.Checkbutton(grupo_perfis, text=texto, variable=var)
-        check_button.pack(anchor='w')
+        check_button = customtkinter.CTkCheckBox(grupo_perfis, text=texto, variable=var)
+        check_button.pack(anchor='w', padx=10, pady=(10,0))
         lista_opcoes.append(var)
 
     # Sinal da operação
-    grupo_sinal = ttk.LabelFrame(janela_nova)
-    grupo_sinal.grid(row=1, column=1, columnspan=2, sticky='s')
-    label_sinal = tk.Label(grupo_sinal, text="A soma das quantidades desses perfis deverá ser")
-    label_sinal.grid(row=0, column=0, columnspan=3)
+    grupo_sinal = customtkinter.CTkFrame(janela_nova)
+    grupo_sinal.grid(row=1, column=1, columnspan=2, padx=10, pady=10, sticky='n')
+    label_sinal = customtkinter.CTkLabel(
+        grupo_sinal, text="A soma desse(s) perfil(s) deve ser"
+    )
+    label_sinal.grid(row=0, column=0, padx=10, pady=10, columnspan=4)
     var_sinal = tk.StringVar()
-    combo_sinal = ttk.Combobox(grupo_sinal, textvariable=var_sinal,
-                               values=['<=', '>='], state="readonly")
-    combo_sinal.grid(row=1, column=0, sticky='w')
+    radio_sinal_menor = customtkinter.CTkRadioButton(
+        grupo_sinal, text="<=", value="<=", variable=var_sinal, width=30
+    )
+    radio_sinal_maior = customtkinter.CTkRadioButton(
+        grupo_sinal, text=">=", value=">=", variable=var_sinal, width=30
+    )
+    radio_sinal_menor.grid(row=1, column=0, sticky='e', padx=(10,0))
+    radio_sinal_maior.grid(row=2, column=0, sticky='e', padx=(10,0))
 
     # Valor do percentual
     var_percentual = tk.DoubleVar()
-    texto_percentual = tk.Entry(grupo_sinal, textvariable=var_percentual, width=5)
-    texto_percentual.grid(row=1, column=1, sticky='e')
-    tk.Label(grupo_sinal, text="%").grid(row=1, column=2, sticky='w')
+    texto_percentual = customtkinter.CTkEntry(grupo_sinal, textvariable=var_percentual, width=40)
+    texto_percentual.grid(row=1, column=1, rowspan=2, padx=0)
+    label_perc = customtkinter.CTkLabel(grupo_sinal, text="%")
+    label_perc.grid(row=1, column=2, sticky='w', rowspan=2, padx=(0,10))
     ToolTip(texto_percentual, msg="Para valores não inteiros, use ponto decimal", delay=0.1)
 
-    # Radiobutton para escolher se a restrição é só geral ou também em cada unidade
-    frame_radio = tk.Frame(janela_nova)
-    frame_radio.grid(row=2, column=1, padx=10, pady=10, columnspan=2)
-    tk.Label(frame_radio, text="Essa restrição se aplica").grid(row=0, column=0, sticky='w')
-    label_duvida = tk.Label(frame_radio, text=" (?)")
-    label_duvida.grid(row=0, column=1, sticky='w')
+    # Switch para escolher se a restrição é só geral ou também em cada unidade
+    frame_escopo = customtkinter.CTkFrame(janela_nova)
+    frame_escopo.grid(row=2, column=1, padx=10, pady=10, columnspan=2)
+    label_t = customtkinter.CTkLabel(
+        frame_escopo, text="Essa restrição se aplica a"
+    )
+    label_t.grid(row=3, column=0, sticky='w', padx=10, pady=10, columnspan=2)
+    label_duvida = customtkinter.CTkLabel(frame_escopo, text=" (?)")
+    label_duvida.grid(row=3, column=2, sticky='ew')
     ToolTip(label_duvida,
-        msg="Escolhendo a opção 'Somente no total' o percentual em cada unidade poderá extrapolar a restrição",
+        msg="Escolhendo a opção 'total' o percentual em cada unidade poderá extrapolar a restrição",
         delay=0.1)
-    # Bug: https://stackoverflow.com/a/37361490/3059369
-    global var_escopo
+
     var_escopo = tk.StringVar()
     var_escopo.set('unidades')
-    opcao_unidade = tk.Radiobutton(frame_radio, text="Em cada unidade",
-                                   variable=var_escopo, value='unidades')
-    opcao_total = tk.Radiobutton(frame_radio, text="Somente no total", variable=var_escopo,
-                                 value='total')
-    opcao_unidade.grid(row=1, column=0, sticky='w')
-    opcao_total.grid(row=2, column=0, sticky='w')
+    label_u = customtkinter.CTkLabel(frame_escopo, text="cada unidade")
+    opcao_perfil = customtkinter.CTkSwitch(
+        frame_escopo, text="total", onvalue="total", offvalue="unidades"
+        , variable=var_escopo
+        , fg_color=("#3B8ED0", "#4A4D50"), progress_color=("#3B8ED0", "#4A4D50")
+        , button_color=("#275e8a", "#D5D9DE") , button_hover_color=("#1d4566","gray100")
+    )
+    label_u.grid(row=4, column=0, padx=(10,0), pady=(0,10), sticky='e')
+    opcao_perfil.grid(row=4, column=1, padx=(10,0), pady=(0,10), sticky='w')
 
     lista_variaveis = {'sinal': var_sinal, 'percentual': var_percentual,
                   'escopo': var_escopo, 'opcoes': lista_opcoes}
+
     # Botões
-    # Alterar o 'background' do bottão do ttk na verdade muda só a cor da borda
-    # Por isso foram usados botões normais
-    botao_salvar = tk.Button(janela_nova, text="Salvar", bg="#afed80", width=10,
-        command=lambda: clique_ok(lista_variaveis, janela_nova, var_erro, texto_erro))
-    botao_salvar.grid(row=3, column=1, sticky='n', pady=10)
-    botao_cancelar = tk.Button(janela_nova, text="Cancelar", bg="#f2cc63", width=10,
-        command=lambda: janela_nova.destroy())
-    botao_cancelar.grid(row=3, column=2, sticky='n', pady=10)
+    botao_salvar = customtkinter.CTkButton(
+        janela_nova, text="Salvar", fg_color="#3e811d", hover_color="#428c20",
+        command=lambda: clique_ok(lista_variaveis, janela_nova, var_erro, texto_erro)
+    )
+    botao_salvar.grid(row=3, column=1, sticky='s', pady=10)
+    botao_cancelar = customtkinter.CTkButton(
+        janela_nova, text="Cancelar", fg_color="#c16100", hover_color="#b87b09",
+        command=lambda: janela_nova.destroy()
+    )
+    botao_cancelar.grid(row=3, column=2, sticky='s', pady=10)
 
     # Label para mensagem de erro
     var_erro = tk.StringVar()
-    texto_erro = tk.Label(janela_nova, name="erro", textvariable=var_erro)
+    texto_erro = customtkinter.CTkLabel(janela_nova, textvariable=var_erro)
     texto_erro.grid(row=4, column=0, columnspan=3)
 
+    return janela_nova
+
+def abrir_janela():
+    """Dá foco na janela nova"""
+    janela = janela_perfis()
+    janela.wm_transient(root)
 
 def atualiza_tela():
     """Função para atualizar o tamanho do canvas após acrescentar elementos ao frame"""
@@ -987,7 +1017,7 @@ def rolar(event):
 ### Fim das funçõoes ###
 
 # ------ Interface gráfica ------
-root = tk.Tk()
+root = customtkinter.CTk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
 root.geometry("+100+50")
@@ -1021,7 +1051,7 @@ frame.grid_rowconfigure(2, weight=1)
 fonte = font.nametofont('TkDefaultFont')
 fonte.configure(size=11)
 
-root.option_add("*Font", fonte)
+#root.option_add("*Font", fonte)
 
 # Título
 TEXTO_TITULO = """Bem vindo.
@@ -1030,230 +1060,260 @@ Dependendo da situação o programa pode levar um certo tempo para encontrar a s
 Os passos executados serão mostrados ao lado direito e ao final a distribuição será exibida na tela.
 Você poderá baixar um relatório completo ou a planilha com a distribuição clicando nos botões."""
 
-label_titulo = tk.Label(frame, text=TEXTO_TITULO, anchor="w", justify="left")
+label_titulo = customtkinter.CTkLabel(frame, text=TEXTO_TITULO, anchor="w", justify="left")
 label_titulo.grid(sticky='W', row=0, column=0, padx=10, pady=10, columnspan=2)
 
-# Grupo arquivo
-grupo_arq = ttk.LabelFrame(frame)
+# -------------- Grupo arquivo --------------
+grupo_arq = customtkinter.CTkFrame(frame)
 grupo_arq.grid(row=1, column=0, rowspan=1, padx=10, pady=10, sticky='nw')
 
 # Texto botão arquivo
-texto_botao = tk.Label(grupo_arq, text="Escolha o arquivo:")
-texto_botao.grid(row=0, column=0)
+texto_botao = customtkinter.CTkLabel(grupo_arq, text="Escolha o arquivo:")
+texto_botao.grid(row=0, column=0, padx=10)
 
 # Botão para selecionar o arquivo
-botao_arquivo = tk.Button(grupo_arq, text="Abrir arquivo", command=carregar_arquivo, bg="#ddd")
+botao_arquivo = customtkinter.CTkButton(
+    grupo_arq, text="Abrir arquivo", command=carregar_arquivo#, bg="#ddd"
+)
 botao_arquivo.grid(row=0, column=1, padx=10, pady=10)
 
 # Label com nome do arquivo
 var_nome_arquivo = tk.StringVar()
-label_nome_arquivo = tk.Label(grupo_arq, textvariable=var_nome_arquivo)
+label_nome_arquivo = customtkinter.CTkLabel(grupo_arq, textvariable=var_nome_arquivo)
 label_nome_arquivo.grid(row=0, column=2, padx=10, pady=10)
 
-# Grupo opções
-ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 11, 'bold'))
-grupo_opcoes = ttk.LabelFrame(frame, text="Opções", style='Bold.TLabelframe')
-grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nw')
+# -------------- Grupo opções --------------
+#ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 11, 'bold'))
+grupo_opcoes = customtkinter.CTkFrame(
+    frame
+)
+grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nsew')
 
-# Checkbox para ch minima
+# ---Checkbox para ch minima
 bool_minima = tk.BooleanVar(value=True)
-checkbox_minima = tk.Checkbutton(grupo_opcoes, text="CH mínima: ", variable=bool_minima,
-                                 command=verifica_check_boxes)
-checkbox_minima.grid(row=0, column=0, padx=10, pady=10)
+checkbox_minima = customtkinter.CTkCheckBox(
+    grupo_opcoes, text="CH mínima: ", variable=bool_minima, command=verifica_check_boxes
+)
+checkbox_minima.grid(row=0, column=0, padx=10, pady=(10,0), sticky='w')
+ToolTip(checkbox_minima, msg="Ativar restrição de carga horária média mínima", delay=0.1)
 
 # campo texto
 texto_ch_min = tk.DoubleVar(value=12.0)
-entrada_CH_MIN = tk.Entry(grupo_opcoes, textvariable=texto_ch_min, width=5)
-entrada_CH_MIN.grid(row=0, column=1, padx=10, pady=10)
+entrada_CH_MIN = customtkinter.CTkEntry(
+    grupo_opcoes, textvariable=texto_ch_min, width=40,
+)
+entrada_CH_MIN.grid(row=0, column=1, padx=10, pady=(10,0), sticky='w')
+ToolTip(entrada_CH_MIN,
+    msg="Valor da carga horária mínima. Para valores não inteiros, use ponto decimal.", delay=0.1)
 
-# Radiobutton para escolher se a restrição é só geral ou também em cada unidade
-frame_radio_min = tk.Frame(grupo_opcoes)
-frame_radio_min.grid(row=0, column=2, padx=10, pady=10)
-label_texto = tk.Label(frame_radio_min, text="Essa restrição se aplica")
-label_texto.grid(row=0, column=0, sticky='w')
-label_duvida = tk.Label(frame_radio_min, text=" (?)")
-label_duvida.grid(row=0, column=1, sticky='w')
-ToolTip(label_duvida,
+# Switch para escolher se a restrição é só geral ou também em cada unidade
+label_texto_min = customtkinter.CTkLabel(
+    grupo_opcoes, text="Essa restrição se aplica a"
+    , fg_color="lightblue"
+)
+label_texto_min.grid(row=0, column=2, pady=(10,0), sticky='w', columnspan=2)
+label_duvida_min = customtkinter.CTkLabel(grupo_opcoes, text=" (?)", fg_color="yellow")
+label_duvida_min.grid(row=0, column=4, pady=(10,0), sticky='w')
+ToolTip(label_duvida_min,
     msg="Escolhendo a opção 'Somente no total' o valor em cada unidade poderá extrapolar a restrição. " +
     "Nesse caso o mínimo por unidade será de 10 aulas (8 horas) por semana.",
     delay=0.1)
 
 escopo_ch_min = tk.StringVar()
 escopo_ch_min.set('total')
-opcao_unidade = tk.Radiobutton(frame_radio_min, text="Em cada unidade",
-                                variable=escopo_ch_min, value='unidades', command=verifica_escopo)
-opcao_total = tk.Radiobutton(frame_radio_min, text="Somente no total", variable=escopo_ch_min,
-                             value='total', command=verifica_escopo)
-opcao_unidade.grid(row=1, column=0, sticky='w')
-opcao_total.grid(row=1, column=1, sticky='w')
+label_unidade_min = customtkinter.CTkLabel(grupo_opcoes, text="unidades", fg_color="lightblue")
+opcao_min = customtkinter.CTkSwitch(
+    grupo_opcoes, text="total", onvalue="total", offvalue="unidades", command=verifica_escopo
+    , variable=escopo_ch_min
+    , fg_color=("#3B8ED0", "#4A4D50"), progress_color=("#3B8ED0", "#4A4D50")
+    , button_color=("#275e8a", "#D5D9DE") , button_hover_color=("#1d4566","gray100")
+)
+label_unidade_min.grid(row=1, column=2, padx=0, sticky='w')
+opcao_min.grid(row=1, column=3, padx=(10,0), sticky='e')
+opcao_min.select()
 
-frame_radio_min.grid_remove()
-
-ToolTip(checkbox_minima, msg="Ativar carga horária média máxima por unidade", delay=0.1)
-ToolTip(entrada_CH_MIN,
-    msg="Valor da carga horária máxima. Para valores não inteiros, use ponto decimal.", delay=0.1)
+grupo_min = [entrada_CH_MIN, label_texto_min, label_duvida_min, label_unidade_min, opcao_min]
 
 # Label para o erro
 var_erro_minima = tk.StringVar()
-label_erro_minima = tk.Label(grupo_opcoes, textvariable=var_erro_minima)
-label_erro_minima.grid(row=1, column=0, padx=0, sticky='w', columnspan=4)
+label_erro_minima = customtkinter.CTkLabel(grupo_opcoes, textvariable=var_erro_minima)
+label_erro_minima.grid(row=1, column=0, padx=10, sticky='w', columnspan=2)
 label_erro_minima.grid_remove()
 
-# Checkbox para ch maxima
+# ---Checkbox para ch maxima
 bool_maxima = tk.BooleanVar(value=True)
-checkbox_maxima = tk.Checkbutton(grupo_opcoes, text="CH máxima: ", variable=bool_maxima,
-                                 command=verifica_check_boxes)
-checkbox_maxima.grid(row=2, column=0, padx=10, pady=10)
+checkbox_maxima = customtkinter.CTkCheckBox(
+    grupo_opcoes, text="CH máxima: ", variable=bool_maxima, command=verifica_check_boxes
+)
+checkbox_maxima.grid(row=2, column=0, padx=10, pady=(10,0), sticky='w')
+ToolTip(checkbox_maxima, msg="Ativar restrição de carga horária média máxima", delay=0.1)
 
 # campo texto
 texto_ch_max = tk.DoubleVar(value=16.0)
-entrada_CH_MAX = tk.Entry(grupo_opcoes, textvariable=texto_ch_max, width=5)
-entrada_CH_MAX.grid(row=2, column=1, padx=10, pady=10)
+entrada_CH_MAX = customtkinter.CTkEntry(
+    grupo_opcoes, textvariable=texto_ch_max, width=40
+)
+entrada_CH_MAX.grid(row=2, column=1, padx=10, pady=(10,0), sticky='w')
+ToolTip(entrada_CH_MAX,
+    msg="Valor da carga horária máxima. Para valores não inteiros, use ponto decimal.", delay=0.1)
 
-# Radiobutton para escolher se a restrição é só geral ou também em cada unidade
-frame_radio_max = tk.Frame(grupo_opcoes)
-frame_radio_max.grid(row=2, column=2, padx=10, pady=10)
-label_texto = tk.Label(frame_radio_max, text="Essa restrição se aplica")
-label_texto.grid(row=0, column=0, sticky='w')
-label_duvida = tk.Label(frame_radio_max, text=" (?)")
-label_duvida.grid(row=0, column=1, sticky='w')
-ToolTip(label_duvida,
-    msg="Escolhendo a opção 'Somente no total' o valor em cada unidade poderá extrapolar a restrição",
+# Switch para escolher se a restrição é só geral ou também em cada unidade
+label_texto_max = customtkinter.CTkLabel(
+    grupo_opcoes, text="Essa restrição se aplica a"
+    , fg_color="lightblue"
+)
+label_texto_max.grid(row=2, column=2, pady=(10,0), sticky='w', columnspan=2)
+label_duvida_max = customtkinter.CTkLabel(grupo_opcoes, text=" (?)", fg_color="yellow")
+label_duvida_max.grid(row=2, column=4, pady=(10,0), sticky='w')
+ToolTip(label_duvida_max,
+    msg="Escolhendo a opção 'Somente no total' o valor em cada unidade poderá extrapolar a restrição. " +
+    "Nesse caso o mínimo por unidade será de 10 aulas (8 horas) por semana.",
     delay=0.1)
 
 escopo_ch_max = tk.StringVar()
 escopo_ch_max.set('total')
-opcao_unidade = tk.Radiobutton(frame_radio_max, text="Em cada unidade",
-                                variable=escopo_ch_max, value='unidades', command=verifica_escopo)
-opcao_total = tk.Radiobutton(frame_radio_max, text="Somente no total", variable=escopo_ch_max,
-                             value='total', command=verifica_escopo)
-opcao_unidade.grid(row=1, column=0, sticky='w')
-opcao_total.grid(row=1, column=1, sticky='w')
+label_unidade_max = customtkinter.CTkLabel(grupo_opcoes, text="unidades", fg_color="lightblue")
+opcao_max = customtkinter.CTkSwitch(
+    grupo_opcoes, text="total", onvalue="total", offvalue="unidades", command=verifica_escopo
+    , variable=escopo_ch_max
+    , fg_color=("#3B8ED0", "#4A4D50"), progress_color=("#3B8ED0", "#4A4D50")
+    , button_color=("#275e8a", "#D5D9DE") , button_hover_color=("#1d4566","gray100")
+)
+label_unidade_max.grid(row=3, column=2, padx=0, sticky='w')
+opcao_max.grid(row=3, column=3, padx=(10,0), sticky='e')
+opcao_max.select()
 
-frame_radio_max.grid_remove()
-
-ToolTip(checkbox_maxima, msg="Ativar carga horária média mínima geral (para toda a Universidade)",
-        delay=0.1)
-ToolTip(entrada_CH_MAX,
-    msg="Valor da carga horária mínima. Para valores não inteiros, use ponto decimal.", delay=0.1)
+grupo_max = [entrada_CH_MAX, label_texto_max, label_duvida_max, label_unidade_max, opcao_max]
 
 # Label para o erro
 var_erro_maxima = tk.StringVar()
-label_erro_maxima = tk.Label(grupo_opcoes, textvariable=var_erro_maxima)
-label_erro_maxima.grid(row=3, column=0, padx=0, sticky='w', columnspan=4)
+label_erro_maxima = customtkinter.CTkLabel(grupo_opcoes, textvariable=var_erro_maxima)
+label_erro_maxima.grid(row=3, column=0, padx=10, sticky='w', columnspan=2)
 label_erro_maxima.grid_remove()
 
-# Checkbox para total minimo
+# ---Checkbox para total mínimo
 bool_min_total = tk.BooleanVar(value=False)
-checkbox_min_total = tk.Checkbutton(grupo_opcoes, text="Total mínimo: ",
+checkbox_min_total = customtkinter.CTkCheckBox(grupo_opcoes, text="Total mínimo: ",
     variable=bool_min_total, command=verifica_check_boxes)
-checkbox_min_total.grid(row=4, column=0, padx=10, pady=10)
+checkbox_min_total.grid(row=4, column=0, padx=10, pady=10, sticky='w')
 
 # campo texto
 texto_min_total = tk.IntVar()
-entrada_N_MIN_total = tk.Entry(grupo_opcoes, textvariable=texto_min_total, width=5)
-entrada_N_MIN_total.grid(row=4, column=1, padx=10, pady=10)
+entrada_N_MIN_total = customtkinter.CTkEntry(grupo_opcoes, textvariable=texto_min_total, width=50)
+entrada_N_MIN_total.grid(row=4, column=1, pady=10, sticky='w')
 
 ToolTip(checkbox_min_total, msg="Ativar número mínimo total de professores", delay=0.1)
 ToolTip(entrada_N_MIN_total, msg="Valor do mínimo total", delay=0.1)
 
 # Label para o erro
 var_erro_total_min = tk.StringVar()
-label_erro_total_min = tk.Label(grupo_opcoes, textvariable=var_erro_total_min)
-label_erro_total_min.grid(row=4, column=2, padx=0, sticky='w')
+label_erro_total_min = customtkinter.CTkLabel(grupo_opcoes, textvariable=var_erro_total_min)
+label_erro_total_min.grid(row=4, column=2, padx=10, sticky='w', columnspan=3)
 
-# Checkbox para total maxima
+# ---Checkbox para total máximo
 bool_max_total = tk.BooleanVar(value=False)
-checkbox_max_total = tk.Checkbutton(grupo_opcoes, text="Total máximo: ",
+checkbox_max_total = customtkinter.CTkCheckBox(grupo_opcoes, text="Total máximo: ",
     variable=bool_max_total, command=verifica_check_boxes)
-checkbox_max_total.grid(row=5, column=0, padx=10, pady=10)
+checkbox_max_total.grid(row=5, column=0, padx=10, pady=10, sticky='w')
 
 # campo texto
 texto_max_total = tk.IntVar()
-entrada_N_MAX_total = tk.Entry(grupo_opcoes, textvariable=texto_max_total, width=5)
-entrada_N_MAX_total.grid(row=5, column=1, padx=10, pady=10)
+entrada_N_MAX_total = customtkinter.CTkEntry(grupo_opcoes, textvariable=texto_max_total, width=50)
+entrada_N_MAX_total.grid(row=5, column=1, pady=10, sticky='w')
 
 ToolTip(checkbox_max_total, msg="Ativar número máximo total de professores", delay=0.1)
 ToolTip(entrada_N_MAX_total, msg="Valor do máximo total", delay=0.1)
 
 # Label para o erro
 var_erro_total_max = tk.StringVar()
-label_erro_total_max = tk.Label(grupo_opcoes, textvariable=var_erro_total_max)
-label_erro_total_max.grid(row=5, column=2, padx=0, sticky='w')
+label_erro_total_max = customtkinter.CTkLabel(grupo_opcoes, textvariable=var_erro_total_max)
+label_erro_total_max.grid(row=5, column=2, padx=10, sticky='w', columnspan=3)
 
 # ---Limitações nos perfis---
-botao_perfil = tk.Button(grupo_opcoes, text="Limitar perfis", command=janela_perfis, bg="#ddd")
-botao_perfil.grid(row=6, column=0, padx=10, pady=10)
+botao_perfil = customtkinter.CTkButton(
+    grupo_opcoes, text="Limitar perfis", command=abrir_janela)
+botao_perfil.grid(row=6, column=0, padx=10, pady=10, sticky='n')
 
 # Frame para a lista de limitações
-frame_perfis = tk.Frame(grupo_opcoes)
-frame_perfis.grid(row=6, column=1, padx=10, pady=10)
+frame_perfis = customtkinter.CTkFrame(grupo_opcoes, height=0)
+frame_perfis.grid(row=6, column=1, padx=10, pady=10, columnspan=4, sticky='w')
 
 # Combobox critério
-label_criterio = ttk.Label(grupo_opcoes, text="Critério:")
-label_criterio.grid(row=7, column=0, padx=10, pady=10)
+label_criterio = customtkinter.CTkLabel(grupo_opcoes, text="Critério:")
+label_criterio.grid(row=7, column=0, padx=10, pady=10, sticky='e')
 
 combo_var = tk.StringVar()
-combobox = ttk.Combobox(grupo_opcoes, textvariable=combo_var, values=list(LISTA_MODOS.keys()),
-                        state="readonly")
-combobox.grid(row=7, column=1, padx=10, pady=10, columnspan=2)
-combobox.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
+combobox = customtkinter.CTkOptionMenu(
+    grupo_opcoes, variable=combo_var, values=list(LISTA_MODOS.keys()),
+    command=lambda *args: verifica_executar()
+)
+combobox.grid(row=7, column=1, padx=10, pady=10, columnspan=3)
 
 # Combo solver
-label_solver = tk.Label(grupo_opcoes, text="Escolha o solver:")
-label_solver.grid(row=8, column=0, padx=10, pady=10)
+label_solver = customtkinter.CTkLabel(grupo_opcoes, text="Escolha o solver:")
+label_solver.grid(row=8, column=0, padx=10, pady=10, sticky='e')
 
 solver_var = tk.StringVar()
-combo_solver = ttk.Combobox(grupo_opcoes, textvariable=solver_var, value=list(['CBC', 'SCIP']),
-                            state="readonly")
-combo_solver.grid(row=8, column=1, padx=10, pady=10, columnspan=2)
-combo_solver.bind("<<ComboboxSelected>>", lambda event: verifica_executar())
+combo_solver = customtkinter.CTkOptionMenu(
+    grupo_opcoes, variable=solver_var, values=list(['CBC', 'SCIP']),
+    command=lambda *args: verifica_executar()
+)
+combo_solver.grid(row=8, column=1, padx=10, pady=10, columnspan=3)
 
 # Tempo limite
 val_limite = tk.IntVar(value=30)
-label_limite = tk.Label(grupo_opcoes, text="Tempo limite:")
+label_limite = customtkinter.CTkLabel(grupo_opcoes, text="Tempo limite:")
 label_limite.grid(row=9, column=0, padx=10, pady=10)
-entrada_tempo_limite = tk.Entry(grupo_opcoes, textvariable=val_limite, width=5)
+entrada_tempo_limite = customtkinter.CTkEntry(grupo_opcoes, textvariable=val_limite, width=40)
 entrada_tempo_limite.grid(row=9, column=1, padx=10, pady=10)
 
 ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1)
 
 # Botão para executar
-botao_executar = tk.Button(grupo_opcoes, text="Executar", state=tk.DISABLED,
-                           command=executar, width=10)
+botao_executar = customtkinter.CTkButton(
+    grupo_opcoes, text="Executar", state="disabled", command=executar)
 botao_executar.grid(row=10, column=0, padx=10, pady=10)
 
 # Inicialmente oculta as opções
 grupo_opcoes.grid_remove()
 
-# Grupo dos resultados
-grupo_resultados = ttk.LabelFrame(frame, text="Resultados", style='Bold.TLabelframe')
+# -------------- Grupo dos resultados --------------
+grupo_resultados = customtkinter.CTkFrame(
+    frame
+    #, label_text="Resultados"
+)
 grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nsew')
 
 resultado = tk.StringVar()
-label_resultado = tk.Label(grupo_resultados, textvariable=resultado, anchor="w", justify="left")
+label_resultado = customtkinter.CTkLabel(
+    grupo_resultados, textvariable=resultado, anchor="w", justify="left"
+)
 label_resultado.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
-label_aba = tk.Label(grupo_resultados, text="Distribuição:")
+label_aba = customtkinter.CTkLabel(grupo_resultados, text="Distribuição:")
 label_aba.grid(row=1, column=0, padx=10, pady=10, sticky='w')
 
 # Adicionando a barra de rolagem vertical
 scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
 
-fonte_tabela = font.Font(family='Courier New', size=11)
-text_tabela = tk.Text(grupo_resultados, height=10, width=60, yscrollcommand=scrollbar.set, \
-                      font=fonte_tabela)
+fonte_tabela = customtkinter.CTkFont(family='Consolas', size=14)
+text_tabela = customtkinter.CTkTextbox(
+    grupo_resultados, height=10, width=60, #yscrollcommand=scrollbar.set,
+    font=fonte_tabela
+)
 text_tabela.grid(row=2, column=0, padx=10, pady=10)
 
 # Configurando a barra de rolagem para rolar o texto no Text widget
-scrollbar.config(command=text_tabela.yview)
+#scrollbar.config(command=text_tabela.yview)
 
-botao_relatorio = tk.Button(grupo_resultados, text="Baixar relatório", command=exportar_txt,
-                            bg="#ddd")
+botao_relatorio = customtkinter.CTkButton(
+    grupo_resultados, text="Baixar relatório", command=exportar_txt
+)
 botao_relatorio.grid(row=3, column=0, padx=10, pady=10, sticky='w')
 
-botao_planilha = tk.Button(grupo_resultados, text="Baixar planilha", command=exportar_planilha,
-                           bg="#ddd")
+botao_planilha = customtkinter.CTkButton(
+    grupo_resultados, text="Baixar planilha", command=exportar_planilha
+)
 botao_planilha.grid(row=3, column=0, padx=10, pady=10, sticky='e')
 
 # Inicialmente oculta os resultados
