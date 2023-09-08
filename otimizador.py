@@ -16,6 +16,7 @@ from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, \
     LpProblem, LpMaximize, LpMinimize, SCIP_CMD
 import customtkinter
 from funcoes import imprimir_resultados, imprimir_parametros, imprimir_unidades, imprimir_perfis
+import ctypes
 
 # Customtkinter
 customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
@@ -1003,11 +1004,6 @@ def abrir_janela():
 
 def atualiza_tela():
     """Função para atualizar o tamanho do canvas após acrescentar elementos ao frame"""
-    frame.update_idletasks()
-    canvas.update_idletasks()
-
-    canvas.config(height=frame.winfo_reqheight(), width=frame.winfo_reqwidth())
-    canvas.config(scrollregion=canvas.bbox("all"))
     root.update_idletasks()
     root.update()
 
@@ -1019,24 +1015,30 @@ def centralizar():
     largura_janela = root.winfo_reqwidth()
     largura_tela = root.winfo_screenwidth()
 
+    # Bug quando a tela está com escala diferente de 100%
+    # https://github.com/TomSchimansky/CustomTkinter/issues/1707
+    scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
+    largura_janela = int(largura_janela / scaleFactor)
+    altura_janela = int(altura_janela / scaleFactor)
+
     # Calcula novas coordenadas
     novo_x = round((largura_tela - largura_janela) / 2)
     novo_y = round((altura_tela - altura_janela - 100) / 2)
+    print(f"{novo_x},{novo_y}")
 
     # Verifica o tamanho da janela
     if altura_tela - altura_janela < 100:
-        barra.grid(row=0, column=1, sticky="ns")
         novo_y = 10
         altura_janela = altura_tela - 100
 
     root.geometry(f"{largura_janela}x{altura_janela}+{novo_x}+{novo_y}")
+    root.update()
     atualiza_tela()
 
 
-def rolar(event):
-    """Ativa a rolagem do canvas com a roda do mouse"""
-    if canvas.winfo_exists():
-        canvas.yview_scroll(-event.delta//120, "units")
+def mudar_modo():
+    """Muda aparência"""
+    customtkinter.set_appearance_mode(opcao_modo.get())
 
 
 ### Fim das funçõoes ###
@@ -1046,37 +1048,10 @@ root = customtkinter.CTk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
 root.geometry("+100+50")
-root.minsize(700,400)
+#root.minsize(700,400)
 
-# Cria o canvas
-canvas = tk.Canvas(root, borderwidth=0)
-canvas.grid(row=0, column=0, sticky="nsew")
-
-# Frame dentro do canvas
-frame = tk.Frame(canvas)
-
-# Barra de rolagem
-barra = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
-
-canvas.configure(yscrollcommand=barra.set)
-canvas.create_window((4,4), window=frame, anchor='nw')
-canvas.bind_all("<MouseWheel>", rolar)
-
-frame.bind("<Configure>", lambda event,
-    canvas=canvas: canvas.configure(scrollregion=canvas.bbox("all")))
-
-root.grid_rowconfigure(0, weight=1)
-root.grid_columnconfigure(0, weight=1)
-
-# Configura a primeira linha para expandir verticalmente
-frame.grid_rowconfigure(1, weight=0)
-frame.grid_rowconfigure(2, weight=1)
-
-# Tamanho da fonte para todos os objetos
-fonte = font.nametofont('TkDefaultFont')
-fonte.configure(size=11)
-
-#root.option_add("*Font", fonte)
+#root.grid_rowconfigure(0, weight=1)
+#root.grid_columnconfigure(0, weight=1)
 
 # Título
 TEXTO_TITULO = """Bem vindo.
@@ -1085,11 +1060,17 @@ Dependendo da situação o programa pode levar um certo tempo para encontrar a s
 Os passos executados serão mostrados ao lado direito e ao final a distribuição será exibida na tela.
 Você poderá baixar um relatório completo ou a planilha com a distribuição clicando nos botões."""
 
-label_titulo = customtkinter.CTkLabel(frame, text=TEXTO_TITULO, anchor="w", justify="left")
-label_titulo.grid(sticky='W', row=0, column=0, padx=10, pady=10, columnspan=2)
+label_titulo = customtkinter.CTkLabel(root, text=TEXTO_TITULO, anchor="w", justify="left")
+label_titulo.grid(row=0, column=0, padx=10, pady=10, sticky='W', columnspan=2)
+
+opcao_modo = customtkinter.CTkOptionMenu(
+    root, values=["Light", "Dark", "System"],
+    command=lambda *args: mudar_modo()
+)
+#opcao_modo.grid(row=0, column=2, padx=10, sticky="w")
 
 # -------------- Grupo arquivo --------------
-grupo_arq = customtkinter.CTkFrame(frame)
+grupo_arq = customtkinter.CTkFrame(root)
 grupo_arq.grid(row=1, column=0, rowspan=1, padx=10, pady=10, sticky='nw')
 
 # Texto botão arquivo
@@ -1110,7 +1091,7 @@ label_nome_arquivo.grid(row=0, column=2, padx=10, pady=10)
 # -------------- Grupo opções --------------
 #ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 11, 'bold'))
 grupo_opcoes = customtkinter.CTkFrame(
-    frame
+    root
 )
 grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nsew')
 
@@ -1306,7 +1287,7 @@ grupo_opcoes.grid_remove()
 
 # -------------- Grupo dos resultados --------------
 grupo_resultados = customtkinter.CTkFrame(
-    frame
+    root
     #, label_text="Resultados"
 )
 grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nsew')
