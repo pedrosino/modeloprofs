@@ -883,11 +883,11 @@ def clique_ok(variaveis, janela, var_erro, label_erro):
     label_perfil = customtkinter.CTkLabel(frame_labels, text=texto_perfis)
     label_perfil.pack(side=tk.LEFT)
 
-    label_excluir = customtkinter.CTkLabel(
-        frame_labels, text='[X]', text_color="#a00", cursor="hand2")
-    label_excluir.pack(side=tk.LEFT)
-
-    label_excluir.bind("<Button-1>", lambda e:excluir_restricao(nome_restricao, frame_labels))
+    botao_excluir = customtkinter.CTkButton(
+        frame_labels, text='X', fg_color="#900", width=20,
+        command=lambda: excluir_restricao(nome_restricao, frame_labels)
+    )
+    botao_excluir.pack(side=tk.LEFT)
     atualiza_tela()
 
     # Acrescenta à lista de restrições
