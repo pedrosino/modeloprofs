@@ -6,9 +6,7 @@ por Pedro Santos Guimarães, em 2023"""
 from datetime import datetime
 import math
 import tkinter as tk
-from tkinter import ttk
 from tkinter import filedialog
-from tkinter import font
 import pandas as pd
 import numpy as np
 from tktooltip import ToolTip
@@ -314,6 +312,8 @@ def executar():
 
     # Mostra resultados
     grupo_resultados.grid()
+    grupo_resultados.configure(width=130 + N_PERFIS*45)
+    grupo_botoes.grid()
     atualiza_tela()
 
     # Inicia relatório
@@ -1015,23 +1015,25 @@ def centralizar():
     largura_janela = root.winfo_reqwidth()
     largura_tela = root.winfo_screenwidth()
 
-    # Bug quando a tela está com escala diferente de 100%
-    # https://github.com/TomSchimansky/CustomTkinter/issues/1707
-    scaleFactor = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
-    largura_janela = int(largura_janela / scaleFactor)
-    altura_janela = int(altura_janela / scaleFactor)
-
     # Calcula novas coordenadas
     novo_x = round((largura_tela - largura_janela) / 2)
     novo_y = round((altura_tela - altura_janela - 100) / 2)
     print(f"{novo_x},{novo_y}")
 
     # Verifica o tamanho da janela
-    if altura_tela - altura_janela < 100:
-        novo_y = 10
-        altura_janela = altura_tela - 100
+    if altura_tela - altura_janela < 80:
+        novo_y = 0
+        altura_janela = altura_tela - 80
 
-    root.geometry(f"{largura_janela}x{altura_janela}+{novo_x}+{novo_y}")
+    # Bug quando a tela está com escala diferente de 100%
+    # https://github.com/TomSchimansky/CustomTkinter/issues/1707
+    scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
+    largura_janela_ajustada = int(largura_janela / scale_factor)
+
+    # Atualiza tamanho do grupo_resultados
+    grupo_resultados.configure(height=altura_janela - 230)
+    # Atualiza tela
+    root.geometry(f"{largura_janela_ajustada}x{altura_janela}+{novo_x}+{novo_y}")
     root.update()
     atualiza_tela()
 
@@ -1286,9 +1288,9 @@ botao_executar.grid(row=10, column=0, padx=10, pady=10)
 grupo_opcoes.grid_remove()
 
 # -------------- Grupo dos resultados --------------
-grupo_resultados = customtkinter.CTkFrame(
+grupo_resultados = customtkinter.CTkScrollableFrame(
     root
-    #, label_text="Resultados"
+    , label_text="Resultados"
 )
 grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nsew')
 
@@ -1299,32 +1301,36 @@ label_resultado = customtkinter.CTkLabel(
 label_resultado.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
 label_aba = customtkinter.CTkLabel(grupo_resultados, text="Distribuição:")
-label_aba.grid(row=1, column=0, padx=10, pady=10, sticky='w')
+label_aba.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
 
 # Adicionando a barra de rolagem vertical
-scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
+#scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
 
 fonte_tabela = customtkinter.CTkFont(family='Consolas', size=14)
 text_tabela = customtkinter.CTkTextbox(
     grupo_resultados, height=10, width=60, #yscrollcommand=scrollbar.set,
     font=fonte_tabela
 )
-text_tabela.grid(row=2, column=0, padx=10, pady=10)
+text_tabela.grid(row=2, column=0, padx=10, pady=0)
 
 # Configurando a barra de rolagem para rolar o texto no Text widget
 #scrollbar.config(command=text_tabela.yview)
 
+# --- Frame com botões ---
+grupo_botoes = customtkinter.CTkFrame(root)
+grupo_botoes.grid(row=3, column=1, padx=10, pady=(0,10), sticky='sew')
 botao_relatorio = customtkinter.CTkButton(
-    grupo_resultados, text="Baixar relatório", command=exportar_txt
+    grupo_botoes, text="Baixar relatório", command=exportar_txt
 )
-botao_relatorio.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+botao_relatorio.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
 botao_planilha = customtkinter.CTkButton(
-    grupo_resultados, text="Baixar planilha", command=exportar_planilha
+    grupo_botoes, text="Baixar planilha", command=exportar_planilha
 )
-botao_planilha.grid(row=3, column=0, padx=10, pady=10, sticky='e')
+botao_planilha.grid(row=0, column=1, padx=10, pady=10, sticky='e')
 
 # Inicialmente oculta os resultados
 grupo_resultados.grid_remove()
+grupo_botoes.grid_remove()
 
 root.mainloop()
