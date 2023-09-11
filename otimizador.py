@@ -1018,7 +1018,6 @@ def centralizar():
     # Calcula novas coordenadas
     novo_x = round((largura_tela - largura_janela) / 2)
     novo_y = round((altura_tela - altura_janela - 100) / 2)
-    print(f"{novo_x},{novo_y}")
 
     # Verifica o tamanho da janela
     if altura_tela - altura_janela < 80:
