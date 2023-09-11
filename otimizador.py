@@ -6,9 +6,7 @@ por Pedro Santos Guimarães, em 2023"""
 from datetime import datetime
 import math
 import tkinter as tk
-from tkinter import ttk
 from tkinter import filedialog
-from tkinter import font
 import pandas as pd
 import numpy as np
 from tktooltip import ToolTip
@@ -16,6 +14,7 @@ from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, \
     LpProblem, LpMaximize, LpMinimize, SCIP_CMD
 import customtkinter
 from funcoes import imprimir_resultados, imprimir_parametros, imprimir_unidades, imprimir_perfis
+import ctypes
 
 # Customtkinter
 customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
@@ -142,7 +141,7 @@ def verifica_escopo():
 def carregar_arquivo():
     """Carrega os dados da planilha"""
     global MATRIZ_UNIDADES, MATRIZ_PERFIS, MATRIZ_PEQ, MATRIZ_TEMPO, N_RESTRICOES, N_UNIDADES, \
-           N_PERFIS, PESOS, NOMES_RESTRICOES, CONECTORES, NOMES_UNIDADES
+           N_PERFIS, PESOS, NOMES_RESTRICOES, CONECTORES, NOMES_UNIDADES, TOTAL_AULAS
     # Importa dados do arquivo
     arquivo = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx")])
     var_nome_arquivo.set(arquivo.split("/")[-1])
@@ -171,6 +170,9 @@ def carregar_arquivo():
     pesos_lidos = df_criterios.to_numpy()
     PESOS = pesos_lidos.transpose().reshape(4)
 
+    # Total de aulas a serem ministradas semanalmente
+    TOTAL_AULAS = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[0]
+
     # Se a importação teve sucesso
     if(len(MATRIZ_UNIDADES) and len(MATRIZ_PERFIS)):
         # Mostra as opções
@@ -180,42 +182,9 @@ def carregar_arquivo():
         #centralizar()
 
 
-def executar():
-    """Executa a otimização"""
-    global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL, \
-        TEMPO_LIMITE, N_MIN_TOTAL, N_MAX_TOTAL, MODO_ESCOLHIDO, QTDES_FINAL, RELATORIO, \
-        DATA_FRAME, TOTAL_AULAS, ESCOPO_CH_MINIMA, ESCOPO_CH_MAXIMA
-
-    # Limpa tabela
-    text_tabela.delete("1.0", tk.END)
-
-    # Captura opções e valores escolhidos
-    LIMITAR_CH_MAXIMA = bool_maxima.get()
-    LIMITAR_CH_MINIMA = bool_minima.get()
-    ESCOPO_CH_MINIMA = escopo_ch_min.get()
-    ESCOPO_CH_MAXIMA = escopo_ch_max.get()
-
-    if LIMITAR_CH_MAXIMA:
-        CH_MAX = texto_ch_max.get()
-    if LIMITAR_CH_MINIMA:
-        CH_MIN = texto_ch_min.get()
-    MAX_TOTAL = bool_max_total.get()
-    MIN_TOTAL = bool_min_total.get()
-    if MAX_TOTAL:
-        N_MAX_TOTAL = texto_max_total.get()
-    if MIN_TOTAL:
-        N_MIN_TOTAL = texto_min_total.get()
-    TEMPO_LIMITE = val_limite.get()
-    MODO_ESCOLHIDO = LISTA_MODOS[combo_var.get()]
-
-    # Total de aulas a serem ministradas semanalmente
-    TOTAL_AULAS = np.sum(MATRIZ_UNIDADES[:N_UNIDADES], axis=0)[0]
-
-    # Verifica modo escolhido
-    if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso', 'todos']:
-        MODO_ESCOLHIDO = 'todos'
-        print("O modo escolhido era inválido. Será utilizado o modo 'todos'.")
-
+def verifica_totais():
+    """Verifica se os valores digitados pelo usuário são válidos"""
+    ler_valores()
     tudo_certo = True
 
     # Verifica números totais
@@ -263,10 +232,17 @@ def executar():
         var_erro_total_max.set("")
         limpa_erro(label_erro_total_max)
 
-    # Verifica carga horária
+    return tudo_certo
+
+
+def verifica_carga_horaria():
+    """Verifica se os valores digitados pelo usuário são válidos"""
+    ler_valores()
+    tudo_certo = True
+
     # 10 aulas de 50 min = 8h20 min por semana (mínimo legal é 8h - Lei 9.394, art. 57)
-    if LIMITAR_CH_MINIMA and CH_MIN < 10:
-        var_erro_minima.set("Deve ser no mínimo 10")
+    if LIMITAR_CH_MINIMA and (CH_MIN < 10 or CH_MIN > 24):
+        var_erro_minima.set("Deve ser entre 10 e 24")
         formata_erro(label_erro_minima)
         tudo_certo = False
     else:
@@ -274,20 +250,70 @@ def executar():
         limpa_erro(label_erro_minima)
 
     # Limite máximo é 24 aulas de 50 min = 20h - Decreto 9.235, art. 93, parág. único
-    if LIMITAR_CH_MAXIMA and CH_MAX > 24:
-        var_erro_maxima.set("Deve ser no máximo 24")
+    if LIMITAR_CH_MAXIMA and (CH_MAX < 10 or CH_MAX > 24):
+        var_erro_maxima.set("Deve ser entre 10 e 24")
         formata_erro(label_erro_maxima)
         tudo_certo = False
     else:
         var_erro_maxima.set("")
         limpa_erro(label_erro_maxima)
 
+    return tudo_certo
+
+
+def ler_valores():
+    """Captura os valores preenchidos pelo usuário"""
+    global LIMITAR_CH_MAXIMA, LIMITAR_CH_MINIMA, CH_MAX, CH_MIN, MAX_TOTAL, MIN_TOTAL, \
+        N_MIN_TOTAL, N_MAX_TOTAL, ESCOPO_CH_MINIMA, ESCOPO_CH_MAXIMA
+    # Captura opções e valores escolhidos
+    LIMITAR_CH_MAXIMA = bool_maxima.get()
+    LIMITAR_CH_MINIMA = bool_minima.get()
+    ESCOPO_CH_MINIMA = escopo_ch_min.get()
+    ESCOPO_CH_MAXIMA = escopo_ch_max.get()
+
+    if LIMITAR_CH_MAXIMA:
+        CH_MAX = texto_ch_max.get()
+    if LIMITAR_CH_MINIMA:
+        CH_MIN = texto_ch_min.get()
+    MAX_TOTAL = bool_max_total.get()
+    MIN_TOTAL = bool_min_total.get()
+    if MAX_TOTAL:
+        N_MAX_TOTAL = texto_max_total.get()
+    if MIN_TOTAL:
+        N_MIN_TOTAL = texto_min_total.get()
+
+
+def executar():
+    """Executa a otimização"""
+    global QTDES_FINAL, RELATORIO, DATA_FRAME, MODO_ESCOLHIDO, TEMPO_LIMITE
+
+    # Limpa tabela
+    text_tabela.delete("1.0", tk.END)
+
+    # Captura valores
+    ler_valores()
+
+    TEMPO_LIMITE = val_limite.get()
+    MODO_ESCOLHIDO = LISTA_MODOS[combo_var.get()]
+
+    # Verifica modo escolhido
+    if MODO_ESCOLHIDO not in ['num', 'peq', 'tempo', 'tempo-reverso', 'ch', 'ch-reverso', 'todos']:
+        MODO_ESCOLHIDO = 'todos'
+        print("O modo escolhido era inválido. Será utilizado o modo 'todos'.")
+
+    # Verifica valores digitados
+    check_totais = verifica_totais()
+
+    check_ch = verifica_carga_horaria()
+
     # Se houve algum problema, não faz o processo
-    if not tudo_certo:
+    if not check_totais or not check_ch:
         return
 
     # Mostra resultados
     grupo_resultados.grid()
+    grupo_resultados.configure(width=130 + N_PERFIS*45)
+    grupo_botoes.grid()
     atualiza_tela()
 
     # Inicia relatório
@@ -978,11 +1004,6 @@ def abrir_janela():
 
 def atualiza_tela():
     """Função para atualizar o tamanho do canvas após acrescentar elementos ao frame"""
-    frame.update_idletasks()
-    canvas.update_idletasks()
-
-    canvas.config(height=frame.winfo_reqheight(), width=frame.winfo_reqwidth())
-    canvas.config(scrollregion=canvas.bbox("all"))
     root.update_idletasks()
     root.update()
 
@@ -997,21 +1018,29 @@ def centralizar():
     # Calcula novas coordenadas
     novo_x = round((largura_tela - largura_janela) / 2)
     novo_y = round((altura_tela - altura_janela - 100) / 2)
+    print(f"{novo_x},{novo_y}")
 
     # Verifica o tamanho da janela
-    if altura_tela - altura_janela < 100:
-        barra.grid(row=0, column=1, sticky="ns")
-        novo_y = 10
-        altura_janela = altura_tela - 100
+    if altura_tela - altura_janela < 80:
+        novo_y = 0
+        altura_janela = altura_tela - 80
 
-    root.geometry(f"{largura_janela}x{altura_janela}+{novo_x}+{novo_y}")
+    # Bug quando a tela está com escala diferente de 100%
+    # https://github.com/TomSchimansky/CustomTkinter/issues/1707
+    scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
+    largura_janela_ajustada = int(largura_janela / scale_factor)
+
+    # Atualiza tamanho do grupo_resultados
+    grupo_resultados.configure(height=altura_janela - 230)
+    # Atualiza tela
+    root.geometry(f"{largura_janela_ajustada}x{altura_janela}+{novo_x}+{novo_y}")
+    root.update()
     atualiza_tela()
 
 
-def rolar(event):
-    """Ativa a rolagem do canvas com a roda do mouse"""
-    if canvas.winfo_exists():
-        canvas.yview_scroll(-event.delta//120, "units")
+def mudar_modo():
+    """Muda aparência"""
+    customtkinter.set_appearance_mode(opcao_modo.get())
 
 
 ### Fim das funçõoes ###
@@ -1021,37 +1050,10 @@ root = customtkinter.CTk()
 root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
 root.geometry("+100+50")
-root.minsize(700,400)
+#root.minsize(700,400)
 
-# Cria o canvas
-canvas = tk.Canvas(root, borderwidth=0)
-canvas.grid(row=0, column=0, sticky="nsew")
-
-# Frame dentro do canvas
-frame = tk.Frame(canvas)
-
-# Barra de rolagem
-barra = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
-
-canvas.configure(yscrollcommand=barra.set)
-canvas.create_window((4,4), window=frame, anchor='nw')
-canvas.bind_all("<MouseWheel>", rolar)
-
-frame.bind("<Configure>", lambda event,
-    canvas=canvas: canvas.configure(scrollregion=canvas.bbox("all")))
-
-root.grid_rowconfigure(0, weight=1)
-root.grid_columnconfigure(0, weight=1)
-
-# Configura a primeira linha para expandir verticalmente
-frame.grid_rowconfigure(1, weight=0)
-frame.grid_rowconfigure(2, weight=1)
-
-# Tamanho da fonte para todos os objetos
-fonte = font.nametofont('TkDefaultFont')
-fonte.configure(size=11)
-
-#root.option_add("*Font", fonte)
+#root.grid_rowconfigure(0, weight=1)
+#root.grid_columnconfigure(0, weight=1)
 
 # Título
 TEXTO_TITULO = """Bem vindo.
@@ -1060,11 +1062,17 @@ Dependendo da situação o programa pode levar um certo tempo para encontrar a s
 Os passos executados serão mostrados ao lado direito e ao final a distribuição será exibida na tela.
 Você poderá baixar um relatório completo ou a planilha com a distribuição clicando nos botões."""
 
-label_titulo = customtkinter.CTkLabel(frame, text=TEXTO_TITULO, anchor="w", justify="left")
-label_titulo.grid(sticky='W', row=0, column=0, padx=10, pady=10, columnspan=2)
+label_titulo = customtkinter.CTkLabel(root, text=TEXTO_TITULO, anchor="w", justify="left")
+label_titulo.grid(row=0, column=0, padx=10, pady=10, sticky='W', columnspan=2)
+
+opcao_modo = customtkinter.CTkOptionMenu(
+    root, values=["Light", "Dark", "System"],
+    command=lambda *args: mudar_modo()
+)
+#opcao_modo.grid(row=0, column=2, padx=10, sticky="w")
 
 # -------------- Grupo arquivo --------------
-grupo_arq = customtkinter.CTkFrame(frame)
+grupo_arq = customtkinter.CTkFrame(root)
 grupo_arq.grid(row=1, column=0, rowspan=1, padx=10, pady=10, sticky='nw')
 
 # Texto botão arquivo
@@ -1085,7 +1093,7 @@ label_nome_arquivo.grid(row=0, column=2, padx=10, pady=10)
 # -------------- Grupo opções --------------
 #ttk.Style().configure('Bold.TLabelframe.Label', font=('TkDefaulFont', 11, 'bold'))
 grupo_opcoes = customtkinter.CTkFrame(
-    frame
+    root
 )
 grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nsew')
 
@@ -1099,6 +1107,7 @@ ToolTip(checkbox_minima, msg="Ativar restrição de carga horária média mínim
 
 # campo texto
 texto_ch_min = tk.DoubleVar(value=12.0)
+texto_ch_min.trace("w", lambda *args: verifica_carga_horaria())
 entrada_CH_MIN = customtkinter.CTkEntry(
     grupo_opcoes, textvariable=texto_ch_min, width=40,
 )
@@ -1109,24 +1118,23 @@ ToolTip(entrada_CH_MIN,
 # Switch para escolher se a restrição é só geral ou também em cada unidade
 label_texto_min = customtkinter.CTkLabel(
     grupo_opcoes, text="Essa restrição se aplica a"
-    , fg_color="lightblue"
 )
 label_texto_min.grid(row=0, column=2, pady=(10,0), sticky='w', columnspan=2)
-label_duvida_min = customtkinter.CTkLabel(grupo_opcoes, text=" (?)", fg_color="yellow")
+label_duvida_min = customtkinter.CTkLabel(grupo_opcoes, text=" (?)")
 label_duvida_min.grid(row=0, column=4, pady=(10,0), sticky='w')
 ToolTip(label_duvida_min,
-    msg="Escolhendo a opção 'Somente no total' o valor em cada unidade poderá extrapolar a restrição. " +
+    msg="Escolhendo a opção 'total' o valor em cada unidade poderá extrapolar a restrição. " +
     "Nesse caso o mínimo por unidade será de 10 aulas (8 horas) por semana.",
     delay=0.1)
 
 escopo_ch_min = tk.StringVar()
 escopo_ch_min.set('total')
-label_unidade_min = customtkinter.CTkLabel(grupo_opcoes, text="unidades", fg_color="lightblue")
+label_unidade_min = customtkinter.CTkLabel(grupo_opcoes, text="unidades")
 opcao_min = customtkinter.CTkSwitch(
     grupo_opcoes, text="total", onvalue="total", offvalue="unidades", command=verifica_escopo
     , variable=escopo_ch_min
-    , fg_color=("#3B8ED0", "#4A4D50"), progress_color=("#3B8ED0", "#4A4D50")
-    , button_color=("#275e8a", "#D5D9DE") , button_hover_color=("#1d4566","gray100")
+    , fg_color=("#3B8ED0", "#275e8a"), progress_color=("#3B8ED0", "#275e8a")
+    , button_color=("#275e8a", "#3B8ED0") , button_hover_color=("#1d4566","#1d4566")
 )
 label_unidade_min.grid(row=1, column=2, padx=0, sticky='w')
 opcao_min.grid(row=1, column=3, padx=(10,0), sticky='e')
@@ -1150,6 +1158,7 @@ ToolTip(checkbox_maxima, msg="Ativar restrição de carga horária média máxim
 
 # campo texto
 texto_ch_max = tk.DoubleVar(value=16.0)
+texto_ch_max.trace("w", lambda *args: verifica_carga_horaria())
 entrada_CH_MAX = customtkinter.CTkEntry(
     grupo_opcoes, textvariable=texto_ch_max, width=40
 )
@@ -1160,24 +1169,23 @@ ToolTip(entrada_CH_MAX,
 # Switch para escolher se a restrição é só geral ou também em cada unidade
 label_texto_max = customtkinter.CTkLabel(
     grupo_opcoes, text="Essa restrição se aplica a"
-    , fg_color="lightblue"
 )
 label_texto_max.grid(row=2, column=2, pady=(10,0), sticky='w', columnspan=2)
-label_duvida_max = customtkinter.CTkLabel(grupo_opcoes, text=" (?)", fg_color="yellow")
+label_duvida_max = customtkinter.CTkLabel(grupo_opcoes, text=" (?)")
 label_duvida_max.grid(row=2, column=4, pady=(10,0), sticky='w')
 ToolTip(label_duvida_max,
-    msg="Escolhendo a opção 'Somente no total' o valor em cada unidade poderá extrapolar a restrição. " +
+    msg="Escolhendo a opção 'total' o valor em cada unidade poderá extrapolar a restrição. " +
     "Nesse caso o mínimo por unidade será de 10 aulas (8 horas) por semana.",
     delay=0.1)
 
 escopo_ch_max = tk.StringVar()
 escopo_ch_max.set('total')
-label_unidade_max = customtkinter.CTkLabel(grupo_opcoes, text="unidades", fg_color="lightblue")
+label_unidade_max = customtkinter.CTkLabel(grupo_opcoes, text="unidades")
 opcao_max = customtkinter.CTkSwitch(
     grupo_opcoes, text="total", onvalue="total", offvalue="unidades", command=verifica_escopo
     , variable=escopo_ch_max
-    , fg_color=("#3B8ED0", "#4A4D50"), progress_color=("#3B8ED0", "#4A4D50")
-    , button_color=("#275e8a", "#D5D9DE") , button_hover_color=("#1d4566","gray100")
+    , fg_color=("#3B8ED0", "#275e8a"), progress_color=("#3B8ED0", "#275e8a")
+    , button_color=("#275e8a", "#3B8ED0") , button_hover_color=("#1d4566","#1d4566")
 )
 label_unidade_max.grid(row=3, column=2, padx=0, sticky='w')
 opcao_max.grid(row=3, column=3, padx=(10,0), sticky='e')
@@ -1200,6 +1208,7 @@ checkbox_min_total.grid(row=4, column=0, padx=10, pady=10, sticky='w')
 # campo texto
 texto_min_total = tk.IntVar()
 entrada_N_MIN_total = customtkinter.CTkEntry(grupo_opcoes, textvariable=texto_min_total, width=50)
+texto_min_total.trace("w", lambda *args: verifica_totais())
 entrada_N_MIN_total.grid(row=4, column=1, pady=10, sticky='w')
 
 ToolTip(checkbox_min_total, msg="Ativar número mínimo total de professores", delay=0.1)
@@ -1219,6 +1228,7 @@ checkbox_max_total.grid(row=5, column=0, padx=10, pady=10, sticky='w')
 # campo texto
 texto_max_total = tk.IntVar()
 entrada_N_MAX_total = customtkinter.CTkEntry(grupo_opcoes, textvariable=texto_max_total, width=50)
+texto_max_total.trace("w", lambda *args: verifica_totais())
 entrada_N_MAX_total.grid(row=5, column=1, pady=10, sticky='w')
 
 ToolTip(checkbox_max_total, msg="Ativar número máximo total de professores", delay=0.1)
@@ -1278,9 +1288,9 @@ botao_executar.grid(row=10, column=0, padx=10, pady=10)
 grupo_opcoes.grid_remove()
 
 # -------------- Grupo dos resultados --------------
-grupo_resultados = customtkinter.CTkFrame(
-    frame
-    #, label_text="Resultados"
+grupo_resultados = customtkinter.CTkScrollableFrame(
+    root
+    , label_text="Resultados"
 )
 grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nsew')
 
@@ -1291,32 +1301,36 @@ label_resultado = customtkinter.CTkLabel(
 label_resultado.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
 label_aba = customtkinter.CTkLabel(grupo_resultados, text="Distribuição:")
-label_aba.grid(row=1, column=0, padx=10, pady=10, sticky='w')
+label_aba.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
 
 # Adicionando a barra de rolagem vertical
-scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
+#scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
 
 fonte_tabela = customtkinter.CTkFont(family='Consolas', size=14)
 text_tabela = customtkinter.CTkTextbox(
     grupo_resultados, height=10, width=60, #yscrollcommand=scrollbar.set,
     font=fonte_tabela
 )
-text_tabela.grid(row=2, column=0, padx=10, pady=10)
+text_tabela.grid(row=2, column=0, padx=10, pady=0)
 
 # Configurando a barra de rolagem para rolar o texto no Text widget
 #scrollbar.config(command=text_tabela.yview)
 
+# --- Frame com botões ---
+grupo_botoes = customtkinter.CTkFrame(root)
+grupo_botoes.grid(row=3, column=1, padx=10, pady=(0,10), sticky='sew')
 botao_relatorio = customtkinter.CTkButton(
-    grupo_resultados, text="Baixar relatório", command=exportar_txt
+    grupo_botoes, text="Baixar relatório", command=exportar_txt
 )
-botao_relatorio.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+botao_relatorio.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
 botao_planilha = customtkinter.CTkButton(
-    grupo_resultados, text="Baixar planilha", command=exportar_planilha
+    grupo_botoes, text="Baixar planilha", command=exportar_planilha
 )
-botao_planilha.grid(row=3, column=0, padx=10, pady=10, sticky='e')
+botao_planilha.grid(row=0, column=1, padx=10, pady=10, sticky='e')
 
 # Inicialmente oculta os resultados
 grupo_resultados.grid_remove()
+grupo_botoes.grid_remove()
 
 root.mainloop()
