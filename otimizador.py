@@ -313,7 +313,6 @@ def executar():
     # Mostra resultados
     grupo_resultados.grid()
     grupo_resultados.configure(width=130 + N_PERFIS*45)
-    grupo_botoes.grid()
     atualiza_tela()
 
     # Inicia relatório
@@ -520,6 +519,11 @@ def executar():
 
         # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
         text_tabela.configure(height=num_linhas*18, width=120 + N_PERFIS*45)
+
+        label_aba.grid()
+        text_tabela.grid()
+        grupo_botoes.configure(width=130 + N_PERFIS*45)
+        grupo_botoes.grid()
 
         atualiza_tela()
         centralizar()
@@ -1302,9 +1306,6 @@ label_resultado.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 label_aba = customtkinter.CTkLabel(grupo_resultados, text="Distribuição:")
 label_aba.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
 
-# Adicionando a barra de rolagem vertical
-#scrollbar = tk.Scrollbar(grupo_resultados, orient="vertical")
-
 fonte_tabela = customtkinter.CTkFont(family='Consolas', size=14)
 text_tabela = customtkinter.CTkTextbox(
     grupo_resultados, height=10, width=60, #yscrollcommand=scrollbar.set,
@@ -1312,24 +1313,25 @@ text_tabela = customtkinter.CTkTextbox(
 )
 text_tabela.grid(row=2, column=0, padx=10, pady=0)
 
-# Configurando a barra de rolagem para rolar o texto no Text widget
-#scrollbar.config(command=text_tabela.yview)
-
 # --- Frame com botões ---
 grupo_botoes = customtkinter.CTkFrame(root)
 grupo_botoes.grid(row=3, column=1, padx=10, pady=(0,10), sticky='sew')
+grupo_botoes.columnconfigure(1, weight=1) #https://stackoverflow.com/a/70141945
 botao_relatorio = customtkinter.CTkButton(
     grupo_botoes, text="Baixar relatório", command=exportar_txt
 )
 botao_relatorio.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
 botao_planilha = customtkinter.CTkButton(
-    grupo_botoes, text="Baixar planilha", command=exportar_planilha
+    grupo_botoes, text="Baixar planilha", command=exportar_planilha, fg_color="#3e811d",
+    hover_color="#428c20"
 )
-botao_planilha.grid(row=0, column=1, padx=10, pady=10, sticky='e')
+botao_planilha.grid(row=0, column=2, padx=10, pady=10, sticky='e')
 
 # Inicialmente oculta os resultados
 grupo_resultados.grid_remove()
+label_aba.grid_remove()
+text_tabela.grid_remove()
 grupo_botoes.grid_remove()
 
 root.mainloop()
