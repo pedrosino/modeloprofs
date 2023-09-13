@@ -15,6 +15,7 @@ from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, \
 import customtkinter
 from funcoes import imprimir_resultados, imprimir_parametros, imprimir_unidades, imprimir_perfis
 import ctypes
+import threading
 
 # Customtkinter
 customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
@@ -531,6 +532,18 @@ def executar():
         print(repr(excp))
 
 
+def resolver(modo, limite):
+    """Resolver o modelo"""
+    solver_escolhido = solver_var.get()
+    if solver_escolhido == 'CBC':
+        MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=limite))
+    elif solver_escolhido == 'SCIP':
+        MODELOS[modo].solve(SCIP_CMD(msg=1, timeLimit=limite,
+            path="scip\\scip.exe"))
+    # O solver GLPK é bem mais lento
+    ##MODELOS[modo].solve(GLPK_CMD(msg=1, options=["--tmlim", str(novo_limite)]))
+
+
 def otimizar(modo, piores, melhores):
     """Função que faz a otimização conforme o modo escolhido"""
     global RELATORIO
@@ -755,17 +768,15 @@ def otimizar(modo, piores, melhores):
     novo_limite = TEMPO_LIMITE
 
     # Resolver o modelo
-    solver_escolhido = solver_var.get()
-    if solver_escolhido == 'CBC':
-        MODELOS[modo].solve(PULP_CBC_CMD(msg=1, timeLimit=novo_limite))
-    elif solver_escolhido == 'SCIP':
-        MODELOS[modo].solve(SCIP_CMD(msg=1, timeLimit=novo_limite,
-            path="C:\\Program Files\\SCIPOptSuite 8.0.4\\bin\\scip.exe"))
-    # O solver GLPK é bem mais lento
-    ##MODELOS[modo].solve(GLPK_CMD(msg=1, options=["--tmlim", str(novo_limite)]))
+    thread = threading.Thread(target=resolver, args=(modo, novo_limite))
+    thread.start()
+
+    while thread.is_alive():
+        atualiza_tela()
 
     # Se não foi encontrada uma solução
-    if MODELOS[modo].status != 1:
+    status = MODELOS[modo].status
+    if status != 1:
         # Avisa usuário e interrompe o processo
         texto_resultado = resultado.get()
         texto_resultado += "\nNão foi possível encontrar uma solução. Verifique as opções escolhidas."
