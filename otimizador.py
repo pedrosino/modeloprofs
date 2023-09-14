@@ -287,17 +287,18 @@ def ler_valores():
 
 def esconder_tabela_botoes():
     """Esconder tabela e botões de arquivos"""
-    label_aba.grid_remove()
+    frame_tabela.grid_remove()
     text_tabela.grid_remove()
     grupo_botoes.grid_remove()
 
 
 def mostrar_tabela_botoes():
     """Mostra a tabela de distribuição e botões para baixar arquivos"""
-    label_aba.grid()
+    frame_tabela.grid()
     text_tabela.grid()
-    grupo_botoes.configure(width=130 + N_PERFIS*45)
+    grupo_botoes.configure(width=175 + N_PERFIS*35)
     grupo_botoes.grid()
+
 
 def executar():
     """Executa a otimização"""
@@ -330,7 +331,7 @@ def executar():
 
     # Mostra resultados
     grupo_resultados.grid()
-    grupo_resultados.configure(width=130 + N_PERFIS*45)
+    #grupo_resultados.configure(width=130 + N_PERFIS*45)
     atualiza_tela()
 
     # Inicia relatório
@@ -536,7 +537,8 @@ def executar():
         num_linhas = int(text_tabela.index(tk.END).split('.', maxsplit=1)[0])
 
         # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
-        text_tabela.configure(height=num_linhas*18, width=120 + N_PERFIS*45)
+        frame_tabela.configure(width=175 + N_PERFIS*35)
+        text_tabela.configure(height=num_linhas*18, width=165 + N_PERFIS*35)
 
         mostrar_tabela_botoes()
 
@@ -1042,30 +1044,37 @@ def atualiza_tela():
 
 def centralizar():
     """Ajusta posição da janela na tela"""
-    altura_janela = root.winfo_reqheight()
-    altura_tela = root.winfo_screenheight()
-    largura_janela = root.winfo_reqwidth()
-    largura_tela = root.winfo_screenwidth()
-
-    # Calcula novas coordenadas
-    novo_x = round((largura_tela - largura_janela) / 2)
-    novo_y = round((altura_tela - altura_janela - 100) / 2)
-
-    # Verifica o tamanho da janela
-    if altura_tela - altura_janela < 80:
-        novo_y = 0
-        altura_janela = altura_tela - 80
-
     # Bug quando a tela está com escala diferente de 100%
     # https://github.com/TomSchimansky/CustomTkinter/issues/1707
     scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
-    largura_janela_ajustada = int(largura_janela / scale_factor)
 
-    # Atualiza tamanho do grupo_resultados
-    grupo_resultados.configure(height=altura_janela - 230)
+    altura_tela = root.winfo_screenheight()
+    largura_tela = root.winfo_screenwidth()
+
+    # Atualiza tamanho do frame_tabela
+    altura_titulo = int(label_titulo.winfo_reqheight() / scale_factor)
+    altura_botoes = int(grupo_botoes.winfo_reqheight() / scale_factor)
+    altura_tabela = int(frame_tabela.winfo_reqheight() / scale_factor)
+    espaco = altura_tela - altura_titulo - altura_botoes - 50
+    frame_tabela.configure(height=min(altura_tabela,espaco))
+    frame_tabela.update()
+
+    altura_janela = root.winfo_reqheight()
+    largura_janela = root.winfo_reqwidth()
+    largura_janela_ajustada = int(largura_janela / scale_factor)
+    altura_janela_ajustada = int(altura_janela / scale_factor)
+
+    # Calcula novas coordenadas
+    novo_x = round((largura_tela - largura_janela_ajustada) / 2)
+    novo_y = round((altura_tela - altura_janela_ajustada - 100) / 2)
+
+    # Verifica o tamanho da janela
+    if altura_tela - altura_janela_ajustada < 80:
+        novo_y = 0
+        altura_janela_ajustada = altura_tela - 80
+
     # Atualiza tela
-    root.geometry(f"{largura_janela_ajustada}x{altura_janela}+{novo_x}+{novo_y}")
-    root.update()
+    root.geometry(f"{largura_janela_ajustada}x{altura_janela_ajustada}+{novo_x}+{novo_y}")
     atualiza_tela()
 
 
@@ -1103,22 +1112,18 @@ opcao_modo = customtkinter.CTkOptionMenu(
 #opcao_modo.grid(row=0, column=2, padx=10, sticky="w")
 
 # -------------- Grupo arquivo --------------
-grupo_arq = customtkinter.CTkFrame(root)
-grupo_arq.grid(row=1, column=0, rowspan=1, padx=10, pady=10, sticky='nw')
-
-# Texto botão arquivo
-texto_botao = customtkinter.CTkLabel(grupo_arq, text="Escolha o arquivo:")
-texto_botao.grid(row=0, column=0, padx=10)
+grupo_arquivo = customtkinter.CTkFrame(root)
+grupo_arquivo.grid(row=1, column=0, rowspan=1, padx=10, pady=10, sticky='nw')
 
 # Botão para selecionar o arquivo
 botao_arquivo = customtkinter.CTkButton(
-    grupo_arq, text="Abrir arquivo", command=carregar_arquivo#, bg="#ddd"
+    grupo_arquivo, text="Abrir arquivo", command=carregar_arquivo#, bg="#ddd"
 )
 botao_arquivo.grid(row=0, column=1, padx=10, pady=10)
 
 # Label com nome do arquivo
 var_nome_arquivo = tk.StringVar()
-label_nome_arquivo = customtkinter.CTkLabel(grupo_arq, textvariable=var_nome_arquivo)
+label_nome_arquivo = customtkinter.CTkLabel(grupo_arquivo, textvariable=var_nome_arquivo)
 label_nome_arquivo.grid(row=0, column=2, padx=10, pady=10)
 
 # -------------- Grupo opções --------------
@@ -1126,7 +1131,7 @@ label_nome_arquivo.grid(row=0, column=2, padx=10, pady=10)
 grupo_opcoes = customtkinter.CTkFrame(
     root
 )
-grupo_opcoes.grid(row=2, column=0, padx=10, pady=10, rowspan=1, sticky='nsew')
+grupo_opcoes.grid(row=2, column=0, padx=10, pady=(0,10), rowspan=1, sticky='nsew')
 
 # ---Checkbox para ch minima
 bool_minima = tk.BooleanVar(value=True)
@@ -1154,7 +1159,7 @@ label_texto_min = customtkinter.CTkLabel(
 )
 label_texto_min.grid(row=0, column=2, pady=(10,0), sticky='w', columnspan=2)
 label_duvida_min = customtkinter.CTkLabel(grupo_opcoes, text=" (?)")
-label_duvida_min.grid(row=0, column=4, pady=(10,0), sticky='w')
+label_duvida_min.grid(row=0, column=4, padx=(0,10), pady=(10,0), sticky='w')
 ToolTip(label_duvida_min,
     msg="Escolhendo a opção 'total' o valor em cada unidade poderá extrapolar a restrição. " +
     "Nesse caso o mínimo por unidade será de 10 aulas (8 horas) por semana.",
@@ -1207,7 +1212,7 @@ label_texto_max = customtkinter.CTkLabel(
 )
 label_texto_max.grid(row=2, column=2, pady=(10,0), sticky='w', columnspan=2)
 label_duvida_max = customtkinter.CTkLabel(grupo_opcoes, text=" (?)")
-label_duvida_max.grid(row=2, column=4, pady=(10,0), sticky='w')
+label_duvida_max.grid(row=2, column=4, padx=(0,10), pady=(10,0), sticky='w')
 ToolTip(label_duvida_max,
     msg="Escolhendo a opção 'total' o valor em cada unidade poderá extrapolar a restrição. " +
     "Nesse caso o máximo por unidade será de 24 aulas (20 horas) por semana.",
@@ -1329,10 +1334,10 @@ grupo_opcoes.grid_remove()
 
 # -------------- Grupo dos resultados --------------
 grupo_resultados = customtkinter.CTkScrollableFrame(
-    root
+    root, width=360
     , label_text="Resultados"
 )
-grupo_resultados.grid(row=1, column=1, padx=10, pady=10, rowspan=2, sticky='nsew')
+grupo_resultados.grid(row=1, column=1, padx=(0,10), pady=10, rowspan=2, sticky='nsew')
 
 resultado = tk.StringVar()
 label_resultado = customtkinter.CTkLabel(
@@ -1340,19 +1345,22 @@ label_resultado = customtkinter.CTkLabel(
 )
 label_resultado.grid(row=0, column=0, padx=10, pady=10, sticky='w')
 
-label_aba = customtkinter.CTkLabel(grupo_resultados, text="Distribuição:")
-label_aba.grid(row=1, column=0, padx=10, pady=(10,0), sticky='w')
+# --- Fram com a tabela
+frame_tabela = customtkinter.CTkScrollableFrame(
+    root, label_text="Distribuição"
+)
+frame_tabela.grid(row=1, column=2, padx=(0,10), pady=10, rowspan=2, sticky='nsew')
 
 fonte_tabela = customtkinter.CTkFont(family='Consolas', size=14)
 text_tabela = customtkinter.CTkTextbox(
-    grupo_resultados, height=10, width=60, #yscrollcommand=scrollbar.set,
+    frame_tabela, #yscrollcommand=scrollbar.set,
     font=fonte_tabela
 )
-text_tabela.grid(row=2, column=0, padx=10, pady=0)
+text_tabela.grid(row=0, column=0, padx=10, pady=0)
 
 # --- Frame com botões ---
 grupo_botoes = customtkinter.CTkFrame(root)
-grupo_botoes.grid(row=3, column=1, padx=10, pady=(0,10), sticky='sew')
+grupo_botoes.grid(row=3, column=2, padx=(0,10), pady=(0,10), sticky='sew')
 grupo_botoes.columnconfigure(1, weight=1) #https://stackoverflow.com/a/70141945
 botao_relatorio = customtkinter.CTkButton(
     grupo_botoes, text="Baixar relatório", command=exportar_txt
