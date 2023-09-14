@@ -977,7 +977,8 @@ def janela_perfis():
     texto_percentual.grid(row=1, column=1, rowspan=2, padx=0)
     label_perc = customtkinter.CTkLabel(grupo_sinal, text="%")
     label_perc.grid(row=1, column=2, sticky='w', rowspan=2, padx=(0,10))
-    ToolTip(texto_percentual, msg="Para valores não inteiros, use ponto decimal", delay=0.1)
+    ToolTip(texto_percentual, msg="Para valores não inteiros, use ponto decimal", delay=0.1
+        , font=('Roboto', 12))
 
     # Switch para escolher se a restrição é só geral ou também em cada unidade
     frame_escopo = customtkinter.CTkFrame(janela_nova)
@@ -987,10 +988,10 @@ def janela_perfis():
     )
     label_t.grid(row=3, column=0, sticky='w', padx=10, pady=10, columnspan=2)
     label_duvida = customtkinter.CTkLabel(frame_escopo, text=" (?)")
-    label_duvida.grid(row=3, column=2, sticky='ew')
+    label_duvida.grid(row=3, column=2, sticky='w')
     ToolTip(label_duvida,
         msg="Escolhendo a opção 'total' o percentual em cada unidade poderá extrapolar a restrição",
-        delay=0.1)
+        delay=0.1, font=('Roboto', 12))
 
     var_escopo = tk.StringVar()
     var_escopo.set('unidades')
@@ -1133,7 +1134,8 @@ checkbox_minima = customtkinter.CTkCheckBox(
     grupo_opcoes, text="CH mínima: ", variable=bool_minima, command=verifica_check_boxes
 )
 checkbox_minima.grid(row=0, column=0, padx=10, pady=(10,0), sticky='w')
-ToolTip(checkbox_minima, msg="Ativar restrição de carga horária média mínima", delay=0.1)
+ToolTip(checkbox_minima, msg="Ativar restrição de carga horária média mínima", delay=0.1
+    , font=('Roboto', 12))
 
 # campo texto
 texto_ch_min = tk.DoubleVar(value=12.0)
@@ -1143,7 +1145,8 @@ entrada_CH_MIN = customtkinter.CTkEntry(
 )
 entrada_CH_MIN.grid(row=0, column=1, padx=10, pady=(10,0), sticky='w')
 ToolTip(entrada_CH_MIN,
-    msg="Valor da carga horária mínima. Para valores não inteiros, use ponto decimal.", delay=0.1)
+    msg="Valor da carga horária mínima. Para valores não inteiros, use ponto decimal.", delay=0.1
+    , font=('Roboto', 12))
 
 # Switch para escolher se a restrição é só geral ou também em cada unidade
 label_texto_min = customtkinter.CTkLabel(
@@ -1155,7 +1158,7 @@ label_duvida_min.grid(row=0, column=4, pady=(10,0), sticky='w')
 ToolTip(label_duvida_min,
     msg="Escolhendo a opção 'total' o valor em cada unidade poderá extrapolar a restrição. " +
     "Nesse caso o mínimo por unidade será de 10 aulas (8 horas) por semana.",
-    delay=0.1)
+    delay=0.1, font=('Roboto', 12))
 
 escopo_ch_min = tk.StringVar()
 escopo_ch_min.set('total')
@@ -1184,7 +1187,8 @@ checkbox_maxima = customtkinter.CTkCheckBox(
     grupo_opcoes, text="CH máxima: ", variable=bool_maxima, command=verifica_check_boxes
 )
 checkbox_maxima.grid(row=2, column=0, padx=10, pady=(10,0), sticky='w')
-ToolTip(checkbox_maxima, msg="Ativar restrição de carga horária média máxima", delay=0.1)
+ToolTip(checkbox_maxima, msg="Ativar restrição de carga horária média máxima", delay=0.1
+    , font=('Roboto', 12))
 
 # campo texto
 texto_ch_max = tk.DoubleVar(value=16.0)
@@ -1194,7 +1198,8 @@ entrada_CH_MAX = customtkinter.CTkEntry(
 )
 entrada_CH_MAX.grid(row=2, column=1, padx=10, pady=(10,0), sticky='w')
 ToolTip(entrada_CH_MAX,
-    msg="Valor da carga horária máxima. Para valores não inteiros, use ponto decimal.", delay=0.1)
+    msg="Valor da carga horária máxima. Para valores não inteiros, use ponto decimal.", delay=0.1
+    , font=('Roboto', 12))
 
 # Switch para escolher se a restrição é só geral ou também em cada unidade
 label_texto_max = customtkinter.CTkLabel(
@@ -1205,8 +1210,8 @@ label_duvida_max = customtkinter.CTkLabel(grupo_opcoes, text=" (?)")
 label_duvida_max.grid(row=2, column=4, pady=(10,0), sticky='w')
 ToolTip(label_duvida_max,
     msg="Escolhendo a opção 'total' o valor em cada unidade poderá extrapolar a restrição. " +
-    "Nesse caso o mínimo por unidade será de 10 aulas (8 horas) por semana.",
-    delay=0.1)
+    "Nesse caso o máximo por unidade será de 24 aulas (20 horas) por semana.",
+    delay=0.1, font=('Roboto', 12))
 
 escopo_ch_max = tk.StringVar()
 escopo_ch_max.set('total')
@@ -1241,8 +1246,9 @@ entrada_N_MIN_total = customtkinter.CTkEntry(grupo_opcoes, textvariable=texto_mi
 texto_min_total.trace("w", lambda *args: verifica_totais())
 entrada_N_MIN_total.grid(row=4, column=1, pady=10, sticky='w')
 
-ToolTip(checkbox_min_total, msg="Ativar número mínimo total de professores", delay=0.1)
-ToolTip(entrada_N_MIN_total, msg="Valor do mínimo total", delay=0.1)
+ToolTip(checkbox_min_total, msg="Ativar número mínimo total de professores", delay=0.1
+    , font=('Roboto', 12))
+ToolTip(entrada_N_MIN_total, msg="Valor do mínimo total", delay=0.1, font=('Roboto', 12))
 
 # Label para o erro
 var_erro_total_min = tk.StringVar()
@@ -1261,8 +1267,9 @@ entrada_N_MAX_total = customtkinter.CTkEntry(grupo_opcoes, textvariable=texto_ma
 texto_max_total.trace("w", lambda *args: verifica_totais())
 entrada_N_MAX_total.grid(row=5, column=1, pady=10, sticky='w')
 
-ToolTip(checkbox_max_total, msg="Ativar número máximo total de professores", delay=0.1)
-ToolTip(entrada_N_MAX_total, msg="Valor do máximo total", delay=0.1)
+ToolTip(checkbox_max_total, msg="Ativar número máximo total de professores", delay=0.1
+    , font=('Roboto', 12))
+ToolTip(entrada_N_MAX_total, msg="Valor do máximo total", delay=0.1, font=('Roboto', 12))
 
 # Label para o erro
 var_erro_total_max = tk.StringVar()
@@ -1307,7 +1314,10 @@ label_limite.grid(row=9, column=0, padx=10, pady=10)
 entrada_tempo_limite = customtkinter.CTkEntry(grupo_opcoes, textvariable=val_limite, width=40)
 entrada_tempo_limite.grid(row=9, column=1, padx=10, pady=10)
 
-ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1)
+ToolTip(label_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1
+    , font=('Roboto', 12))
+ToolTip(entrada_tempo_limite, msg="Tempo máximo para procurar a solução ótima", delay=0.1
+    , font=('Roboto', 12))
 
 # Botão para executar
 botao_executar = customtkinter.CTkButton(
