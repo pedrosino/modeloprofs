@@ -2,7 +2,7 @@
 Esse repositório contém o código fonte do modelo de programação linear desenvolvido para otimizar a distribuição de professores em uma Universidade Federal.
 O modelo utiliza a biblioteca PuLP, do Python.
 
-Versão atual: 1.0 (11 de setembro de 2023)
+Versão atual: 1.1.0 (13 de setembro de 2023)
 
 **Download:** [Otimizador.zip](https://github.com/pedrosino/modeloprofs/raw/master/otimizador.zip?download=)
 
