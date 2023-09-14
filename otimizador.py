@@ -7,6 +7,8 @@ from datetime import datetime
 import math
 import tkinter as tk
 from tkinter import filedialog
+import ctypes
+import threading
 import pandas as pd
 import numpy as np
 from tktooltip import ToolTip
@@ -14,8 +16,6 @@ from pulp import lpSum, lpDot, LpVariable, LpStatus, PULP_CBC_CMD, \
     LpProblem, LpMaximize, LpMinimize, SCIP_CMD
 import customtkinter
 from funcoes import imprimir_resultados, imprimir_parametros, imprimir_unidades, imprimir_perfis
-import ctypes
-import threading
 
 # Customtkinter
 customtkinter.set_appearance_mode("System")  # Modes: system (default), light, dark
@@ -138,6 +138,7 @@ def verifica_escopo():
     else:
         var_erro_maxima.set("")
         limpa_erro(label_erro_maxima)
+
 
 def carregar_arquivo():
     """Carrega os dados da planilha"""
@@ -284,12 +285,28 @@ def ler_valores():
         N_MIN_TOTAL = texto_min_total.get()
 
 
+def esconder_tabela_botoes():
+    """Esconder tabela e botões de arquivos"""
+    label_aba.grid_remove()
+    text_tabela.grid_remove()
+    grupo_botoes.grid_remove()
+
+
+def mostrar_tabela_botoes():
+    """Mostra a tabela de distribuição e botões para baixar arquivos"""
+    label_aba.grid()
+    text_tabela.grid()
+    grupo_botoes.configure(width=130 + N_PERFIS*45)
+    grupo_botoes.grid()
+
 def executar():
     """Executa a otimização"""
     global QTDES_FINAL, RELATORIO, DATA_FRAME, MODO_ESCOLHIDO, TEMPO_LIMITE
 
     # Limpa tabela
     text_tabela.delete("1.0", tk.END)
+
+    esconder_tabela_botoes()
 
     # Captura valores
     ler_valores()
@@ -521,10 +538,7 @@ def executar():
         # Ajusta a altura do widget para mostrar no máximo altura_maxima linhas
         text_tabela.configure(height=num_linhas*18, width=120 + N_PERFIS*45)
 
-        label_aba.grid()
-        text_tabela.grid()
-        grupo_botoes.configure(width=130 + N_PERFIS*45)
-        grupo_botoes.grid()
+        mostrar_tabela_botoes()
 
         atualiza_tela()
         centralizar()
@@ -1012,10 +1026,12 @@ def janela_perfis():
 
     return janela_nova
 
+
 def abrir_janela():
     """Dá foco na janela nova"""
     janela = janela_perfis()
     janela.wm_transient(root)
+
 
 def atualiza_tela():
     """Função para atualizar o tamanho do canvas após acrescentar elementos ao frame"""
@@ -1061,7 +1077,7 @@ def mudar_modo():
 
 # ------ Interface gráfica ------
 root = customtkinter.CTk()
-root.title("Otimizador de distribuição de professores 1.0 - Pedro Santos Guimarães")
+root.title("Otimizador de distribuição de professores 1.1.0")
 # From https://www.tutorialspoint.com/how-to-set-the-position-of-a-tkinter-window-without-setting-the-dimensions
 root.geometry("+100+50")
 #root.minsize(700,400)
@@ -1341,8 +1357,6 @@ botao_planilha.grid(row=0, column=2, padx=10, pady=10, sticky='e')
 
 # Inicialmente oculta os resultados
 grupo_resultados.grid_remove()
-label_aba.grid_remove()
-text_tabela.grid_remove()
-grupo_botoes.grid_remove()
+esconder_tabela_botoes()
 
 root.mainloop()
