@@ -300,6 +300,33 @@ def mostrar_tabela_botoes():
     grupo_botoes.grid()
 
 
+def iniciar_barra():
+    """Inicia o movimento da barra"""
+    barra_flutuante.configure(width=largura_barra)
+    barra_cheia.configure(width=0)
+    barra_flutuante.grid()
+    barra_cheia.grid()
+    barra_flutuante.start()
+
+
+def atualizar_barras():
+    """Atualiza as barras para criar o efeito"""
+    largura_crescente = barra_cheia.cget('width')
+    largura_decrescente = barra_flutuante.cget('width')
+    nova_crescente = largura_crescente + incremento_largura
+    nova_decrescente = largura_decrescente - incremento_largura
+    barra_cheia.configure(width=nova_crescente)
+    barra_cheia.grid()
+    barra_flutuante.configure(width=nova_decrescente)
+
+
+def parar_barra():
+    """Finaliza o movimento da barra"""
+    barra_flutuante.stop()
+    barra_flutuante.configure(width=0)
+    barra_cheia.configure(width=largura_barra)
+
+
 def executar():
     """Executa a otimização"""
     global QTDES_FINAL, RELATORIO, DATA_FRAME, MODO_ESCOLHIDO, TEMPO_LIMITE
@@ -308,6 +335,7 @@ def executar():
     text_tabela.delete("1.0", tk.END)
 
     esconder_tabela_botoes()
+    iniciar_barra()
 
     # Captura valores
     ler_valores()
@@ -442,7 +470,9 @@ def executar():
                 else:
                     texto_resultado += f"\nTerminado. Resultado: {piores[modo_usado.split('-')[0]]}, "\
                         f"resolvido em {MODELOS[modo_usado].solutionTime:.3f} segundos"
+
                 resultado.set(texto_resultado)
+                atualizar_barras()
                 atualiza_tela()
 
                 # Imprime resultados
@@ -540,8 +570,9 @@ def executar():
         frame_tabela.configure(width=175 + N_PERFIS*35)
         text_tabela.configure(height=num_linhas*18, width=165 + N_PERFIS*35)
 
+        # Ajustes na tela
         mostrar_tabela_botoes()
-
+        parar_barra()
         atualiza_tela()
         centralizar()
     except ValueError as excp:
@@ -1046,27 +1077,26 @@ def centralizar():
     """Ajusta posição da janela na tela"""
     # Bug quando a tela está com escala diferente de 100%
     # https://github.com/TomSchimansky/CustomTkinter/issues/1707
-    scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
 
     altura_tela = root.winfo_screenheight()
     largura_tela = root.winfo_screenwidth()
 
     # Atualiza tamanho do frame_tabela
-    altura_titulo = int(label_titulo.winfo_reqheight() / scale_factor)
-    altura_botoes = int(grupo_botoes.winfo_reqheight() / scale_factor)
-    altura_tabela = int(frame_tabela.winfo_reqheight() / scale_factor)
+    altura_titulo = int(label_titulo.winfo_reqheight() / fator_escala)
+    altura_botoes = int(grupo_botoes.winfo_reqheight() / fator_escala)
     espaco = altura_tela - altura_titulo - altura_botoes - 50
-    frame_tabela.configure(height=min(altura_tabela,espaco))
+    # Configurar a altura do frame não afeta necessariamente a tabela
+    frame_tabela.configure(height=espaco / fator_escala)
     frame_tabela.update()
 
     altura_janela = root.winfo_reqheight()
     largura_janela = root.winfo_reqwidth()
-    largura_janela_ajustada = int(largura_janela / scale_factor)
-    altura_janela_ajustada = int(altura_janela / scale_factor)
+    largura_janela_ajustada = int(largura_janela / fator_escala)
+    altura_janela_ajustada = int(altura_janela / fator_escala)
 
     # Calcula novas coordenadas
     novo_x = round((largura_tela - largura_janela_ajustada) / 2)
-    novo_y = round((altura_tela - altura_janela_ajustada - 100) / 2)
+    novo_y = max(round((altura_tela - altura_janela_ajustada - 100) / 2), 0)
 
     # Verifica o tamanho da janela
     if altura_tela - altura_janela_ajustada < 80:
@@ -1094,6 +1124,10 @@ root.geometry("+100+50")
 
 #root.grid_rowconfigure(0, weight=1)
 #root.grid_columnconfigure(0, weight=1)
+
+# Bug quando a tela está com escala diferente de 100%
+# https://github.com/TomSchimansky/CustomTkinter/issues/1707
+fator_escala = ctypes.windll.shcore.GetScaleFactorForDevice(0)/100
 
 # Título
 TEXTO_TITULO = """Bem vindo.
@@ -1299,7 +1333,7 @@ combobox = customtkinter.CTkOptionMenu(
     grupo_opcoes, variable=combo_var, values=list(LISTA_MODOS.keys()),
     command=lambda *args: verifica_executar()
 )
-combobox.grid(row=7, column=1, padx=10, pady=10, columnspan=3)
+combobox.grid(row=7, column=1, padx=10, pady=10, columnspan=3, sticky='w')
 
 # Combo solver
 label_solver = customtkinter.CTkLabel(grupo_opcoes, text="Escolha o solver:")
@@ -1310,7 +1344,7 @@ combo_solver = customtkinter.CTkOptionMenu(
     grupo_opcoes, variable=solver_var, values=list(['CBC', 'SCIP']),
     command=lambda *args: verifica_executar()
 )
-combo_solver.grid(row=8, column=1, padx=10, pady=10, columnspan=3)
+combo_solver.grid(row=8, column=1, padx=10, pady=10, columnspan=3, sticky='w')
 
 # Tempo limite
 val_limite = tk.IntVar(value=30)
@@ -1372,6 +1406,23 @@ botao_planilha = customtkinter.CTkButton(
     hover_color="#428c20"
 )
 botao_planilha.grid(row=0, column=2, padx=10, pady=10, sticky='e')
+
+# --------------- Barra de status --------------
+largura_barra = int((grupo_opcoes.winfo_width() + grupo_resultados.winfo_width() + 10) * fator_escala)
+incremento_largura = int(largura_barra / 7)
+
+barra_flutuante = customtkinter.CTkProgressBar(
+    root, orientation="horizontal", mode="determinate", width=largura_barra
+)
+barra_flutuante.grid(row=3, column=0, padx=10, pady=(0,10), columnspan=2, sticky="e")
+barra_flutuante.grid_remove()
+
+barra_cheia = customtkinter.CTkProgressBar(
+    root, orientation="horizontal", mode="determinate", progress_color="#1fde18", width=0
+)
+barra_cheia.grid(row=3, column=0, padx=10, pady=(0,10), columnspan=2, sticky="w")
+barra_cheia.grid_remove()
+barra_cheia.set(1)
 
 # Inicialmente oculta os resultados
 grupo_resultados.grid_remove()
